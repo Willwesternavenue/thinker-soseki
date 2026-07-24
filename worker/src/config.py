@@ -15,11 +15,11 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 # GCP / Firebase プロジェクト(Secret Managerの参照先)
-GCP_PROJECT_ID = "al-thinker-dev"
+GCP_PROJECT_ID = "thinker-maurice"
 
 # SupabaseプロジェクトURL(公開情報)。ローカルDBで動かす時だけ環境変数で上書き
 SUPABASE_URL = os.environ.get(
-    "SUPABASE_URL", "https://cnhqrjmvchtqkauynevi.supabase.co"
+    "SUPABASE_URL", "https://hbsvltfowywqgkbskabc.supabase.co"
 )
 
 # チャンク化ルールのバージョン。ルール変更時に上げる(仕様6.3)

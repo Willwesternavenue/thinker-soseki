@@ -8,16 +8,16 @@
  */
 
 /** GCP / Firebase プロジェクトID(Secret Manager・firebase-admin が使う) */
-export const GCP_PROJECT_ID = "al-thinker-dev";
+export const GCP_PROJECT_ID = "thinker-maurice-9082f";
 
 /** Firebase クライアント設定(公開情報。APIキーは秘密ではない) */
 export const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyAht-xXUQxyBnkIY6Jvb3a9g-NZRCsYLLU",
-  authDomain: "al-thinker-dev.firebaseapp.com",
+  apiKey: "AIzaSyAR1poPa8lGqNNOqVI4D6oexLoO4RJv03M",
+  authDomain: "thinker-maurice-9082f.firebaseapp.com",
   projectId: GCP_PROJECT_ID,
-  storageBucket: "al-thinker-dev.firebasestorage.app",
-  messagingSenderId: "360880512462",
-  appId: "1:360880512462:web:8547dc56c38efcddca5f9f",
+  storageBucket: "thinker-maurice-9082f.firebasestorage.app",
+  messagingSenderId: "202583863761",
+  appId: "1:202583863761:web:1b2a39de68bf2204dab0f0",
 } as const;
 
 /**
@@ -31,7 +31,7 @@ export const SESSION_COOKIE_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
 
 /** SupabaseプロジェクトURL(公開情報)。ローカルDBで動かす時だけ環境変数で上書き */
 export const SUPABASE_URL =
-  process.env.SUPABASE_URL ?? "https://cnhqrjmvchtqkauynevi.supabase.co";
+  process.env.SUPABASE_URL ?? "https://hbsvltfowywqgkbskabc.supabase.co";
 
 /** L3判断文法の動作モード: "assist"=approved規則を回答に注入 / それ以外=shadow */
 export const L3_MODE = process.env.L3_MODE ?? "assist";
