@@ -70,7 +70,7 @@ export async function uploadSource(formData: FormData): Promise<{ error?: string
 
   const { error: sourceError } = await supabase.from("sources").insert({
     source_id: sourceId,
-    person_id: "x_shigyo",
+    person_id: "merleau_ponty",
     title,
     source_type: sourceType,
     author,

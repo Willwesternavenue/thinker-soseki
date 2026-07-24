@@ -23,7 +23,7 @@ from pathlib import Path
 
 from . import db
 
-PERSON_ID = "x_shigyo"
+PERSON_ID = "merleau_ponty"
 
 ID_PREFIX = {
     "book": "BOOK",
@@ -194,7 +194,7 @@ def main() -> None:
     )
     ap.add_argument("--type", default="video_transcript", help="source_type(既定: video_transcript)")
     ap.add_argument("--priority", default="important", help="core / important / support(既定: important)")
-    ap.add_argument("--author", default="執行草舟")
+    ap.add_argument("--author", default="メルロ=ポンティ")
     ap.add_argument("--dry-run", action="store_true", help="登録せず抽出結果だけ表示")
     args = ap.parse_args()
 

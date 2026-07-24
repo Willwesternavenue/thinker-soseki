@@ -2,7 +2,7 @@
 -- 仕様: docs/superpowers/specs/2026-07-07-transcript-prep-design.md
 create table public.transcript_drafts (
   draft_id uuid primary key default gen_random_uuid(),
-  person_id text not null default 'x_shigyo',
+  person_id text not null default 'merleau_ponty',
   title text not null,
   video_url text,
   hint text,

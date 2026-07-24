@@ -12,7 +12,7 @@ from . import config, db
 from .steps import embed as embed_step
 
 SRC = config.REPO_ROOT / "data" / "thought_questions.txt"
-PERSON_ID = "x_shigyo"
+PERSON_ID = "merleau_ponty"
 FALLBACK_THOUGHT_ID = "FALLBACK_LIFE_ADVICE_BASICS"
 
 # ファイルの日本語 intent → スキーマの enum

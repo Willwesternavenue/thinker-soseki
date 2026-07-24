@@ -87,7 +87,7 @@ export async function createSession(): Promise<{
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("chat_sessions")
-    .insert({ user_id: auth.user.id, person_id: "x_shigyo", title: "新しい相談" })
+    .insert({ user_id: auth.user.id, person_id: "merleau_ponty", title: "新しい相談" })
     .select("session_id")
     .single();
   if (error) return { error: error.message };

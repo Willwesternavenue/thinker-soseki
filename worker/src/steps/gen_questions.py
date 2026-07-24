@@ -86,7 +86,7 @@ def run(card_id: str) -> int:
     return len(rows)
 
 
-def run_for_all_cards(person_id: str = "x_shigyo") -> int:
+def run_for_all_cards(person_id: str = "merleau_ponty") -> int:
     """質問が未生成のカード(rejected以外)すべてに対して生成する。"""
     c = db.client()
     cards = (

@@ -48,7 +48,7 @@ export async function startDistillation(): Promise<{ jobId?: string; error?: str
 
   const { data, error } = await supabase
     .from("distillation_jobs")
-    .insert({ person_id: "x_shigyo", kind: "all", status: "pending" })
+    .insert({ person_id: "merleau_ponty", kind: "all", status: "pending" })
     .select("job_id")
     .single();
   if (error) return { error: error.message };

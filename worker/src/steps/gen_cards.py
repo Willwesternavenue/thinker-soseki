@@ -40,7 +40,7 @@ PROMPT_TEMPLATE = """思想ID「{thought_id}」の思想カードを作成する
 MIN_EVIDENCE_CHUNKS = 2  # これ未満の思想ID候補はカード化しない
 
 
-def run(person_id: str = "x_shigyo") -> list[str]:
+def run(person_id: str = "merleau_ponty") -> list[str]:
     """カード候補を生成し、作成した card_id のリストを返す。"""
     c = db.client()
     persona = (

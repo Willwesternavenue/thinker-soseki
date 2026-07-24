@@ -149,7 +149,7 @@ export function ChatClient({
       {/* セッション一覧 */}
       <aside className="flex w-64 flex-col border-r border-stone-200 bg-white">
         <div className="flex items-center justify-between border-b border-stone-200 p-3">
-          <span className="text-sm font-bold">X執行</span>
+          <span className="text-sm font-bold">Xメルロ=ポンティ</span>
           <button
             onClick={handleNewSession}
             className="rounded bg-blue-700 px-2 py-1 text-xs font-medium text-white"

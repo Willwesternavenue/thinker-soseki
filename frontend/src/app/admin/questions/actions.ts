@@ -62,7 +62,7 @@ export async function addQuestion(fields: {
   const questionId = `q_manual_${Date.now().toString(36)}`;
   const { error } = await supabase.from("thought_questions").insert({
     question_id: questionId,
-    person_id: "x_shigyo",
+    person_id: "merleau_ponty",
     question: fields.question,
     target_thought_id: fields.target_thought_id,
     target_card_id: card?.card_id ?? null,
@@ -106,7 +106,7 @@ export async function testSearch(query: string): Promise<{
   const embedding = await embedText(query);
   const { data, error } = await supabase.rpc("match_thought_questions", {
     query_embedding: JSON.stringify(embedding),
-    target_person_id: "x_shigyo",
+    target_person_id: "merleau_ponty",
     match_count: 10,
   });
   if (error) return { error: error.message };

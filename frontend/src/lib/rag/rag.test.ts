@@ -7,8 +7,8 @@ import { buildRetrievalQuery, normalizeSubjectReferences } from "./session";
 import type { EvidenceChunk, Persona, ThoughtCard } from "./types";
 
 const persona: Persona = {
-  person_id: "x_shigyo",
-  display_name: "X執行",
+  person_id: "merleau_ponty",
+  display_name: "Xメルロ=ポンティ",
   system_prompt: "",
   first_person: "俺",
   banned_terms_exact: ["社長が", "社長は", "社長として"],
@@ -136,34 +136,39 @@ describe("aggregateThoughtHits(仕様7.4 Stage2: thought_id集計)", () => {
   });
 });
 
-describe("normalizeSubjectReferences(本人呼称の正規化: 敬称ノイズ抑制)", () => {
-  it("各種呼称を「執行草舟」に正規化する", () => {
-    expect(normalizeSubjectReferences("執行社長は子どものころどんなお子さんでしたか"))
-      .toBe("執行草舟は子どものころどんなお子さんでしたか");
-    expect(normalizeSubjectReferences("社長の好きな絵は?")).toBe("執行草舟の好きな絵は?");
-    expect(normalizeSubjectReferences("執行さんの読書論")).toBe("執行草舟の読書論");
-    expect(normalizeSubjectReferences("しぎょうさんの話")).toBe("執行草舟の話");
-    expect(normalizeSubjectReferences("草舟さんはどう考える")).toBe("執行草舟はどう考える");
-    expect(normalizeSubjectReferences("ご自身の体験は")).toBe("執行草舟の体験は");
+describe("normalizeSubjectReferences(人物の表記ゆれ正規化)", () => {
+  it("カナ表記の区切り・長音の揺れを「メルロ=ポンティ」に統一する", () => {
+    expect(normalizeSubjectReferences("メルロ＝ポンティの知覚の現象学"))
+      .toBe("メルロ=ポンティの知覚の現象学");
+    expect(normalizeSubjectReferences("メルロ・ポンティはどう考える"))
+      .toBe("メルロ=ポンティはどう考える");
+    expect(normalizeSubjectReferences("メルロポンティの身体論"))
+      .toBe("メルロ=ポンティの身体論");
+    expect(normalizeSubjectReferences("メルロー＝ポンティーの晩年"))
+      .toBe("メルロ=ポンティの晩年");
+    expect(normalizeSubjectReferences("メルロ=ポンティ先生の講義"))
+      .toBe("メルロ=ポンティの講義");
   });
 
-  it("既に正規名なら二重化しない・「執行草舟」内の「草舟」を誤置換しない", () => {
-    expect(normalizeSubjectReferences("執行草舟の哲学")).toBe("執行草舟の哲学");
-    expect(normalizeSubjectReferences("執行草舟さんの哲学")).toBe("執行草舟の哲学");
+  it("ラテン表記 Merleau-Ponty / Merleau Ponty も正規化する", () => {
+    expect(normalizeSubjectReferences("Merleau-Pontyの両義性"))
+      .toBe("メルロ=ポンティの両義性");
+    expect(normalizeSubjectReferences("merleau ponty の肉の概念"))
+      .toBe("メルロ=ポンティ の肉の概念");
   });
 
-  it("「副社長」など複合語は本人に置換しない", () => {
-    expect(normalizeSubjectReferences("伯父は三井の副社長だった"))
-      .toBe("伯父は三井の副社長だった");
+  it("既に正規名なら二重化しない", () => {
+    expect(normalizeSubjectReferences("メルロ=ポンティの哲学"))
+      .toBe("メルロ=ポンティの哲学");
   });
 
-  it("アバターへの二人称「あなた」を本人に正規化する(経歴質問の検索改善)", () => {
-    expect(normalizeSubjectReferences("あなたの経歴を教えてください"))
-      .toBe("執行草舟の経歴を教えてください");
+  it("アバターへの二人称「あなた」「ご自身」を本人に正規化する(検索改善)", () => {
+    expect(normalizeSubjectReferences("あなたの主著を教えてください"))
+      .toBe("メルロ=ポンティの主著を教えてください");
     expect(normalizeSubjectReferences("あなた様のお考えは"))
-      .toBe("執行草舟のお考えは");
-    expect(normalizeSubjectReferences("あなたならどうしますか"))
-      .toBe("執行草舟ならどうしますか");
+      .toBe("メルロ=ポンティのお考えは");
+    expect(normalizeSubjectReferences("ご自身の体験は"))
+      .toBe("メルロ=ポンティの体験は");
   });
 });
 
@@ -221,12 +226,12 @@ describe("buildRetrievalQuery(直近文脈の連結は指示語・省略形の�
     );
   });
 
-  it("連結した文脈側の本人呼称も正規化される", () => {
+  it("連結した文脈側の人物表記も正規化される", () => {
     expect(
-      buildRetrievalQuery("それはどこで見られますか", null, [
-        { role: "user", content: "社長の好きな絵は?" },
+      buildRetrievalQuery("それはどこで論じられていますか", null, [
+        { role: "user", content: "メルロ・ポンティの主著は?" },
       ])
-    ).toBe("執行草舟の好きな絵は? それはどこで見られますか");
+    ).toBe("メルロ=ポンティの主著は? それはどこで論じられていますか");
   });
 });
 

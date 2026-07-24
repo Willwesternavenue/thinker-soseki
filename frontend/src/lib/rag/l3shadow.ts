@@ -17,7 +17,7 @@ import { callJson, MODEL_LIGHT } from "./llm";
  *   こちらは本番形状(全規則一括)。判定方式の差自体も比較データになる
  */
 
-const PERSON_ID = "x_shigyo";
+const PERSON_ID = "merleau_ponty";
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const SHADOW_TIMEOUT_MS = 8000;
 

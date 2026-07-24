@@ -9,7 +9,7 @@ export default async function PersonaPage() {
   const { data: persona } = await supabase
     .from("personas")
     .select("*")
-    .eq("person_id", "x_shigyo")
+    .eq("person_id", "merleau_ponty")
     .single();
 
   const { data: cards } = await supabase
@@ -27,7 +27,7 @@ export default async function PersonaPage() {
       <div>
         <h1 className="text-xl font-bold">ペルソナ設定(プロンプト)</h1>
         <p className="mt-1 text-sm text-stone-500">
-          X執行の人格・語り口・禁止語・安全方針をここで管理します。
+          Xメルロ=ポンティの人格・語り口・禁止語・安全方針をここで管理します。
           人物固有の情報はコードではなくこの設定に集約されています。
         </p>
       </div>

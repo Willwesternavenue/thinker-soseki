@@ -98,10 +98,10 @@ export async function ingestDraft(
 
   const { error: sourceError } = await supabase.from("sources").insert({
     source_id: sourceId,
-    person_id: "x_shigyo",
+    person_id: "merleau_ponty",
     title: draft.title,
     source_type: "video_transcript",
-    author: "執行草舟",
+    author: "メルロ=ポンティ",
     file_type: "txt",
     priority: draft.priority,
     status: "raw",
