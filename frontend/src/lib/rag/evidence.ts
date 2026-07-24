@@ -1,0 +1,197 @@
+import "server-only";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { embedText } from "@/lib/embedding";
+import type { EvidenceChunk } from "./types";
+
+const MAX_EVIDENCE = 10; // LLMへ渡す原典の上限(伝記質問で複数エピソードを拾えるよう拡大)
+const MAX_PER_SOURCE = 5; // 同一原典からの上限(1冊に集中する伝記章で複数箇所を拾えるよう緩和)
+const MAX_PER_ROLE = 3;
+
+/** A系統: thought_evidence_links(approved)から代表チャンクを取得(仕様7.6)。 */
+export async function fetchLinkedEvidence(
+  db: SupabaseClient,
+  personId: string,
+  thoughtIds: string[]
+): Promise<EvidenceChunk[]> {
+  if (!thoughtIds.length) return [];
+  const { data } = await db
+    .from("thought_evidence_links")
+    .select(
+      "chunk_id, evidence_role, strength, quote_allowed, source_chunks(chunk_id, source_id, chapter_title, section_title, source_page, printed_page, text, summary, verbatim, status), sources(title)"
+    )
+    .eq("person_id", personId)
+    .eq("status", "approved")
+    .in("thought_id", thoughtIds);
+
+  const strengthScore = { high: 1.0, medium: 0.8, low: 0.6 } as Record<string, number>;
+  const result: EvidenceChunk[] = [];
+  for (const link of data ?? []) {
+    const chunk = Array.isArray(link.source_chunks)
+      ? link.source_chunks[0]
+      : link.source_chunks;
+    const source = Array.isArray(link.sources) ? link.sources[0] : link.sources;
+    if (!chunk || chunk.status !== "active") continue;
+    result.push({
+      chunk_id: chunk.chunk_id,
+      source_id: chunk.source_id,
+      source_title: source?.title,
+      chapter_title: chunk.chapter_title,
+      section_title: chunk.section_title,
+      source_page: chunk.source_page,
+      printed_page: chunk.printed_page,
+      text: chunk.text,
+      summary: chunk.summary,
+      verbatim: chunk.verbatim,
+      evidence_role: link.evidence_role,
+      quote_allowed: link.quote_allowed,
+      score: strengthScore[link.strength] ?? 0.7,
+      origin: "linked",
+    });
+  }
+  return result;
+}
+
+/** B系統(1): pgvectorでthought_id絞り込み検索(仕様7.6)。 */
+export async function searchSourceChunks(
+  db: SupabaseClient,
+  personId: string,
+  query: string,
+  thoughtIds: string[]
+): Promise<EvidenceChunk[]> {
+  if (!thoughtIds.length) return [];
+  const embedding = await embedText(query);
+  const { data } = await db.rpc("match_source_chunks_by_thoughts", {
+    query_embedding: JSON.stringify(embedding),
+    thought_ids: thoughtIds,
+    target_person_id: personId,
+    match_count: 10,
+  });
+  return ((data ?? []) as Record<string, unknown>[]).map((r) => toChunk(r, "vector"));
+}
+
+/** B系統(2): PGroonga全文検索(仕様7.6)。 */
+export async function keywordSearchChunks(
+  db: SupabaseClient,
+  personId: string,
+  query: string,
+  thoughtIds: string[]
+): Promise<EvidenceChunk[]> {
+  if (!thoughtIds.length) return [];
+  const { data, error } = await db.rpc("search_source_chunks_fulltext", {
+    query_text: query,
+    thought_ids: thoughtIds,
+    target_person_id: personId,
+    match_count: 10,
+  });
+  if (error) return []; // クエリ構文エラー等は補助検索なので握りつぶす
+  return ((data ?? []) as Record<string, unknown>[]).map((r) => {
+    const chunk = toChunk(r, "keyword");
+    // PGroongaスコアは正規化されていないため控えめな固定重みに
+    chunk.score = 0.5;
+    return chunk;
+  });
+}
+
+/**
+ * 思想IDに紐づかない質問(fact / person_or_work 等)向けの原典直検索。
+ * 思想カードが無くても、その人物の全チャンクをベクトル+PGroongaで検索して根拠にする。
+ * これがないと経歴・会社情報など、カード化されていない事実が一切取得できない。
+ */
+export async function retrieveUnscopedEvidence(
+  db: SupabaseClient,
+  personId: string,
+  query: string
+): Promise<EvidenceChunk[]> {
+  const embedding = await embedText(query);
+  const [vectorRes, keywordRes] = await Promise.all([
+    db.rpc("match_source_chunks_all", {
+      query_embedding: JSON.stringify(embedding),
+      target_person_id: personId,
+      match_count: 10,
+    }),
+    db.rpc("search_source_chunks_fulltext", {
+      query_text: query,
+      thought_ids: null,
+      target_person_id: personId,
+      match_count: 10,
+    }),
+  ]);
+  const vectorHits = ((vectorRes.data ?? []) as Record<string, unknown>[]).map((r) =>
+    toChunk(r, "vector")
+  );
+  const keywordHits = keywordRes.error
+    ? []
+    : ((keywordRes.data ?? []) as Record<string, unknown>[]).map((r) => {
+        const chunk = toChunk(r, "keyword");
+        chunk.score = 0.5;
+        return chunk;
+      });
+  return mergeEvidence([], vectorHits, keywordHits);
+}
+
+function toChunk(r: Record<string, unknown>, origin: "vector" | "keyword"): EvidenceChunk {
+  return {
+    chunk_id: r.chunk_id as string,
+    source_id: r.source_id as string,
+    chapter_title: (r.chapter_title as string) ?? null,
+    section_title: (r.section_title as string) ?? null,
+    source_page: (r.source_page as number) ?? null,
+    printed_page: (r.printed_page as number) ?? null,
+    text: r.text as string,
+    summary: (r.summary as string) ?? null,
+    verbatim: Boolean(r.verbatim),
+    evidence_role: null,
+    quote_allowed: false,
+    score: (r.similarity as number) ?? 0.5,
+    origin,
+  };
+}
+
+/** Evidence統合・重複排除(仕様7.7)。linked > vector > keyword の優先で残す。 */
+export function mergeEvidence(
+  linked: EvidenceChunk[],
+  vectorHits: EvidenceChunk[],
+  keywordHits: EvidenceChunk[]
+): EvidenceChunk[] {
+  const seen = new Map<string, EvidenceChunk>();
+  for (const chunk of [...linked, ...vectorHits, ...keywordHits]) {
+    const existing = seen.get(chunk.chunk_id);
+    if (!existing) {
+      seen.set(chunk.chunk_id, chunk);
+    } else if (existing.origin !== "linked" && chunk.origin === "linked") {
+      seen.set(chunk.chunk_id, chunk);
+    }
+  }
+  return [...seen.values()].sort((a, b) => b.score - a.score);
+}
+
+/** 多様性制御(仕様7.7): 同一source・同一roleに偏らせず3〜8件に絞る。 */
+export function diversifyEvidence(hits: EvidenceChunk[]): EvidenceChunk[] {
+  const perSource = new Map<string, number>();
+  const perRole = new Map<string, number>();
+  const result: EvidenceChunk[] = [];
+  for (const chunk of hits) {
+    if (result.length >= MAX_EVIDENCE) break;
+    const sourceCount = perSource.get(chunk.source_id) ?? 0;
+    if (sourceCount >= MAX_PER_SOURCE) continue;
+    // roleの偏り制御はrole割当済み(linked由来)のみ対象。未割当のvector/keywordヒットは絞らない
+    if (chunk.evidence_role) {
+      const roleCount = perRole.get(chunk.evidence_role) ?? 0;
+      if (roleCount >= MAX_PER_ROLE) continue;
+      perRole.set(chunk.evidence_role, roleCount + 1);
+    }
+    result.push(chunk);
+    perSource.set(chunk.source_id, sourceCount + 1);
+  }
+  return result;
+}
+
+/**
+ * 引用可能フィルタ(仕様7.8)。コードで強制:
+ * evidence_role = quote かつ verbatim = true かつ quote_allowed = true
+ */
+export function filterQuotableChunks(hits: EvidenceChunk[]): EvidenceChunk[] {
+  return hits.filter(
+    (c) => c.evidence_role === "quote" && c.verbatim === true && c.quote_allowed === true
+  );
+}

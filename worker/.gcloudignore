@@ -1,0 +1,9 @@
+# gcloud builds submit のアップロード対象から除外する(ビルドコンテキスト削減)。
+# gcloud は worker/ 起点のため、リポジトリルートの .gitignore は参照しない。
+# .dockerignore と同等の内容を明示する。
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+tests
+.git
