@@ -55,6 +55,9 @@ SQLエディタで `update user_profiles set role='admin' where user_id='<UID>';
 
 ## 運用フロー
 
+> 新しい人物向けの投入手順(persona登録〜カード承認)の詳細は
+> [docs/CONTENT_INGESTION.md](./docs/CONTENT_INGESTION.md) を参照。以下は概要。
+
 1. **原典投入**: `/admin/sources` からPDF/Word/TXTをアップロード → Workerが extract → clean(話者正規化)→ chunk → embed → 軽蒸留 を自動実行(`/admin/jobs` で監視・再実行)
 2. **蒸留**(Phase 2、CLIで実行):
    ```bash
@@ -67,7 +70,7 @@ SQLエディタで `update user_profiles set role='admin' where user_id='<UID>';
    ```
 3. **レビュー**: `/admin/cards` でdraftカードを編集・承認(approved化で本番回答に使用)。原典リンクの承認とquote_allowed設定もカード詳細で行う。`/admin/chunks` で重要度変更、`/admin/questions` で質問の追加・テスト検索
 4. **チャット**: `/chat`。adminは各回答の「参照情報を見る」でルーティング・ヒットチャンク・Guard結果を確認できる
-5. **評価**: `/admin/evaluations` で評価セット([evaluation/questions.json](./evaluation/questions.json)、50問に差し替え可)を実行し、5観点スコアを記録。フォールバック発生質問はthought_questions追加候補として集計される
+5. **評価**: `/admin/evaluations` で評価セット(`evaluation/questions.json` を対象人物用に用意)を実行し、5観点スコアを記録。フォールバック発生質問はthought_questions追加候補として集計される
 
 ## テスト
 
