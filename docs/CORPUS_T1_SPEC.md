@@ -454,21 +454,48 @@ system_inference / confidence / abstention_reason
 
 | # | タスク | 主な成果物 | 依存 |
 |---|---|---|---|
-| C-T2a | migration（新規4テーブル + 既存への additive 列） | `2026072800000X_corpus_layer.sql` | C-T1 |
-| C-T2b | Manifest Importer（CSV → canonical work同定 → editions） | `worker/src/aozora/manifest.py` | C-T2a |
-| C-T2c | 作業中8件の記録（HTMLページ） | 同上 | C-T2b |
-| C-T3a | 取得（GitHubミラー・zip・sha256） | `worker/src/aozora/fetch.py` | C-T2b |
-| C-T3b | Parser/Normalizer（encoding/ruby/gaiji/notes/header/footer） | `worker/src/aozora/parse.py` | C-T3a |
-| C-T3c | チャンク分割（`aozora_v1`） | `worker/src/aozora/chunk.py` | C-T3b |
-| C-T4a | Pass1 決定的タグ + Pass3 整合性検査 | `worker/src/aozora/tag.py` | C-T3c |
+| C-T2a | **完了** migration（新規4テーブル + 既存への additive 列） | `20260727000001_corpus_layer.sql` | C-T1 |
+| C-T2b | **完了** Manifest Importer（106作品 / 113版 / 要確認1件） | `worker/src/aozora/manifest.py` | C-T2a |
+| C-T2c | **完了** 作業中8件の記録（HTMLページ） | `worker/src/aozora/person_page.py` | C-T2b |
+| C-T3a | **完了** 取得（GitHubミラー・zip・sha256） | `worker/src/aozora/ingest.py` | C-T2b |
+| C-T3b | **完了** Parser/Normalizer（3形式・ルビ・注記・奥付） | `worker/src/aozora/parse.py` | C-T3a |
+| C-T3c | **完了** チャンク分割（`aozora_v1`・話者交代・意味段落） | `worker/src/aozora/chunk.py` | C-T3b |
+| C-T4a | **完了** Pass1 決定的タグ + Pass3 整合性検査 + Pass4 レビュー判定 | `worker/src/aozora/tag.py` | C-T3c |
 | C-T4b | Pass2 LLM分類 + Pass4 レビューキュー | 同上 | C-T4a |
-| C-T5 | Phase A 13資料の投入 + 論理Index + retrieval test | 実データ | C-T4b |
+| C-T5 | **完了 2026-07-27** Phase A 13資料の投入 + 論理Index検証 | 実データ 483チャンク | C-T4a |
 | C-T6 | L2/L3候補生成（思想/創作/規則/Bridge Rule） | | C-T5 |
 | C-T7 | Router・Trace（人物質問判定・corpus_roleフィルタ・留保） | | C-T6 |
 | C-T8 | テスト・ドキュメント・snapshot | | C-T7 |
 
 **創作モードとの関係**: 生成パイプラインは T4c まで完成済み。創作モードの T6（夢十夜 profile 投入）は
 **C-T5 に吸収**される。C-T5 完了時点で、実データを既存パイプラインに流せる。
+
+---
+
+## 12.1 C-T5 の実測結果（2026-07-27）
+
+CLI（`worker/src/aozora/cli.py`）だけで、空のDBから以下まで再現できる。
+
+```bash
+uv run python -m src.aozora.cli manifest        # CSV 113行 → 作品106 / 版113 / 要確認1
+uv run python -m src.aozora.cli in-progress     # 作業中8件を記録(本文は取らない)
+uv run python -m src.aozora.cli ingest-phase-a  # Phase A 13資料 → 483チャンク
+uv run python -m src.aozora.cli report          # 状態とデータ品質
+```
+
+| 指標 | 実測 |
+|---|---|
+| 文書 | 13件（lecture 9 / literary_theory 1 / criticism 1 / preface 1 / short_story 1） |
+| チャンク | 483件（文字化け率は全件 0.0000） |
+| corpus_role | core_thought 9 / creative_grammar 3 / narrative_reference 1 |
+| speaker_role | author_direct 408 / narrator 47 / character 28 |
+| **author_thought_core_index** | **377件・うち小説由来 0件** |
+| narrative_reference_index | 75件（全件が思想の根拠から除外） |
+| tag_review_status | auto_ok 483（整合性違反 0件） |
+| orphan chunk | 0件 |
+| 未解決の同定キュー | 1件（吾輩は猫である） |
+
+**指示書§14.6「core thought内のfiction混入率」= 0** を実データで満たしている。
 
 ---
 

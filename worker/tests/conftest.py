@@ -77,10 +77,12 @@ def clean_corpus(client):
     テスト間で残骸が残ると件数の検証が崩れる。
     """
     def _wipe():
-        # FKの順に消す(editions → works)
+        # FKの順に消す。sources は work_editions を参照し、
+        # source_chunks は sources の cascade で一緒に消える。
         client.table("canonical_work_review_queue").delete().neq(
             "queue_id", "00000000-0000-0000-0000-000000000000").execute()
         client.table("aozora_manifest_entries").delete().neq("entry_id", "").execute()
+        client.table("sources").delete().neq("edition_id", "").execute()
         client.table("work_editions").delete().neq("edition_id", "").execute()
         client.table("canonical_works").delete().neq("canonical_work_id", "").execute()
 

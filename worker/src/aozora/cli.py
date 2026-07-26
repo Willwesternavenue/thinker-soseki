@@ -1,0 +1,162 @@
+"""青空文庫コーパスの取り込みCLI(C-T5)。
+
+使い方(worker ディレクトリで):
+  uv run python -m src.aozora.cli manifest            # 113件のマニフェスト取込
+  uv run python -m src.aozora.cli in-progress         # 作業中8件の記録(本文は取らない)
+  uv run python -m src.aozora.cli ingest 000799       # 版を1つ取り込む
+  uv run python -m src.aozora.cli ingest-phase-a      # Phase A 13資料をまとめて取り込む
+  uv run python -m src.aozora.cli report              # コーパスの状態を出す
+
+正本仕様: docs/CORPUS_T1_SPEC.md
+"""
+
+import argparse
+import csv
+import io
+import sys
+import urllib.request
+import zipfile
+from collections import Counter
+
+from .. import db
+from . import ingest, manifest, person_page
+
+PERSON_ID = "natsume_soseki"
+AOZORA_PERSON_ID = "000148"
+CSV_URL = "https://www.aozora.gr.jp/index_pages/list_person_all_extended_utf8.zip"
+PERSON_PAGE_URL = f"https://www.aozora.gr.jp/index_pages/person{int(AOZORA_PERSON_ID)}.html"
+
+# Phase A のコア資料(仕様 §4.1)。edition_id → 作品名
+PHASE_A_EDITIONS = {
+    # 思想の中核(core_thought)
+    "000772": "私の個人主義",
+    "000759": "現代日本の開化",
+    "000788": "中味と形式",
+    "001747": "模倣と独立",
+    "000757": "道楽と職業",
+    "000755": "文芸の哲学的基礎",
+    "000756": "文芸と道徳",
+    "000778": "教育と文芸",
+    # 創作・Bridge Rule の中核(creative_grammar)
+    "001102": "創作家の態度",
+    "000796": "写生文",
+    "000793": "作物の批評",
+    "002667": "高浜虚子著『鶏頭』序",
+    # 創作の参照(narrative_reference / style_reference)
+    "000799": "夢十夜",
+}
+
+
+def _fetch_manifest_rows() -> list[dict]:
+    """公式CSVを取得し、対象人物の行を返す。"""
+    with urllib.request.urlopen(CSV_URL, timeout=120) as r:
+        data = r.read()
+    with zipfile.ZipFile(io.BytesIO(data)) as z:
+        name = [n for n in z.namelist() if n.lower().endswith(".csv")][0]
+        text = z.read(name).decode("utf-8-sig")
+    return [
+        row for row in csv.DictReader(io.StringIO(text))
+        if row.get("人物ID") == AOZORA_PERSON_ID
+    ]
+
+
+def cmd_manifest(_args) -> None:
+    rows = _fetch_manifest_rows()
+    result = manifest.import_manifest(rows, person_id=PERSON_ID)
+    print(f"CSV {len(rows)}行 → 作品{result['works']}件 / 版{result['editions']}件 "
+          f"/ 要確認{result['review_queued']}件")
+
+
+def cmd_in_progress(_args) -> None:
+    with urllib.request.urlopen(PERSON_PAGE_URL, timeout=60) as r:
+        html = r.read().decode("utf-8", errors="replace")
+    entries = person_page.parse_in_progress(html)
+    manifest.import_in_progress_entries(
+        entries, person_id=PERSON_ID, source_page_url=PERSON_PAGE_URL
+    )
+    print(f"作業中 {len(entries)}件を記録(本文は取得しない)")
+    for e in entries:
+        print(f"  {e['aozora_work_id']} {e['title']} ({e['orthography']})")
+
+
+def cmd_ingest(args) -> None:
+    result = ingest.ingest_edition(args.edition_id)
+    print(f"{args.edition_id}: genre={result['genre']} role={result['corpus_role']} "
+          f"chunks={result['chunks']} 化け率={result['garbling_ratio']:.4f}")
+
+
+def cmd_ingest_phase_a(_args) -> None:
+    total = 0
+    for edition_id, title in PHASE_A_EDITIONS.items():
+        result = ingest.ingest_edition(edition_id)
+        total += result["chunks"]
+        print(f"  {edition_id} {title:20s} genre={result['genre']:16s} "
+              f"role={result['corpus_role']:20s} chunks={result['chunks']:4d}")
+    print(f"合計 {len(PHASE_A_EDITIONS)}資料 / {total}チャンク")
+
+
+def cmd_report(_args) -> None:
+    """コーパスの状態とデータ品質を出す(指示書§14.6)。"""
+    c = db.client()
+    srcs = (
+        c.table("sources")
+        .select("source_id,title,corpus_role,document_genre")
+        .eq("source_provider", "aozora").execute().data
+    )
+    chunks = (
+        c.table("source_chunks")
+        .select("source_id,speaker_role,thought_eligibility,tag_review_status")
+        .eq("chunker_version", "aozora_v1").execute().data
+    )
+    print(f"文書: {len(srcs)}件 / チャンク: {len(chunks)}件")
+    print(f"corpus_role: {dict(Counter(s['corpus_role'] for s in srcs))}")
+    print(f"document_genre: {dict(Counter(s['document_genre'] for s in srcs))}")
+    print(f"speaker_role: {dict(Counter(x['speaker_role'] for x in chunks))}")
+    print(f"tag_review_status: {dict(Counter(x['tag_review_status'] for x in chunks))}")
+
+    by_src = {s["source_id"]: s for s in srcs}
+    core = [
+        x for x in chunks
+        if by_src.get(x["source_id"], {}).get("corpus_role") == "core_thought"
+        and x["speaker_role"] == "author_direct"
+        and x["thought_eligibility"] != "excluded"
+    ]
+    fiction_in_core = [
+        x for x in core
+        if by_src[x["source_id"]]["document_genre"] in ("novel", "short_story", "sketch")
+    ]
+    print(f"\nauthor_thought_core_index: {len(core)}件 / "
+          f"うち小説由来 {len(fiction_in_core)}件 "
+          f"{'OK' if not fiction_in_core else '← NG(混入している)'}")
+
+    queue = (
+        c.table("canonical_work_review_queue").select("*")
+        .eq("status", "open").execute().data
+    )
+    print(f"未解決の作品同定キュー: {len(queue)}件")
+    for q in queue:
+        print(f"  {q['aozora_work_ids']}: {q['reason'][:80]}")
+
+
+def main(argv=None) -> int:
+    parser = argparse.ArgumentParser(description="青空文庫コーパス取り込み")
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    sub.add_parser("manifest", help="公式CSVから作品・版を取り込む").set_defaults(
+        func=cmd_manifest)
+    sub.add_parser("in-progress", help="作業中作品を記録する(本文は取らない)").set_defaults(
+        func=cmd_in_progress)
+    p_ingest = sub.add_parser("ingest", help="版を1つ取り込む")
+    p_ingest.add_argument("edition_id")
+    p_ingest.set_defaults(func=cmd_ingest)
+    sub.add_parser("ingest-phase-a", help="Phase A 13資料を取り込む").set_defaults(
+        func=cmd_ingest_phase_a)
+    sub.add_parser("report", help="コーパスの状態を出す").set_defaults(func=cmd_report)
+
+    args = parser.parse_args(argv)
+    args.func(args)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
