@@ -26,8 +26,13 @@ git ls-files | grep -vE "\.(lock|lockb)$|package-lock\.json|uv\.lock" | xargs gr
 **旧リポジトリ名を必ず検索対象に入れること**。person_id や人物名だけを検索すると §4 の外部リンクを取りこぼす
 （実際に `thinkerllm` という文字列が2世代連続で見落とされ、管理画面のGitHubリンクが別リポジトリを指したままだった）。
 
-**旧人物名は表記ごとに検索する**。1つの綴りだけでは漏れる
-（例: メルロ=ポンティなら `メルロ` と `Merleau` の両方、漱石なら `漱石` と `Soseki`）。
+**旧人物名は表記ごと・かつ「短い部分文字列」で検索する**。フルネームだけでは漏れる。
+
+- 例: メルロ=ポンティなら `メルロ` と `Merleau`、漱石なら `漱石` と `Soseki`
+- ⚠️ **`執行草舟` ではなく `執行` で探す**。フルネームで検索したせいで
+  `xshigyo-worker`（pyprojectのパッケージ名）やテストfixtureが**3世代目まで生き延びた**。
+- **初代人物まで遡って検索する**こと。2代目で見落とされたものは3代目でも見落とされる。
+  実績: 執行草舟の痕跡が、メルロ=ポンティ版・漱石版の両方に残っていた。
 
 ---
 
@@ -91,6 +96,9 @@ psql -h 127.0.0.1 -p <db port> -U postgres -d postgres -tAc \
       （「社長:」）のまま放置され、`pytest` が3件赤のままだった。**フォーク直後にテストを回して確認すること**。
 - [ ] `lib/transcripts/prompts.ts` の整形プロンプト内の人物名
 - [ ] `worker/src/steps/clean.py` の話者正規化まわりのコメント
+- [ ] **`worker/tests/test_interview.py` の対談fixture**（⚠️ 3世代目まで残っていた）
+      初代人物の対談内容（書名・思想用語）がテストデータに埋まっている。
+      動作はするが人物が変わると意味不明になるので、新人物の内容に差し替える。
 
 ## 4. 表示名・外部リンク（2世代連続で漏れた領域）
 
@@ -119,6 +127,8 @@ psql -h 127.0.0.1 -p <db port> -U postgres -d postgres -tAc \
 ⚠️ **原則: 新スタックが未確定の間は、上流の実値を残さず `<新プロジェクト名>-TBD` 等のプレースホルダにする。**
 実値を残すと「ローカル開発のつもりで**上流の本番DBに書き込む**」事故が起きる。
 
+- [ ] **`worker/pyproject.toml` の `name`**（⚠️ 3世代目まで `xshigyo-worker` のまま残っていた）
+      変更後は `cd worker && uv lock` で `uv.lock` を再生成すること
 - [ ] `frontend/src/lib/const.ts`: `GCP_PROJECT_ID` / `FIREBASE_CONFIG` 6項目 / `SUPABASE_URL`
 - [ ] `worker/src/config.py`: `GCP_PROJECT_ID` / `SUPABASE_URL`
 - [ ] `frontend/package.json`: `deploy` / `deploy:worker` スクリプト内のプロジェクトID
