@@ -232,7 +232,7 @@ T0 レポート §7 の図を正とする（frontend INSERT → worker ポーリ
 | # | タスク | 依存 | 主な成果物 |
 |---|---|---|---|
 | T2a | **完了 2026-07-26** migration 作成 + `db reset` 全チェーン適用 + 制約9項目の実地検証 + 既存テスト green | フォーク | `20260726000001_creative_mode.sql` |
-| T2b | worker repository 層（profiles/cards/generations/traces の CRUD） | T2a | `creative/` 下の db アクセス |
+| T2b | **完了 2026-07-26** worker repository 層（profiles/cards/generations/traces の CRUD）+ 実DBに対する結合テスト14件 | T2a | `worker/src/creative/repo.py` |
 | T3a | admin: creative-profiles 画面 + actions | T2a | profile 登録が可能に |
 | T3b | admin: creative-cards 画面 + 承認フロー | T2a | カード承認が可能に |
 | T4a | worker: ポーリング分岐 + Step1〜4 + 不変条件 | T2b | ジョブが cards/sources まで走る |
