@@ -16,6 +16,8 @@ import traceback
 
 from . import db
 from .config import CHUNKER_VERSION
+from .creative import generate as creative_generate
+from .creative import repo as creative_repo
 from .steps import chunk as chunk_step
 from .steps import clean as clean_step
 from .steps import distill_light
@@ -73,7 +75,7 @@ def _reclaim_orphaned_jobs() -> None:
     Workerは単一プロセス想定なので、起動時点の running は全て孤児。放置すると
     UIで「処理中のまま経過時間だけ増える」ゾンビになるため回収する。
     """
-    for table in ("ingestion_jobs", "distillation_jobs"):
+    for table in ("ingestion_jobs", "distillation_jobs", "creative_generations"):
         res = (
             db.client().table(table)
             .update({"status": "pending", "current_step": None})
@@ -83,14 +85,31 @@ def _reclaim_orphaned_jobs() -> None:
             print(f"起動時回収: {table} の取り残し {len(res.data)}件を pending に戻した")
 
 
+def run_creative_once() -> bool:
+    """pendingの創作生成ジョブを1件処理する。処理した場合 True。
+
+    claimは既存ジョブと同じく非排他(単一worker前提)。
+    """
+    job = creative_repo.claim_next_generation()
+    if not job:
+        return False
+    _set_heartbeat_state("processing", job_id=job["job_id"])
+    _write_heartbeat()
+    creative_generate.process_generation(job)
+    return True
+
+
 def run_forever() -> None:
-    print(f"worker[{WORKER_NAME}]: ingestion_jobs / distillation_jobs のポーリングを開始")
+    print(
+        f"worker[{WORKER_NAME}]: ingestion_jobs / distillation_jobs / "
+        "creative_generations のポーリングを開始"
+    )
     _reclaim_orphaned_jobs()
     threading.Thread(target=_heartbeat_loop, daemon=True).start()
     _write_heartbeat()
     while True:
         try:
-            did = run_once() or run_distillation_once()
+            did = run_once() or run_distillation_once() or run_creative_once()
         except Exception as exc:
             # ポーリング/処理中の一過性エラー(DBのstatement timeout・接続断など)で
             # Workerプロセスごと落とさない。ログして少し待ち、ループを継続する。

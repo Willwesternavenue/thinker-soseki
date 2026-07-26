@@ -119,6 +119,13 @@ def claim_next_generation(*, client=None) -> dict | None:
     return updated[0] if updated else {**job, "status": "running"}
 
 
+def save_brief_normalized(job_id: str, brief: dict, *, client=None) -> None:
+    """Step1で構造化したbriefを保存する(後続ステップとtraceの入力)。"""
+    _c(client).table("creative_generations").update(
+        {"brief_normalized": brief}
+    ).eq("job_id", job_id).execute()
+
+
 def set_generation_step(job_id: str, step: str, *, client=None) -> None:
     """進捗を記録する。UIはこれを見て生成中の表示を切り替える。"""
     _c(client).table("creative_generations").update(

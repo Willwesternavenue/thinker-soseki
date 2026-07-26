@@ -32,6 +32,9 @@ CHUNKER_VERSION = "v1"
 MODEL_LIGHT_DISTILL = "claude-haiku-4-5-20251001"
 MODEL_HEAVY_DISTILL = "claude-sonnet-5"
 MODEL_CARD_DRAFT = "claude-sonnet-5"
+# 創作モード(仕様§14 の役割分担): outline/draft は高性能、brief/選定/guard judge は軽量
+MODEL_CREATIVE_MAIN = "claude-sonnet-5"
+MODEL_CREATIVE_LIGHT = "claude-haiku-4-5-20251001"
 EMBEDDING_MODEL = "text-embedding-3-small"
 EMBEDDING_DIM = 1536
 

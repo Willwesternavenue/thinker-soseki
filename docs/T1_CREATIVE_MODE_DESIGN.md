@@ -107,6 +107,11 @@ creative/
 
 `display_title` は `creative_profiles.display_title_format`（例 `{title}（AI創作）`）から必ず組み立てる。素の題名は保存しない。
 
+**実装時の変更（T4a）**: 実行順を **profile → cards → brief → sources** にした。
+表の Step 番号は仕様§6.2 の論理段階のままだが、brief 正規化は LLM 呼び出しを伴うため、
+失敗が確定しているジョブ（profile 不正・承認済みカード0枚）で先に課金されてしまう。
+安価で決定的な検証を先に実行する。`current_step` に入る値は変わらない。
+
 ### 3.3 CLI（新規）
 
 - `python -m src.creative_distill --profile <slug>` — 既存 `gen_cards.py` の機構（evidence 集約・MIN_EVIDENCE_CHUNKS=2・既存カードskip・draft 生成）を創作用プロンプトで再実装した創作カード自動 draft。thought_id の代わりに card_type×観点キーで集約
@@ -235,7 +240,7 @@ T0 レポート §7 の図を正とする（frontend INSERT → worker ポーリ
 | T2b | **完了 2026-07-26** worker repository 層（profiles/cards/generations/traces の CRUD）+ 実DBに対する結合テスト14件 | T2a | `worker/src/creative/repo.py` |
 | T3a | admin: creative-profiles 画面 + actions | T2a | profile 登録が可能に |
 | T3b | admin: creative-cards 画面 + 承認フロー | T2a | カード承認が可能に |
-| T4a | worker: ポーリング分岐 + Step1〜4 + 不変条件 | T2b | ジョブが cards/sources まで走る |
+| T4a | **完了 2026-07-26** worker: ポーリング分岐 + Step1〜4 + 不変条件 | T2b | `creative/generate.py` `creative/prompts.py` + main.py 分岐 |
 | T4b | worker: outline / draft + prompts.py（版管理） | T4a | 本文生成 |
 | T4c | worker: guard.py + 再生成フロー + trace 書込み | T4b | §5・§6 完成 |
 | T5 | `/creative` UI + ポーリング + 結果タブ + admin generations 監視 | T2a（表示は T4c） | ユーザー導線完成 |
