@@ -231,7 +231,7 @@ T0 レポート §7 の図を正とする（frontend INSERT → worker ポーリ
 
 | # | タスク | 依存 | 主な成果物 |
 |---|---|---|---|
-| T2a | **完了 2026-07-26**（commit 7e80de3）migration 作成 + 適用検証 + 既存テスト green | フォーク | `20260726000001_creative_mode.sql` |
+| T2a | **完了 2026-07-26** migration 作成 + `db reset` 全チェーン適用 + 制約9項目の実地検証 + 既存テスト green | フォーク | `20260726000001_creative_mode.sql` |
 | T2b | worker repository 層（profiles/cards/generations/traces の CRUD） | T2a | `creative/` 下の db アクセス |
 | T3a | admin: creative-profiles 画面 + actions | T2a | profile 登録が可能に |
 | T3b | admin: creative-cards 画面 + 承認フロー | T2a | カード承認が可能に |
@@ -247,11 +247,22 @@ T0 レポート §7 の図を正とする（frontend INSERT → worker ポーリ
 並行トラック（コードと独立）: 環境構築チェックリスト（HANDOFF.md — GitHubリポジトリ・Firebase・Supabase はユーザー作成分担）。
 T2〜T5 は新スタック無しで実装・モックテストまで進められる。実生成の確認は T6a 以降。
 
-### 検証環境の制約（T2a で判明）
+### ローカル検証環境（T2a で整備）
 
-ローカルに Docker が無く、Homebrew の PostgreSQL 16 には pgvector / PGroonga も入っていないため、
-`supabase db reset` による全 migration チェーンの適用は**このマシンでは実施できない**。
-T2a では代替として、対象 migration が参照する依存オブジェクト（`set_updated_at` / `personas` /
-`user_profiles`）を実定義どおり用意したローカルDBに適用し、制約の効き方を実地確認した。
-creative_* の4テーブルは vector / PGroonga 系オブジェクトに一切触れないため、この方法で
-検証範囲は足りている。新スタック接続後（T6a 以降）に `supabase db push` で実DBへの適用を確認すること。
+`supabase db reset` による全 migration チェーンの適用が**ローカルで可能**（Docker + Supabase CLI）。
+pgvector 0.8.2 / PGroonga 3.2.5 はローカルスタックに同梱されている。
+
+⚠️ **soseki 専用のローカルスタックを使うこと**。フォーク直後は `supabase/config.toml` の
+`project_id` とポートが maurice と同一（`thinkerllm` / 55321-55329）で、同じコンテナ群を
+共有してしまう。この状態で `supabase db reset` を実行すると maurice のローカルDBまで消える。
+T2a で soseki 側を `project_id = "thinker-soseki"` / ポート **55421-55429** に分離済み
+（決定事項「maurice とは完全分離」をローカル開発環境にも適用したもの）。
+
+```bash
+export PATH="/Applications/Docker.app/Contents/Resources/bin:$PATH"  # docker が PATH に無い場合
+supabase start          # soseki専用スタック(55421-55429)
+supabase db reset       # 全migrationを最初から適用
+psql -h 127.0.0.1 -p 55422 -U postgres -d postgres   # パスワード postgres
+```
+
+実DB（Supabase クラウド）への適用は、新スタック作成後に `supabase link` → `db push` で行う。

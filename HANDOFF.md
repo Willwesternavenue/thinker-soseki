@@ -52,6 +52,9 @@ maurice 立ち上げ時の実績手順。詳細は `/Users/will/.claude/projects
 - [ ] Firebase プロジェクト新規作成（ユーザー作業）→ Webアプリ登録 → firebaseConfig 6項目をコードへ
   - ⚠️ Firebase が別サフィックス付きprojectIdを作ることがある（maurice では thinker-maurice と thinker-maurice-9082f の2つが生まれ混乱した）
   - ⚠️ Authentication → メール/パスワード有効化を忘れない
+- [x] ローカル Supabase スタックの分離（2026-07-26）: `config.toml` の `project_id` が maurice と同じ
+  `thinkerllm`・ポートも同一だったため、`thinker-soseki` / ポート 55421-55429 に変更。
+  分離前に `supabase db reset` すると **maurice のローカルDBまで消える**ので注意
 - [ ] Supabase プロジェクト新規作成（ユーザー作業）→ URL をコードへ → `supabase link` → `db push`
   - ⚠️ Supabase CLI のログインアカウントとプロジェクト所有アカウントの不一致に注意（maurice で発生）
 - [ ] ローカル秘匿キー: `~/.config/gcp-keys/soseki.env` を作成（GOOGLE_APPLICATION_CREDENTIALS=SAキー / SUPABASE_SERVICE_ROLE_KEY / ANTHROPIC_API_KEY / OPENAI_API_KEY の4行）
