@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+/*
+ * 常時ライトテーマ(視認性優先)。配色トークン:
+ *   背景 stone-50 / 面 white / 文字 stone-900 / 補助 stone-500〜600 /
+ *   罫線 stone-200〜300 / 主ボタン blue-700 / 状態色 各色100(地)×700〜800(文字)
+ * 配色は layout.tsx とコンポーネントのユーティリティクラスで指定する。
+ * 注意: ここに body { color/background } を書くとレイヤー外CSSとして
+ * Tailwindユーティリティより優先されてしまうため書かないこと。
+ */
+html {
+  color-scheme: light;
+}

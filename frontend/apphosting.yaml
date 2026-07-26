@@ -1,0 +1,32 @@
+# Firebase App Hosting 設定(frontend)
+# デプロイ手順・前提は docs/FIREBASE_MIGRATION.md 参照。
+#
+# 秘匿キーはSecret Managerのシークレットを環境変数として注入する。
+# (万一この定義が漏れても、起動時に instrumentation.ts が同じシークレットを
+#  Secret Managerから直接取得するフォールバックがある)
+# 事前に: firebase apphosting:secrets:grantaccess <SECRET名> --backend <backend名>
+
+runConfig:
+  # after()(レスポンス送信後のtrace保存・L3回収・セッション要約)があるため
+  # CPU 1以上を維持すること(1未満はリクエスト処理中しかCPUが割り当てられない)。
+  # デプロイ後は docs/FIREBASE_MIGRATION.md の検証手順で answer_traces への
+  # 記録(=after()が動いている証拠)を必ず確認する。
+  cpu: 1
+  memoryMiB: 1024
+  concurrency: 80
+  minInstances: 0 # コールドスタート(1〜2秒)許容。管理UIの快適さ優先なら 1
+  maxInstances: 4
+
+env:
+  - variable: SUPABASE_SERVICE_ROLE_KEY
+    secret: SUPABASE_SERVICE_ROLE_KEY
+    availability:
+      - RUNTIME
+  - variable: ANTHROPIC_API_KEY
+    secret: ANTHROPIC_API_KEY
+    availability:
+      - RUNTIME
+  - variable: OPENAI_API_KEY
+    secret: OPENAI_API_KEY
+    availability:
+      - RUNTIME
