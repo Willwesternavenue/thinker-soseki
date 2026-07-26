@@ -231,7 +231,7 @@ T0 レポート §7 の図を正とする（frontend INSERT → worker ポーリ
 
 | # | タスク | 依存 | 主な成果物 |
 |---|---|---|---|
-| T2a | migration 作成 + db reset + 既存テスト green | フォーク | `20260726000001_creative_mode.sql` |
+| T2a | **完了 2026-07-26**（commit 7e80de3）migration 作成 + 適用検証 + 既存テスト green | フォーク | `20260726000001_creative_mode.sql` |
 | T2b | worker repository 層（profiles/cards/generations/traces の CRUD） | T2a | `creative/` 下の db アクセス |
 | T3a | admin: creative-profiles 画面 + actions | T2a | profile 登録が可能に |
 | T3b | admin: creative-cards 画面 + 承認フロー | T2a | カード承認が可能に |
@@ -246,3 +246,12 @@ T0 レポート §7 の図を正とする（frontend INSERT → worker ポーリ
 
 並行トラック（コードと独立）: 環境構築チェックリスト（HANDOFF.md — GitHubリポジトリ・Firebase・Supabase はユーザー作成分担）。
 T2〜T5 は新スタック無しで実装・モックテストまで進められる。実生成の確認は T6a 以降。
+
+### 検証環境の制約（T2a で判明）
+
+ローカルに Docker が無く、Homebrew の PostgreSQL 16 には pgvector / PGroonga も入っていないため、
+`supabase db reset` による全 migration チェーンの適用は**このマシンでは実施できない**。
+T2a では代替として、対象 migration が参照する依存オブジェクト（`set_updated_at` / `personas` /
+`user_profiles`）を実定義どおり用意したローカルDBに適用し、制約の効き方を実地確認した。
+creative_* の4テーブルは vector / PGroonga 系オブジェクトに一切触れないため、この方法で
+検証範囲は足りている。新スタック接続後（T6a 以降）に `supabase db push` で実DBへの適用を確認すること。
