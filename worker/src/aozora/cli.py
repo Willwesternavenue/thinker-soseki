@@ -19,9 +19,10 @@ import zipfile
 from collections import Counter
 
 from .. import db
-from . import ingest, manifest, person_page
+from . import gen_creative_cards, ingest, manifest, person_page
 
 PERSON_ID = "natsume_soseki"
+YUME_PROFILE_ID = "cp_yume_juya"
 AOZORA_PERSON_ID = "000148"
 CSV_URL = "https://www.aozora.gr.jp/index_pages/list_person_all_extended_utf8.zip"
 PERSON_PAGE_URL = f"https://www.aozora.gr.jp/index_pages/person{int(AOZORA_PERSON_ID)}.html"
@@ -95,6 +96,56 @@ def cmd_ingest_phase_a(_args) -> None:
     print(f"合計 {len(PHASE_A_EDITIONS)}資料 / {total}チャンク")
 
 
+def cmd_create_profile(_args) -> None:
+    """『夢十夜』の creative profile を作る(C-T6 の前提)。"""
+    c = db.client()
+    c.table("creative_profiles").upsert({
+        "profile_id": YUME_PROFILE_ID,
+        "person_id": PERSON_ID,
+        "name": "夢十夜",
+        "slug": "yume-juya",
+        "description": "『夢十夜』を参照した新作短編を生成するためのプロファイル",
+        # 参照する原典。C-T5 で投入した夢十夜と創作論
+        "source_scope": {"source_ids": ["AOZORA_000799"],
+                         "corpus_roles": ["narrative_reference", "creative_grammar"]},
+        # 生成文の正書法。青空文庫の底本(新字新仮名)に合わせる
+        "orthography_policy": "新字新仮名",
+        "target_language": "ja",
+        "historical_period": "明治",
+        "default_generation_settings": {
+            "use_rag": True, "use_cards": True, "rules": "off",
+            "preset_name": "cards_only",
+            "guard": {"ngram_n": 10, "lcs_threshold": 20,
+                      "ngram_overlap_ratio_max": 0.05, "max_regenerations": 2},
+        },
+        "disclosure_text": (
+            "本文はAIが公開原典と承認済み創作カードを参照して生成した創作物であり、"
+            "原作者本人の作品ではありません。"
+        ),
+        # 誤認防止のため題名レベルで固定する(仕様§5.1)
+        "display_title_format": "{title}（AI創作）",
+        "copyright_policy": "原典はパブリックドメイン(夏目漱石・没1916年)",
+        "status": "active",
+    }).execute()
+    print(f"creative_profile を作成/更新: {YUME_PROFILE_ID}")
+
+
+def cmd_gen_cards(_args) -> None:
+    """承認前の創作カード候補を生成する(必ず draft)。"""
+    result = gen_creative_cards.generate_for_profile(YUME_PROFILE_ID)
+    print(f"カード候補: 新規{result['created']}件 / "
+          f"既存スキップ{result['skipped_existing']}件 / "
+          f"根拠不足スキップ{result['skipped_no_evidence']}件")
+    c = db.client()
+    cards = (
+        c.table("creative_cards").select("card_type,title,evidence_type,status")
+        .eq("profile_id", YUME_PROFILE_ID).order("card_type").execute().data
+    )
+    for card in cards:
+        print(f"  [{card['status']:8s}] {card['card_type']:12s} "
+              f"{card['evidence_type'][:24]:24s} {card['title']}")
+
+
 def cmd_embed(_args) -> None:
     """未生成のチャンクにembeddingを付ける(OpenAIの実キーが要る)。"""
     done = ingest.embed_pending_chunks()
@@ -159,6 +210,10 @@ def main(argv=None) -> int:
         func=cmd_ingest_phase_a)
     sub.add_parser("embed", help="未生成チャンクのembeddingを作る").set_defaults(
         func=cmd_embed)
+    sub.add_parser("create-profile", help="『夢十夜』のcreative profileを作る").set_defaults(
+        func=cmd_create_profile)
+    sub.add_parser("gen-cards", help="創作カード候補を生成する(draft)").set_defaults(
+        func=cmd_gen_cards)
     sub.add_parser("report", help="コーパスの状態を出す").set_defaults(func=cmd_report)
 
     args = parser.parse_args(argv)

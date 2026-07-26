@@ -82,6 +82,10 @@ def clean_corpus(client):
         client.table("canonical_work_review_queue").delete().neq(
             "queue_id", "00000000-0000-0000-0000-000000000000").execute()
         client.table("aozora_manifest_entries").delete().neq("entry_id", "").execute()
+        # コーパス由来の創作カードも消す(C-T6 が evidence_chunk_ids で紐づくため、
+        # 残っていると「既存カードはスキップ」の判定でテストが干渉する)
+        client.table("creative_cards").delete().neq("card_id", "").execute()
+        client.table("creative_profiles").delete().neq("profile_id", "").execute()
         client.table("sources").delete().neq("edition_id", "").execute()
         client.table("work_editions").delete().neq("edition_id", "").execute()
         client.table("canonical_works").delete().neq("canonical_work_id", "").execute()
