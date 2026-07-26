@@ -205,3 +205,132 @@ def test_invariants_are_checked_before_calling_llm(client, profile):
     generate.process_generation(job, client=client, call_json=llm)
 
     assert llm.calls == [], "承認済みカードが無いと分かる前にLLMを呼んではいけない"
+
+
+def test_build_outline_uses_main_model_and_includes_context():
+    """Step5: 承認済みカード・原典・briefを踏まえたoutlineを高性能モデルで作る(仕様§6.2)。"""
+    llm = FakeLLM({
+        "intro": "鏡の前に立つ場面から始まる", "anomaly": "鏡像だけが年を取る",
+        "repetition_and_change": "毎朝の確認が徐々に恐怖に変わる",
+        "turn": "鏡像が自分を追い越す", "ending": "鏡を割らずに部屋を出る",
+        "unexplained": "なぜ鏡だけが老いるのかは説明しない",
+    })
+    ctx = generate.GenerationContext(
+        job={"job_id": "job-1"},
+        profile={"orthography_policy": "新字新仮名"},
+        brief={"motif": "鏡", "situation": "鏡の中の自分が年を取る",
+               "emotional_target": "不安、静かな恐怖", "length": 1500, "constraints": []},
+        cards=[{"card_type": "narrative", "title": "異常を自然な事実として扱う",
+                "positive_patterns": ["夢の内部では異常も当然の事実として扱う"]}],
+        source_text="こんな夢を見た。",
+    )
+
+    outline = generate.build_outline(ctx, job_id="job-1", call_json=llm)
+
+    assert outline["anomaly"] == "鏡像だけが年を取る"
+    assert llm.calls[0]["model"] == generate.config.MODEL_CREATIVE_MAIN
+    prompt = llm.calls[0]["prompt"]
+    assert "鏡" in prompt
+    assert "異常を自然な事実として扱う" in prompt  # 承認済みカードが渡っている
+    assert "こんな夢を見た。" in prompt  # 原典が渡っている
+
+
+def test_build_draft_includes_orthography_length_and_common_constraints():
+    """Step6: outline・カード・原典・正書法・文字数を踏まえ、共通禁止事項も守らせる。"""
+    llm = FakeLLM({"text": "こんな夢を見た、と始まる短編。"})
+    ctx = generate.GenerationContext(
+        job={"job_id": "job-1"},
+        profile={"orthography_policy": "新字新仮名"},
+        brief={"motif": "鏡", "length": 1500, "constraints": ["会話文を増やしすぎない"]},
+        cards=[{"card_type": "prohibition", "title": "象徴の意味を解説しない"}],
+        source_text="こんな夢を見た。",
+    )
+    outline = {"intro": "導入部分", "anomaly": "異常部分", "repetition_and_change": "反復部分",
+               "turn": "転換部分", "ending": "終結部分", "unexplained": "余白部分"}
+
+    draft = generate.build_draft(ctx, outline, job_id="job-1", call_json=llm)
+
+    assert draft == "こんな夢を見た、と始まる短編。"
+    assert llm.calls[0]["model"] == generate.config.MODEL_CREATIVE_MAIN
+    prompt = llm.calls[0]["prompt"]
+    assert "新字新仮名" in prompt
+    assert "1500" in prompt
+    assert "象徴の意味を解説しない" in prompt  # 承認済みprohibitionカードが渡っている
+    assert "導入部分" in prompt  # outlineが渡っている
+    system = llm.calls[0]["system"]
+    assert "原作者本人として名乗らない" in system  # 共通禁止事項(仕様§14)
+
+
+def test_process_generation_advances_to_draft_then_fails_pending_guard(client, profile):
+    """T4bまでの範囲: outline/draftを生成しdraftまで進んでから安全側で失敗する(Guardは未実装)。"""
+    person_id = (
+        client.table("creative_profiles").select("person_id")
+        .eq("profile_id", profile).single().execute().data["person_id"]
+    )
+    _seed_corpus(client, profile, person_id, {"第一夜": "こんな夢を見た。"})
+    client.table("creative_cards").insert(
+        {"card_id": f"{profile}_ok", "profile_id": profile, "card_type": "narrative",
+         "title": "異常を自然な事実として扱う", "status": "approved"}
+    ).execute()
+    job = _new_job(client, profile, idempotency_key=f"draft_{profile}")
+    llm = FakeLLM(
+        {"motif": "鏡", "length": 1500, "constraints": []},
+        {"intro": "a", "anomaly": "b", "repetition_and_change": "c",
+         "turn": "d", "ending": "e", "unexplained": "f"},
+        {"text": "こんな夢を見た。"},
+    )
+
+    generate.process_generation(job, client=client, call_json=llm)
+
+    row = (
+        client.table("creative_generations").select("status, current_step, error_message")
+        .eq("job_id", job["job_id"]).single().execute().data
+    )
+    assert row["current_step"] == "draft"
+    assert row["status"] == "failed"
+    assert row["error_message"].startswith("unknown:")
+    trace = (
+        client.table("creative_traces").select("model_ids, prompt_versions")
+        .eq("job_id", job["job_id"]).single().execute().data
+    )
+    assert trace["model_ids"]["outline"] == generate.config.MODEL_CREATIVE_MAIN
+    assert trace["model_ids"]["draft"] == generate.config.MODEL_CREATIVE_MAIN
+    assert trace["prompt_versions"]["outline"] == "v1"
+    assert trace["prompt_versions"]["draft"] == "v1"
+
+
+def test_generate_functions_never_pass_job_id_to_call_json():
+    """agent_runs.job_id は ingestion_jobs へのFKのため、creative_generations の
+    job_idを渡すとFK違反になる(distillation_jobs系ステップと同じ制約)。
+    call_json へは job_id を渡さず、input_ref で相関を取ること。
+    """
+    llm = FakeLLM(
+        {"motif": "鏡", "length": 1500, "constraints": []},
+        {"selected": ["第一夜"]},
+        {"intro": "a", "anomaly": "b", "repetition_and_change": "c",
+         "turn": "d", "ending": "e", "unexplained": "f"},
+        {"text": "本文"},
+    )
+    ctx = generate.GenerationContext(
+        job={"job_id": "creative-job-id"},
+        profile={"orthography_policy": "新字新仮名", "source_scope": {}},
+        brief={"motif": "鏡", "length": 1500, "constraints": []},
+        cards=[], source_text="原典",
+    )
+
+    generate.normalize_brief({"motif": "鏡"}, job_id="creative-job-id", call_json=llm)
+    generate.select_chapters(
+        {"第一夜": {"text": "a", "chunk_ids": ["c1"]},
+         "第三夜": {"text": "b", "chunk_ids": ["c2"]},
+         "第五夜": {"text": "c", "chunk_ids": ["c3"]}},
+        {"motif": "鏡"}, max_count=1, job_id="creative-job-id", call_json=llm,
+    )
+    generate.build_outline(ctx, job_id="creative-job-id", call_json=llm)
+    generate.build_draft(ctx, {}, job_id="creative-job-id", call_json=llm)
+
+    for call in llm.calls:
+        assert call.get("job_id") is None, (
+            "call_json への job_id は agent_runs.job_id (ingestion_jobsへのFK) "
+            "を経由するため、creative_generations の job_id を渡すとFK違反になる"
+        )
+        assert "creative-job-id" in call["input_ref"], "相関はinput_refで取ること"

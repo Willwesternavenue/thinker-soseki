@@ -81,6 +81,18 @@ comment on table creative_generations is
 - heartbeat payload の current_job_id に創作ジョブも載せる
 - 失敗時: status='failed' + error_message（2000字切詰め）+ **trace は必ず書く**（§6）
 
+### 3.1.1 `llm.call_json` の `job_id` は渡さない（T4b で判明した実DB制約）
+
+`agent_runs.job_id` は **`ingestion_jobs(job_id)` への外部キー**（`on delete set null`）。
+既存の `distill_heavy.py` / `gen_cards.py` / `gen_questions.py`（`distillation_jobs` 配下で動く処理）は
+この制約を避けるため、そもそも `call_json` に `job_id` を渡していない（`input_ref` だけで相関を取る）。
+
+創作系（`creative_generations.job_id`）も同じ理由で **`call_json` へ `job_id` を渡してはいけない**。
+渡すと `agent_runs_job_id_fkey` 違反で例外になる。単体テスト（LLMをFakeで差し替え）では検出できず、
+実DB + 実LLM の end-to-end 確認で発見した。`creative/generate.py` の4関数
+（`normalize_brief` / `select_chapters` / `build_outline` / `build_draft`）はいずれも
+`input_ref=f"creative_generation:{job_id}"` のみで相関を取り、`call_json(job_id=...)` は渡さない。
+
 ### 3.2 生成モジュール（新規 `worker/src/creative/`）
 
 ```
@@ -241,7 +253,7 @@ T0 レポート §7 の図を正とする（frontend INSERT → worker ポーリ
 | T3a | admin: creative-profiles 画面 + actions | T2a | profile 登録が可能に |
 | T3b | admin: creative-cards 画面 + 承認フロー | T2a | カード承認が可能に |
 | T4a | **完了 2026-07-26** worker: ポーリング分岐 + Step1〜4 + 不変条件 | T2b | `creative/generate.py` `creative/prompts.py` + main.py 分岐 |
-| T4b | worker: outline / draft + prompts.py（版管理） | T4a | 本文生成 |
+| T4b | **完了 2026-07-27** worker: outline / draft + prompts.py（版管理） | T4a | `build_outline` / `build_draft` |
 | T4c | worker: guard.py + 再生成フロー + trace 書込み | T4b | §5・§6 完成 |
 | T5 | `/creative` UI + ポーリング + 結果タブ + admin generations 監視 | T2a（表示は T4c） | ユーザー導線完成 |
 | T6a | `aozora_fetch` CLI + 夢十夜 ingestion（底本記録） | 新スタック + person置換 | 夢十夜コーパス |

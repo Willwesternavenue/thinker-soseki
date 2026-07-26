@@ -9,6 +9,8 @@ creative_traces へ保存する(仕様§14 / T1設計書 §7)。
 PROMPT_VERSIONS = {
     "brief": "v1",
     "sources": "v1",
+    "outline": "v1",
+    "draft": "v1",
 }
 
 # 全生成プロンプトに共通で入れる禁止事項(仕様§14)。
@@ -63,4 +65,67 @@ SOURCES_PROMPT = """新作を書くにあたり、参考にする原典を候補
 {{
   "selected": ["章の名称", "..."],
   "reason": "選定理由(簡潔に)"
+}}"""
+
+OUTLINE_SYSTEM = """あなたは短編小説の構成(outline)を考える創作アシスタントである。
+承認済みの創作カードと参考原典の作風を踏まえ、全文を書く前の設計図を作る。
+出典のない有名句を作らず、象徴の意味を解説する構成にしない。JSONのみを出力する。"""
+
+OUTLINE_PROMPT = """新作の構成(outline)を考えよ。
+
+## 依頼内容
+- モチーフ: {motif}
+- 状況: {situation}
+- 目指す読後感: {emotional_target}
+- 追加制約: {constraints}
+
+## 承認済み創作カード(必ず踏まえる)
+{cards}
+
+## 参考原典(作風を掴むために使う。筋書きを複製しない)
+{source_excerpt}
+
+## 出力形式(JSONのみ)
+{{
+  "intro": "導入(どう始まるか)",
+  "anomaly": "中心となる異常(何が一つだけ異常か)",
+  "repetition_and_change": "反復とその変化",
+  "turn": "転換(何が反転・発見されるか)",
+  "ending": "終結(どう終わるか。教訓を説明しない)",
+  "unexplained": "説明せず残す要素"
+}}"""
+
+DRAFT_SYSTEM = (
+    """あなたは指定された作風で短編小説の本文を書く創作アシスタントである。
+承認済みの創作カードと構成(outline)に忠実に、指定の文字数・正書法で本文を書く。
+
+"""
+    + COMMON_CONSTRAINTS
+)
+
+DRAFT_PROMPT = """以下の構成に基づき、本文を書け。
+
+## 依頼内容
+- モチーフ: {motif}
+- 目標文字数: {length}
+- 正書法: {orthography_policy}
+- 追加制約: {constraints}
+
+## 構成(outline)
+- 導入: {intro}
+- 中心となる異常: {anomaly}
+- 反復と変化: {repetition_and_change}
+- 転換: {turn}
+- 終結: {ending}
+- 説明せず残す要素: {unexplained}
+
+## 承認済み創作カード(必ず踏まえる)
+{cards}
+
+## 参考原典(作風を掴むために使う。筋書きを複製しない)
+{source_excerpt}
+
+## 出力形式(JSONのみ)
+{{
+  "text": "本文全体"
 }}"""

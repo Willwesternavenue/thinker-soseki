@@ -42,7 +42,6 @@ def normalize_brief(
             brief_raw=json.dumps(brief_raw, ensure_ascii=False, indent=2)
         ),
         input_ref=f"creative_generation:{job_id}",
-        job_id=job_id,
     )
 
 
@@ -87,7 +86,6 @@ def select_chapters(
             max_count=max_count,
         ),
         input_ref=f"creative_generation:{job_id}",
-        job_id=job_id,
     )
     # 候補に無い名称は捨てる(存在しない原典を投入しないため)
     selected = [name for name in result.get("selected") or [] if name in grouped]
@@ -146,6 +144,72 @@ def build_source_context(
     }
 
 
+def _format_cards(cards: list[dict]) -> str:
+    """承認済みカードをプロンプトへ埋め込む形にする。"""
+    if not cards:
+        return "(なし)"
+    lines = []
+    for c in cards:
+        patterns = c.get("positive_patterns") or []
+        line = f"- [{c['card_type']}] {c['title']}"
+        if patterns:
+            line += f": {'; '.join(patterns)}"
+        lines.append(line)
+    return "\n".join(lines)
+
+
+def _format_constraints(brief: dict) -> str:
+    return "、".join(brief.get("constraints") or []) or "(なし)"
+
+
+def build_outline(ctx: "GenerationContext", *, job_id=None, call_json=None) -> dict:
+    """Step5: 全文の前に内部outlineを作る(高性能モデル。仕様§6.2 Step6)。"""
+    call = call_json or llm.call_json
+    return call(
+        agent_name="creative_outline",
+        model=config.MODEL_CREATIVE_MAIN,
+        system=prompts.OUTLINE_SYSTEM,
+        prompt=prompts.OUTLINE_PROMPT.format(
+            motif=ctx.brief.get("motif") or "(指定なし)",
+            situation=ctx.brief.get("situation") or "(指定なし)",
+            emotional_target=ctx.brief.get("emotional_target") or "(指定なし)",
+            constraints=_format_constraints(ctx.brief),
+            cards=_format_cards(ctx.cards),
+            source_excerpt=ctx.source_text,
+        ),
+        input_ref=f"creative_generation:{job_id}",
+    )
+
+
+def build_draft(
+    ctx: "GenerationContext", outline: dict, *, job_id=None, call_json=None
+) -> str:
+    """Step6: outline・承認済みカード・原典から本文を生成する(高性能モデル)。"""
+    call = call_json or llm.call_json
+    result = call(
+        agent_name="creative_draft",
+        model=config.MODEL_CREATIVE_MAIN,
+        system=prompts.DRAFT_SYSTEM,
+        prompt=prompts.DRAFT_PROMPT.format(
+            motif=ctx.brief.get("motif") or "(指定なし)",
+            length=ctx.brief.get("length") or "指定なし",
+            orthography_policy=ctx.profile["orthography_policy"],
+            constraints=_format_constraints(ctx.brief),
+            intro=outline.get("intro", ""),
+            anomaly=outline.get("anomaly", ""),
+            repetition_and_change=outline.get("repetition_and_change", ""),
+            turn=outline.get("turn", ""),
+            ending=outline.get("ending", ""),
+            unexplained=outline.get("unexplained", ""),
+            cards=_format_cards(ctx.cards),
+            source_excerpt=ctx.source_text,
+        ),
+        input_ref=f"creative_generation:{job_id}",
+        max_tokens=4096,  # 短編1500字クラスでも既定2048では不足しうるため引き上げ
+    )
+    return result["text"]
+
+
 def prepare_generation(job: dict, *, client=None, call_json=None) -> GenerationContext:
     """Step1〜4: brief正規化 → profile検証 → 承認済みカード → 原典投入。
 
@@ -186,25 +250,44 @@ def prepare_generation(job: dict, *, client=None, call_json=None) -> GenerationC
 def process_generation(job: dict, *, client=None, call_json=None) -> None:
     """1件の生成ジョブを処理する。失敗しても必ず trace を残す(仕様§15.2)。
 
-    Step5(outline)以降は T4b で実装する。それまでは材料を揃えた時点で
+    Guard(Step7)以降は T4c で実装する。それまではdraftまで生成した時点で
     未実装として安全側に失敗させる(ジョブを running のまま放置しない)。
     """
     job_id = job["job_id"]
     ctx = None
+    reached_outline_draft = False
     try:
         ctx = prepare_generation(job, client=client, call_json=call_json)
+
+        repo.set_generation_step(job_id, "outline", client=client)
+        outline = build_outline(ctx, job_id=job_id, call_json=call_json)
+
+        repo.set_generation_step(job_id, "draft", client=client)
+        build_draft(ctx, outline, job_id=job_id, call_json=call_json)
+        reached_outline_draft = True
+
         raise NotImplementedError(
-            "outline以降の生成は未実装(T4b)。材料の準備までは完了している。"
+            "guard以降は未実装(T4c)。draftまでの生成は完了している。"
         )
     except repo.CreativeInvariantError as exc:
-        _finish_failed(job, repo.ERROR_INVARIANT, str(exc), ctx, client=client)
+        _finish_failed(job, repo.ERROR_INVARIANT, str(exc), ctx, reached_outline_draft, client=client)
     except NotImplementedError as exc:
-        _finish_failed(job, repo.ERROR_UNKNOWN, str(exc), ctx, client=client)
+        _finish_failed(job, repo.ERROR_UNKNOWN, str(exc), ctx, reached_outline_draft, client=client)
     except Exception as exc:  # noqa: BLE001 - 監査記録を残してから失敗させる
-        _finish_failed(job, repo.ERROR_LLM, str(exc), ctx, client=client)
+        _finish_failed(job, repo.ERROR_LLM, str(exc), ctx, reached_outline_draft, client=client)
 
 
-def _finish_failed(job, kind, message, ctx, *, client=None) -> None:
+def _finish_failed(
+    job, kind, message, ctx, reached_outline_draft=False, *, client=None
+) -> None:
+    model_ids: dict[str, str] = {}
+    if ctx is not None:
+        model_ids["brief"] = config.MODEL_CREATIVE_LIGHT
+        model_ids["sources"] = config.MODEL_CREATIVE_LIGHT
+    if reached_outline_draft:
+        model_ids["outline"] = config.MODEL_CREATIVE_MAIN
+        model_ids["draft"] = config.MODEL_CREATIVE_MAIN
+
     repo.fail_generation(job["job_id"], kind, message, client=client)
     repo.insert_trace(
         job["job_id"],
@@ -212,7 +295,7 @@ def _finish_failed(job, kind, message, ctx, *, client=None) -> None:
         used_card_ids=[c["card_id"] for c in ctx.cards] if ctx else [],
         injected_source_ids=ctx.injected_source_ids if ctx else [],
         injected_chunk_ids=ctx.injected_chunk_ids if ctx else [],
-        model_ids={"brief": config.MODEL_CREATIVE_LIGHT},
+        model_ids=model_ids,
         prompt_versions=dict(prompts.PROMPT_VERSIONS),
         guard_results={},
         client=client,
