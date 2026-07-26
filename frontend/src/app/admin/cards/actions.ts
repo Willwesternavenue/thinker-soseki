@@ -115,7 +115,7 @@ export async function setCardStatus(
       .eq("target_card_id", cardId)
       .eq("status", "draft");
     await supabase.rpc("rebuild_related_thought_ids", {
-      target_person_id: "merleau_ponty",
+      target_person_id: "natsume_soseki",
     });
   }
   if (status === "deprecated" || status === "rejected") {
@@ -164,7 +164,7 @@ export async function reviewLink(
   // 正本(リンク)変更 → 派生列を同期(仕様5.3)
   if (update.status !== undefined) {
     await supabase.rpc("rebuild_related_thought_ids", {
-      target_person_id: "merleau_ponty",
+      target_person_id: "natsume_soseki",
     });
   }
   revalidatePath("/admin/cards");

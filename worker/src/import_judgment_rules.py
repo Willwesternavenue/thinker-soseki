@@ -16,7 +16,7 @@ import sys
 from . import config, db
 
 SRC = config.REPO_ROOT / "data" / "judgment_rules_initial_v1.json"
-PERSON_ID = "merleau_ponty"
+PERSON_ID = "natsume_soseki"
 CREATED_BY = "claude-draft-v1"
 
 

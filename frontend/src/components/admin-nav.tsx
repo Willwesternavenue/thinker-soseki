@@ -64,7 +64,7 @@ export function AdminNav() {
       ref={navRef}
       className="mx-auto flex max-w-5xl items-center gap-1 px-6 py-2 text-sm"
     >
-      <span className="mr-3 shrink-0 whitespace-nowrap font-bold">Xメルロ=ポンティ 管理</span>
+      <span className="mr-3 shrink-0 whitespace-nowrap font-bold">X漱石 管理</span>
       {NAV.map((entry) =>
         "href" in entry ? (
           <Link

@@ -3,7 +3,7 @@
 -- kind='term' 正しい表記(単純置換の基準) / kind='rule' 文脈で判断する使い分けルール
 create table public.glossary_terms (
   id uuid primary key default gen_random_uuid(),
-  person_id text not null default 'merleau_ponty',
+  person_id text not null default 'natsume_soseki',
   kind text not null default 'term' check (kind in ('term','rule')),
   content text not null,
   note text,

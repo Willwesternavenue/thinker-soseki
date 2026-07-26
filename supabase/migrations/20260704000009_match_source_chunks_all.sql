@@ -3,7 +3,7 @@
 -- 原典本文を根拠として取得できるようにするための経路(仕様の穴埋め)。
 create or replace function public.match_source_chunks_all(
   query_embedding extensions.vector(1536),
-  target_person_id text default 'merleau_ponty',
+  target_person_id text default 'natsume_soseki',
   match_count int default 20
 )
 returns table (

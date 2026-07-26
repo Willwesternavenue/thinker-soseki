@@ -7,8 +7,8 @@ import { buildRetrievalQuery, normalizeSubjectReferences } from "./session";
 import type { EvidenceChunk, Persona, ThoughtCard } from "./types";
 
 const persona: Persona = {
-  person_id: "merleau_ponty",
-  display_name: "Xメルロ=ポンティ",
+  person_id: "natsume_soseki",
+  display_name: "X漱石",
   system_prompt: "",
   first_person: "俺",
   banned_terms_exact: ["社長が", "社長は", "社長として"],
@@ -137,38 +137,38 @@ describe("aggregateThoughtHits(仕様7.4 Stage2: thought_id集計)", () => {
 });
 
 describe("normalizeSubjectReferences(人物の表記ゆれ正規化)", () => {
-  it("カナ表記の区切り・長音の揺れを「メルロ=ポンティ」に統一する", () => {
-    expect(normalizeSubjectReferences("メルロ＝ポンティの知覚の現象学"))
-      .toBe("メルロ=ポンティの知覚の現象学");
-    expect(normalizeSubjectReferences("メルロ・ポンティはどう考える"))
-      .toBe("メルロ=ポンティはどう考える");
-    expect(normalizeSubjectReferences("メルロポンティの身体論"))
-      .toBe("メルロ=ポンティの身体論");
-    expect(normalizeSubjectReferences("メルロー＝ポンティーの晩年"))
-      .toBe("メルロ=ポンティの晩年");
-    expect(normalizeSubjectReferences("メルロ=ポンティ先生の講義"))
-      .toBe("メルロ=ポンティの講義");
+  it("号のみ・姓+号・敬称付きを「夏目漱石」に統一する", () => {
+    expect(normalizeSubjectReferences("漱石の則天去私とは"))
+      .toBe("夏目漱石の則天去私とは");
+    expect(normalizeSubjectReferences("夏目漱石はどう考える"))
+      .toBe("夏目漱石はどう考える");
+    expect(normalizeSubjectReferences("漱石先生の講義"))
+      .toBe("夏目漱石の講義");
+    expect(normalizeSubjectReferences("夏目先生の晩年"))
+      .toBe("夏目漱石の晩年");
+    expect(normalizeSubjectReferences("夏目金之助の生涯"))
+      .toBe("夏目漱石の生涯");
   });
 
-  it("ラテン表記 Merleau-Ponty / Merleau Ponty も正規化する", () => {
-    expect(normalizeSubjectReferences("Merleau-Pontyの両義性"))
-      .toBe("メルロ=ポンティの両義性");
-    expect(normalizeSubjectReferences("merleau ponty の肉の概念"))
-      .toBe("メルロ=ポンティ の肉の概念");
+  it("ラテン表記 Natsume Soseki / Sōseki も正規化する", () => {
+    expect(normalizeSubjectReferences("Natsume Sosekiの文明論"))
+      .toBe("夏目漱石の文明論");
+    expect(normalizeSubjectReferences("sōseki の個人主義"))
+      .toBe("夏目漱石 の個人主義");
   });
 
   it("既に正規名なら二重化しない", () => {
-    expect(normalizeSubjectReferences("メルロ=ポンティの哲学"))
-      .toBe("メルロ=ポンティの哲学");
+    expect(normalizeSubjectReferences("夏目漱石の文学"))
+      .toBe("夏目漱石の文学");
   });
 
   it("アバターへの二人称「あなた」「ご自身」を本人に正規化する(検索改善)", () => {
-    expect(normalizeSubjectReferences("あなたの主著を教えてください"))
-      .toBe("メルロ=ポンティの主著を教えてください");
+    expect(normalizeSubjectReferences("あなたの代表作を教えてください"))
+      .toBe("夏目漱石の代表作を教えてください");
     expect(normalizeSubjectReferences("あなた様のお考えは"))
-      .toBe("メルロ=ポンティのお考えは");
+      .toBe("夏目漱石のお考えは");
     expect(normalizeSubjectReferences("ご自身の体験は"))
-      .toBe("メルロ=ポンティの体験は");
+      .toBe("夏目漱石の体験は");
   });
 });
 
@@ -229,9 +229,9 @@ describe("buildRetrievalQuery(直近文脈の連結は指示語・省略形の�
   it("連結した文脈側の人物表記も正規化される", () => {
     expect(
       buildRetrievalQuery("それはどこで論じられていますか", null, [
-        { role: "user", content: "メルロ・ポンティの主著は?" },
+        { role: "user", content: "漱石先生の主著は?" },
       ])
-    ).toBe("メルロ=ポンティの主著は? それはどこで論じられていますか");
+    ).toBe("夏目漱石の主著は? それはどこで論じられていますか");
   });
 });
 

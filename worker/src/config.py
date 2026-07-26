@@ -15,11 +15,14 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 # GCP / Firebase プロジェクト(Secret Managerの参照先)
-GCP_PROJECT_ID = "thinker-maurice"
+# ⚠️ TBD: 漱石用 GCP プロジェクト作成後に実値へ差し替える(HANDOFF.md チェックリスト)。
+# maurice の値を残すと誤って maurice 本番へ接続するため、確定までプレースホルダ。
+GCP_PROJECT_ID = "thinker-soseki-TBD"
 
 # SupabaseプロジェクトURL(公開情報)。ローカルDBで動かす時だけ環境変数で上書き
+# ⚠️ TBD: 漱石用プロジェクト作成後に実値へ
 SUPABASE_URL = os.environ.get(
-    "SUPABASE_URL", "https://hbsvltfowywqgkbskabc.supabase.co"
+    "SUPABASE_URL", "https://thinker-soseki-TBD.supabase.co"
 )
 
 # チャンク化ルールのバージョン。ルール変更時に上げる(仕様6.3)

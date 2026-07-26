@@ -42,38 +42,41 @@ export async function getSessionContext(
 }
 
 /**
- * この人物(メルロ=ポンティ)を指す正規名。merleau_ponty固有。
- * 将来取り込む原典(訳書)で最も多い表記に合わせると検索が安定する。訳書が
- * 「メルロ＝ポンティ」(全角=)中心ならこの値を差し替える。
+ * この人物(夏目漱石)を指す正規名。natsume_soseki固有。
+ * 青空文庫の著者名表記「夏目漱石」に合わせる(原典・カードとの一致が最も安定する)。
  */
-const SUBJECT_CANONICAL = "メルロ=ポンティ";
+const SUBJECT_CANONICAL = "夏目漱石";
 
 /**
- * 検索クエリ内の、この人物を指す各種表記・呼称を正規名「メルロ=ポンティ」に寄せる
- * (merleau_ponty固有)。
+ * 検索クエリ内の、この人物を指す各種表記・呼称を正規名「夏目漱石」に寄せる
+ * (natsume_soseki固有)。
  *
- * フランス人名の複合姓のため、日本語では区切り文字(= ＝ ・ -)や長音の有無で表記が
- * 大きく割れる。表記がばらつくと、質問と原典・カードの間で同一人物の一致が取れず検索が
- * 弱くなる。表記ゆれを1つに統一してから埋め込む。※検索クエリ(分類・ルーティング・原典
- * 検索)にのみ適用。回答生成は原文を使う。
+ * 漱石は号のみ(漱石)・姓+号(夏目漱石)・本名(夏目金之助)・ローマ字(Natsume
+ * Soseki / Sōseki)と呼称が割れる。表記がばらつくと、質問と原典・カードの間で
+ * 同一人物の一致が取れず検索が弱くなる。表記ゆれを1つに統一してから埋め込む。
+ * ※検索クエリ(分類・ルーティング・原典検索)にのみ適用。回答生成は原文を使う。
  *
- * 対応: メルロ=ポンティ / メルロ＝ポンティ / メルロ・ポンティ / メルロポンティ /
- *       メルロー(＝)ポンティ(ー) / Merleau-Ponty / Merleau Ponty(先生・氏付きも) /
- *       このアバターへの二人称 ご自身 / あなた(様) → メルロ=ポンティ
+ * 対応: 夏目漱石 / 漱石 / 夏目金之助 / 夏目さん・先生・氏 /
+ *       Natsume Soseki / Sōseki / Souseki(敬称付きも) /
+ *       このアバターへの二人称 ご自身 / あなた(様) → 夏目漱石
  */
 export function normalizeSubjectReferences(query: string): string {
   return query
-    // ラテン表記: Merleau-Ponty / Merleau Ponty(大小文字・区切り問わず)
-    .replace(/Merleau[\s\-‐−―]*Ponty/gi, SUBJECT_CANONICAL)
-    // カナ表記の揺れ: メルロ(ー) + 区切り(= ＝ ・ - 無し) + ポンティ(ー)、敬称付きも
-    .replace(/メルロ[ー]?[=＝・‐−―\-]?ポンティ[ー]?(さん|先生|氏)?/g, SUBJECT_CANONICAL)
+    // ラテン表記: (Natsume) Soseki / Sōseki / Souseki(大小文字・長音表記問わず)
+    .replace(/(?:Natsume[\s・]*)?S[oōô]u?h?seki/gi, SUBJECT_CANONICAL)
+    // 本名: 夏目金之助(敬称付きも)
+    .replace(/夏目金之助(さん|先生|氏)?/g, SUBJECT_CANONICAL)
+    // 号: (夏目)漱石(敬称付きも)
+    .replace(/(?:夏目\s*)?漱石(さん|先生|氏)?/g, SUBJECT_CANONICAL)
+    // 姓+敬称のみ(「夏目先生」等。裸の「夏目」は地名・他人名と衝突するため対象外)
+    .replace(/夏目(さん|先生|氏)/g, SUBJECT_CANONICAL)
     // このアバターに向けられた「ご自身」= 本人
     .replace(/ご自身/g, SUBJECT_CANONICAL)
     // このアバターに向けられた二人称「あなた(様)」= 本人(人物アンカー無しの
     // 「あなたの思想を教えて」が原典・プロフィールに届かないのを防ぐ)
     .replace(/あなた(様|さま)?/g, SUBJECT_CANONICAL)
     // 置換で連続した正規名を1つに畳む
-    .replace(/メルロ=ポンティ(?:\s*メルロ=ポンティ)+/g, SUBJECT_CANONICAL);
+    .replace(/夏目漱石(?:\s*夏目漱石)+/g, SUBJECT_CANONICAL);
 }
 
 /**

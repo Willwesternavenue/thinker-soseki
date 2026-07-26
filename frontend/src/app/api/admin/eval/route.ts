@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     .from("chat_sessions")
     .insert({
       user_id: auth.user.id,
-      person_id: "merleau_ponty",
+      person_id: "natsume_soseki",
       title: `eval:${questionId ?? "manual"}`,
       status: "eval",
     })

@@ -6,7 +6,7 @@ const GITHUB = "https://github.com/Willwesternavenue/thinkerllm/blob/main";
 /** 回答パイプラインのステップ定義(表示用) */
 const ANSWER_STEPS = [
   ["1. 分類", "classify.ts", "質問を8種(thought / life_advice / fact / person_or_work / health / politics / creative / mixed)に分類。thought・life_adviceは「カード必読」の不変条件が立つ"],
-  ["2. 検索クエリ生成", "session.ts", "セッション要約+直近発言から検索用クエリを構築。人物の表記ゆれ(メルロ＝ポンティ / メルロ・ポンティ / Merleau-Ponty 等)を正規名に統一して検索を安定させる"],
+  ["2. 検索クエリ生成", "session.ts", "セッション要約+直近発言から検索用クエリを構築。人物の表記ゆれ(漱石 / 夏目金之助 / Natsume Soseki 等)を正規名「夏目漱石」に統一して検索を安定させる"],
   ["3. ルーティング", "router.ts", "多段でthought_id(思想)を特定: ①概念エイリアス展開(誤解語の検出含む) → ②想定質問(thought_questions)との類似照合 → ③カードembedding類似+LLM。どの段で決まったかはrouting_methodとしてtraceに残る"],
   ["4. カード取得", "cards.ts", "approvedの思想カードのみ取得しマージ。ルーティング全滅時はフォールバックカード(人生相談の基本姿勢)。thought/life_adviceでカード0枚なら例外を投げて止まる(不変条件)"],
   ["5. 原典検索", "evidence.ts", "カードに紐づく承認済み原典リンク(linked)+全原典の関連検索(unscoped)をマージ。source/role偏りの多様性制御、引用可(quote_allowed)フィルタはコードで強制"],
@@ -46,7 +46,7 @@ export default function ArchitecturePage() {
       <div>
         <h1 className="text-xl font-bold">設計(エンジニア向けオンボード)</h1>
         <p className="mt-2 text-sm leading-relaxed text-stone-600">
-          このシステムは思想家・メルロ=ポンティのAIアバターです。一般的なRAG(質問→ベクトル検索→生成)と
+          このシステムは作家・夏目漱石のAIアバターです。一般的なRAG(質問→ベクトル検索→生成)と
           違い、<b>原典を直接検索して答えるのは事実系の質問だけ</b>です。思想・人生相談は、原典から
           蒸留し人間が承認した<b>思想カード(回答方針)</b>を必ず経由する固定ワークフローで答えます。
           設計の中心思想は「LLMの即興に思想を任せず、承認可能な人工物(カード・判断規則)に判断を

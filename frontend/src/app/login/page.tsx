@@ -44,7 +44,7 @@ export default function LoginPage() {
         onSubmit={handleSubmit}
         className="w-full max-w-sm space-y-4 rounded-lg border border-stone-200 bg-white p-8"
       >
-        <h1 className="text-xl font-bold">Xメルロ=ポンティ</h1>
+        <h1 className="text-xl font-bold">X漱石</h1>
         <p className="text-sm text-stone-600">
           会員向けサービスです。アカウントは管理者が発行します。
         </p>

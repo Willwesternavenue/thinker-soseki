@@ -41,7 +41,7 @@ import type {
   TopHit,
 } from "./types";
 
-const PERSON_ID = "merleau_ponty";
+const PERSON_ID = "natsume_soseki";
 
 export type PipelineResult = {
   answer: string;

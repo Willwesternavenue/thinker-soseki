@@ -123,7 +123,7 @@ export function UploadForm() {
           <label className="mb-1 block text-xs text-stone-600">著者</label>
           <input
             name="author"
-            defaultValue="メルロ=ポンティ"
+            defaultValue="夏目漱石"
             className="w-full rounded border border-stone-300 bg-white px-2 py-1.5 text-sm"
           />
         </div>

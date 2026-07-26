@@ -3,11 +3,11 @@
 from src.steps.clean import clean_pages, normalize_speaker_line, page_for_offset
 
 
-def test_shachou_label_is_normalized():
-    """「社長:」はそのまま残さず「本人発言:」に正規化する(仕様6.2重要ルール)。"""
-    line, speaker = normalize_speaker_line("社長:絶対負とは根源的なエネルギーだ。")
+def test_self_label_is_normalized():
+    """本人ラベル「漱石:」はそのまま残さず「本人発言:」に正規化する(仕様6.2重要ルール)。"""
+    line, speaker = normalize_speaker_line("漱石:則天去私とは自然に従うことだ。")
     assert line.startswith("本人発言: ")
-    assert "社長" not in line
+    assert "漱石" not in line
     assert speaker == "本人発言"
 
 
@@ -18,13 +18,13 @@ def test_interviewer_label_is_normalized():
 
 
 def test_half_width_colon_also_normalized():
-    line, speaker = normalize_speaker_line("社長: これが答えだ。")
+    line, speaker = normalize_speaker_line("漱石: これが答えだ。")
     assert speaker == "本人発言"
 
 
 def test_full_width_colon_normalized():
     """ベンダー納品書き起こしは全角コロン「：」を使う。半角と同様に正規化する。"""
-    line, speaker = normalize_speaker_line("社長：これが答えだ。")
+    line, speaker = normalize_speaker_line("漱石：これが答えだ。")
     assert speaker == "本人発言"
     assert line.startswith("本人発言: ")
 

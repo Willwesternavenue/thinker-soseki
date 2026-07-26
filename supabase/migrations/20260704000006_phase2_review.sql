@@ -11,7 +11,7 @@ alter table public.chunk_distillations
 
 -- 派生列の再生成は approved リンクのみを正本として反映する(仕様6.11)
 create or replace function public.rebuild_related_thought_ids(
-  target_person_id text default 'merleau_ponty'
+  target_person_id text default 'natsume_soseki'
 )
 returns void
 language sql

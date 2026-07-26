@@ -24,7 +24,7 @@ CORE_BOOK_NAMES = {
     "BOOK_014": "生くる",
     "BOOK_015": "憧れの思想",
 }
-PERSON_ID = "merleau_ponty"
+PERSON_ID = "natsume_soseki"
 
 SYSTEM = """あなたは思想家アバターの「思想カード」を原典と突き合わせて校閲する編集者である。
 与えられた原典の関連箇所だけに基づき、カードの記述が原典に支持されるか、矛盾・事実誤認が

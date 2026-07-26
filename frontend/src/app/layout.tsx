@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Xメルロ=ポンティ",
+  title: "X漱石",
   description: "思想蒸留型RAGによるAI対話体験",
 };
 

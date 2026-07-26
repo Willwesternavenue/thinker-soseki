@@ -7,17 +7,21 @@
  * シェルの環境変数での一時上書きを想定。ファイルとしての .env は使わない)。
  */
 
-/** GCP / Firebase プロジェクトID(Secret Manager・firebase-admin が使う) */
-export const GCP_PROJECT_ID = "thinker-maurice-9082f";
+/**
+ * GCP / Firebase プロジェクトID(Secret Manager・firebase-admin が使う)。
+ * ⚠️ TBD: 漱石用 Firebase プロジェクト作成後に実値へ差し替える(HANDOFF.md チェックリスト)。
+ * maurice の値を残すと誤って maurice 本番へ接続するため、確定までプレースホルダにしてある。
+ */
+export const GCP_PROJECT_ID = "thinker-soseki-TBD";
 
-/** Firebase クライアント設定(公開情報。APIキーは秘密ではない) */
+/** Firebase クライアント設定(公開情報。APIキーは秘密ではない)。⚠️ TBD: Webアプリ登録後に6項目を転記 */
 export const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyAR1poPa8lGqNNOqVI4D6oexLoO4RJv03M",
-  authDomain: "thinker-maurice-9082f.firebaseapp.com",
+  apiKey: "TBD",
+  authDomain: "thinker-soseki-TBD.firebaseapp.com",
   projectId: GCP_PROJECT_ID,
-  storageBucket: "thinker-maurice-9082f.firebasestorage.app",
-  messagingSenderId: "202583863761",
-  appId: "1:202583863761:web:1b2a39de68bf2204dab0f0",
+  storageBucket: "thinker-soseki-TBD.firebasestorage.app",
+  messagingSenderId: "TBD",
+  appId: "TBD",
 } as const;
 
 /**
@@ -29,9 +33,9 @@ export const SESSION_COOKIE_NAME = "__session";
 /** セッションCookieの有効期間(ミリ秒)。firebase-adminの上限は14日 */
 export const SESSION_COOKIE_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
 
-/** SupabaseプロジェクトURL(公開情報)。ローカルDBで動かす時だけ環境変数で上書き */
+/** SupabaseプロジェクトURL(公開情報)。ローカルDBで動かす時だけ環境変数で上書き。⚠️ TBD: 漱石用プロジェクト作成後に実値へ */
 export const SUPABASE_URL =
-  process.env.SUPABASE_URL ?? "https://hbsvltfowywqgkbskabc.supabase.co";
+  process.env.SUPABASE_URL ?? "https://thinker-soseki-TBD.supabase.co";
 
 /** L3判断文法の動作モード: "assist"=approved規則を回答に注入 / それ以外=shadow */
 export const L3_MODE = process.env.L3_MODE ?? "assist";

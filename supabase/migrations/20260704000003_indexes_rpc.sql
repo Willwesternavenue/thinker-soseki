@@ -24,7 +24,7 @@ create index answer_traces_fallback_idx on public.answer_traces (fallback_card_u
 -- 12.1 質問対応情報のベクトル検索
 create or replace function public.match_thought_questions(
   query_embedding extensions.vector(1536),
-  target_person_id text default 'merleau_ponty',
+  target_person_id text default 'natsume_soseki',
   match_count int default 20
 )
 returns table (
@@ -59,7 +59,7 @@ $$;
 create or replace function public.match_source_chunks_by_thoughts(
   query_embedding extensions.vector(1536),
   thought_ids text[],
-  target_person_id text default 'merleau_ponty',
+  target_person_id text default 'natsume_soseki',
   match_count int default 20
 )
 returns table (
@@ -105,7 +105,7 @@ $$;
 create or replace function public.search_source_chunks_fulltext(
   query_text text,
   thought_ids text[] default null,
-  target_person_id text default 'merleau_ponty',
+  target_person_id text default 'natsume_soseki',
   match_count int default 20
 )
 returns table (
@@ -150,7 +150,7 @@ $$;
 -- 派生列の再生成: thought_evidence_links(正本)から source_chunks.related_thought_ids を同期
 -- 承認・リンク編集後のインデックス更新(仕様6.11)で呼ぶ
 create or replace function public.rebuild_related_thought_ids(
-  target_person_id text default 'merleau_ponty'
+  target_person_id text default 'natsume_soseki'
 )
 returns void
 language sql

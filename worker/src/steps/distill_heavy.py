@@ -49,7 +49,7 @@ PROMPT_TEMPLATE = """以下は「{person_name}」の重要な原典チャンク�
 verbatimがfalseの場合、quote_candidatesは必ず空配列にする。"""
 
 
-def run(person_id: str = "merleau_ponty", source_id: str | None = None) -> int:
+def run(person_id: str = "natsume_soseki", source_id: str | None = None) -> int:
     """importance=high の未重蒸留チャンクを処理する。処理件数を返す。"""
     query = (
         db.client().table("chunk_distillations")
