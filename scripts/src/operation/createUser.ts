@@ -22,8 +22,10 @@ import { SecretManagerServiceClient } from "@google-cloud/secret-manager";
 
 // 正本は frontend/src/lib/const.ts / worker/src/config.py(変えるときは全て揃える)
 const GCP_PROJECT_ID = "thinker-soseki-TBD";
+// ⚠️ TBD: 漱石用Supabaseプロジェクト作成後に実値へ。ローカル開発時は
+// SUPABASE_URL=http://127.0.0.1:55421 を環境変数で渡す。
 const SUPABASE_URL =
-  process.env.SUPABASE_URL ?? "https://hbsvltfowywqgkbskabc.supabase.co";
+  process.env.SUPABASE_URL ?? "https://thinker-soseki-TBD.supabase.co";
 
 const USAGE = `使い方: npm run create-user -- --email <メール> [オプション]
   --email     (必須)ログイン用メールアドレス
