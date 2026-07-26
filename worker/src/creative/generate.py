@@ -8,7 +8,7 @@ import json
 from dataclasses import dataclass, field
 
 from .. import config, llm
-from . import prompts, repo
+from . import guard, prompts, repo
 
 # v0.1 で本文生成へ投入する章の上限。夢十夜は10篇の小コーパスなので、
 # 関連する一夜の全文を入れる方が semantic search より単純で強い(仕様§6.2 Step4)
@@ -182,10 +182,24 @@ def build_outline(ctx: "GenerationContext", *, job_id=None, call_json=None) -> d
 
 
 def build_draft(
-    ctx: "GenerationContext", outline: dict, *, job_id=None, call_json=None
+    ctx: "GenerationContext",
+    outline: dict,
+    *,
+    job_id=None,
+    call_json=None,
+    violations: list[str] | None = None,
 ) -> str:
-    """Step6: outline・承認済みカード・原典から本文を生成する(高性能モデル)。"""
+    """Step6: outline・承認済みカード・原典から本文を生成する(高性能モデル)。
+
+    violations が渡された場合は、直前のGuard違反を修正させる再生成として扱う
+    (仕様§5.3)。
+    """
     call = call_json or llm.call_json
+    retry_note = ""
+    if violations:
+        retry_note = "\n\n## 前回の問題点(必ず修正すること)\n" + "\n".join(
+            f"- {v}" for v in violations
+        )
     result = call(
         agent_name="creative_draft",
         model=config.MODEL_CREATIVE_MAIN,
@@ -203,7 +217,8 @@ def build_draft(
             unexplained=outline.get("unexplained", ""),
             cards=_format_cards(ctx.cards),
             source_excerpt=ctx.source_text,
-        ),
+        )
+        + retry_note,
         input_ref=f"creative_generation:{job_id}",
         max_tokens=4096,  # 短編1500字クラスでも既定2048では不足しうるため引き上げ
     )
@@ -247,15 +262,28 @@ def prepare_generation(job: dict, *, client=None, call_json=None) -> GenerationC
     )
 
 
-def process_generation(job: dict, *, client=None, call_json=None) -> None:
-    """1件の生成ジョブを処理する。失敗しても必ず trace を残す(仕様§15.2)。
+class GuardExhaustedError(RuntimeError):
+    """再生成上限に達してもGuardを通らなかった。安全側で失敗させる(仕様§8.1)。"""
 
-    Guard(Step7)以降は T4c で実装する。それまではdraftまで生成した時点で
-    未実装として安全側に失敗させる(ジョブを running のまま放置しない)。
-    """
+    def __init__(self, message: str, guard_results: dict, regeneration_count: int):
+        super().__init__(message)
+        self.guard_results = guard_results
+        self.regeneration_count = regeneration_count
+
+
+def _guard_settings(profile: dict) -> dict:
+    """Guardの閾値を profile の設定から読む(コードへ直書きしない。仕様§8.1)。"""
+    settings = (profile.get("default_generation_settings") or {}).get("guard") or {}
+    return {**guard.DEFAULT_GUARD_SETTINGS, **settings}
+
+
+def process_generation(job: dict, *, client=None, call_json=None) -> None:
+    """1件の生成ジョブを処理する(Step1〜8)。失敗しても必ず trace を残す(仕様§15.2)。"""
     job_id = job["job_id"]
     ctx = None
     reached_outline_draft = False
+    guard_results: dict = {}
+    regeneration_count = 0
     try:
         ctx = prepare_generation(job, client=client, call_json=call_json)
 
@@ -263,23 +291,77 @@ def process_generation(job: dict, *, client=None, call_json=None) -> None:
         outline = build_outline(ctx, job_id=job_id, call_json=call_json)
 
         repo.set_generation_step(job_id, "draft", client=client)
-        build_draft(ctx, outline, job_id=job_id, call_json=call_json)
+        draft = build_draft(ctx, outline, job_id=job_id, call_json=call_json)
         reached_outline_draft = True
 
-        raise NotImplementedError(
-            "guard以降は未実装(T4c)。draftまでの生成は完了している。"
+        # Step7: Guard。違反なら理由を渡して再生成し、上限で安全側に失敗する(仕様§5.3)
+        settings = _guard_settings(ctx.profile)
+        max_regenerations = settings["max_regenerations"]
+        sources = fetch_scope_chunks(ctx.profile, client=client)
+        while True:
+            repo.set_generation_step(job_id, "guard", client=client)
+            guard_results = guard.run_guard(
+                draft,
+                sources=sources,
+                cards=ctx.cards,
+                settings=settings,
+                job_id=job_id,
+                call_json=call_json,
+            )
+            if guard_results["passed"]:
+                break
+            if regeneration_count >= max_regenerations:
+                raise GuardExhaustedError(
+                    f"再生成{regeneration_count}回でもGuardを通らなかった: "
+                    + " / ".join(guard_results["violations"]),
+                    guard_results,
+                    regeneration_count,
+                )
+            regeneration_count += 1
+            repo.set_generation_step(job_id, "draft", client=client)
+            draft = build_draft(
+                ctx, outline, job_id=job_id, call_json=call_json,
+                violations=guard_results["violations"],
+            )
+
+        # Step8: 保存
+        repo.set_generation_step(job_id, "save", client=client)
+        display_title = repo.build_display_title(
+            ctx.profile, ctx.brief.get("motif") or "無題"
+        )
+        repo.finish_generation(
+            job_id,
+            final_text=draft,
+            display_title=display_title,
+            outline=outline,
+            client=client,
+        )
+        repo.insert_trace(
+            job_id,
+            job["profile_id"],
+            used_card_ids=[c["card_id"] for c in ctx.cards],
+            injected_source_ids=ctx.injected_source_ids,
+            injected_chunk_ids=ctx.injected_chunk_ids,
+            model_ids=_model_ids(ctx, reached_outline_draft, guarded=True),
+            prompt_versions=dict(prompts.PROMPT_VERSIONS),
+            guard_results=guard_results,
+            regeneration_count=regeneration_count,
+            client=client,
         )
     except repo.CreativeInvariantError as exc:
-        _finish_failed(job, repo.ERROR_INVARIANT, str(exc), ctx, reached_outline_draft, client=client)
-    except NotImplementedError as exc:
-        _finish_failed(job, repo.ERROR_UNKNOWN, str(exc), ctx, reached_outline_draft, client=client)
+        _finish_failed(job, repo.ERROR_INVARIANT, str(exc), ctx, reached_outline_draft,
+                       client=client)
+    except GuardExhaustedError as exc:
+        _finish_failed(job, repo.ERROR_GUARD, str(exc), ctx, reached_outline_draft,
+                       guard_results=exc.guard_results,
+                       regeneration_count=exc.regeneration_count, client=client)
     except Exception as exc:  # noqa: BLE001 - 監査記録を残してから失敗させる
-        _finish_failed(job, repo.ERROR_LLM, str(exc), ctx, reached_outline_draft, client=client)
+        _finish_failed(job, repo.ERROR_LLM, str(exc), ctx, reached_outline_draft,
+                       client=client)
 
 
-def _finish_failed(
-    job, kind, message, ctx, reached_outline_draft=False, *, client=None
-) -> None:
+def _model_ids(ctx, reached_outline_draft: bool, *, guarded: bool = False) -> dict:
+    """どのステップまで到達したかを反映したモデル一覧(trace用)。"""
     model_ids: dict[str, str] = {}
     if ctx is not None:
         model_ids["brief"] = config.MODEL_CREATIVE_LIGHT
@@ -287,7 +369,16 @@ def _finish_failed(
     if reached_outline_draft:
         model_ids["outline"] = config.MODEL_CREATIVE_MAIN
         model_ids["draft"] = config.MODEL_CREATIVE_MAIN
+    if guarded:
+        model_ids["guard_judge"] = config.MODEL_CREATIVE_LIGHT
+    return model_ids
 
+
+def _finish_failed(
+    job, kind, message, ctx, reached_outline_draft=False, *,
+    guard_results=None, regeneration_count=0, client=None,
+) -> None:
+    """安全側で失敗させる。違反したまま本文は保存せず、guard結果はtraceに残す。"""
     repo.fail_generation(job["job_id"], kind, message, client=client)
     repo.insert_trace(
         job["job_id"],
@@ -295,8 +386,9 @@ def _finish_failed(
         used_card_ids=[c["card_id"] for c in ctx.cards] if ctx else [],
         injected_source_ids=ctx.injected_source_ids if ctx else [],
         injected_chunk_ids=ctx.injected_chunk_ids if ctx else [],
-        model_ids=model_ids,
+        model_ids=_model_ids(ctx, reached_outline_draft, guarded=bool(guard_results)),
         prompt_versions=dict(prompts.PROMPT_VERSIONS),
-        guard_results={},
+        guard_results=guard_results or {},
+        regeneration_count=regeneration_count,
         client=client,
     )

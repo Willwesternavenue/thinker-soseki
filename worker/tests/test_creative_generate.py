@@ -261,8 +261,11 @@ def test_build_draft_includes_orthography_length_and_common_constraints():
     assert "原作者本人として名乗らない" in system  # 共通禁止事項(仕様§14)
 
 
-def test_process_generation_advances_to_draft_then_fails_pending_guard(client, profile):
-    """T4bまでの範囲: outline/draftを生成しdraftまで進んでから安全側で失敗する(Guardは未実装)。"""
+def test_process_generation_records_step_models_in_trace(client, profile):
+    """到達したステップのモデルがtraceに記録される(監査要件・仕様§16)。
+
+    Guard通過後の全体挙動は tests/test_creative_pipeline.py で検証する。
+    """
     person_id = (
         client.table("creative_profiles").select("person_id")
         .eq("profile_id", profile).single().execute().data["person_id"]
@@ -277,24 +280,19 @@ def test_process_generation_advances_to_draft_then_fails_pending_guard(client, p
         {"motif": "鏡", "length": 1500, "constraints": []},
         {"intro": "a", "anomaly": "b", "repetition_and_change": "c",
          "turn": "d", "ending": "e", "unexplained": "f"},
-        {"text": "こんな夢を見た。"},
+        {"text": "鏡の前に立つと、映った顔だけが老いていた。"},
     )
 
     generate.process_generation(job, client=client, call_json=llm)
 
-    row = (
-        client.table("creative_generations").select("status, current_step, error_message")
-        .eq("job_id", job["job_id"]).single().execute().data
-    )
-    assert row["current_step"] == "draft"
-    assert row["status"] == "failed"
-    assert row["error_message"].startswith("unknown:")
     trace = (
         client.table("creative_traces").select("model_ids, prompt_versions")
         .eq("job_id", job["job_id"]).single().execute().data
     )
     assert trace["model_ids"]["outline"] == generate.config.MODEL_CREATIVE_MAIN
     assert trace["model_ids"]["draft"] == generate.config.MODEL_CREATIVE_MAIN
+    assert trace["prompt_versions"]["outline"] == "v1"
+    assert trace["prompt_versions"]["draft"] == "v1"
     assert trace["prompt_versions"]["outline"] == "v1"
     assert trace["prompt_versions"]["draft"] == "v1"
 
