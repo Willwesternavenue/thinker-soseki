@@ -35,10 +35,10 @@ const LAYERS = [
 ] as const;
 
 const KEY_DOCS = [
-  ["MVP全体仕様 v1.1(回答フロー・テーブル定義の正本)", "xshigyo_mvp_spec_v1_1.md"],
+  ["創作モード指示書 v0.2(正本)", "docs/CREATIVE_MODE_SPEC_v0.2.md"],
+  ["創作モード T1 実装設計(schema/API/生成sequence)", "docs/T1_CREATIVE_MODE_DESIGN.md"],
   ["L3 Judgment Rule データ仕様 v0.2(判断文法・9テーブル設計・実行メタルール)", "docs/judgment_rules_spec_v0_2.md"],
   ["Regression Suite 仕様 v0.2(理由一致型評価・ホールドアウト規律)", "docs/regression_suite_spec_v0_2.md"],
-  ["初期判断規則15件ドラフト(規則の実例)", "docs/judgment_rules_initial_draft.md"],
   ["HANDOFF(現状・運用の落とし穴・未了)", "HANDOFF.md"],
 ] as const;
 

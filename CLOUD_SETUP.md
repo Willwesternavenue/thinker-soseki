@@ -1,6 +1,7 @@
 # クラウドSupabase セットアップ / 同僚オンボード
 
-X執行のDBを**クラウドSupabase**に載せ、複数人で同じDBを共有できるようにした記録と手順(2026-07-08)。
+DBを**クラウドSupabase**に載せ、複数人で同じDBを共有できるようにした記録と手順(2026-07-08)。
+※初代人物(執行草舟)の時代に書かれた記録。手順自体は人物に依存しない。
 
 > **2026-07-16更新**: 認証はFirebase Auth、ホスティングはFirebase App Hostingへ移行し、
 > **.env / frontend/.env.local は廃止**した(下記2〜3の手順は旧方式)。
@@ -14,7 +15,7 @@ X執行のDBを**クラウドSupabase**に載せ、複数人で同じDBを共有
 - 接続先は `.env`(Worker用)と `frontend/.env.local`(フロント用)の URL + キーで切り替わる。両方 gitignore 済み。
 
 ## 同僚のオンボード手順
-1. リポジトリを clone: `git clone git@github.com:Willwesternavenue/thinkerllm.git`
+1. リポジトリを clone: `git clone git@github.com:Willwesternavenue/thinker-soseki.git`
 2. `.env`(リポジトリ直下)を作成:
    ```
    SUPABASE_URL=https://cnhqrjmvchtqkauynevi.supabase.co
