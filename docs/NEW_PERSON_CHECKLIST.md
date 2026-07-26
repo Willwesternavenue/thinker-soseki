@@ -175,6 +175,12 @@ psql -h 127.0.0.1 -p <db port> -U postgres -d postgres -tAc \
   （ジョブテーブルに psql で行を入れれば worker が拾う）
 - 一方 **frontend は全ページが `proxy.ts` の認証で守られている**ため、
   画面を1枚でも開くには Firebase が必要（Auth の無料枠で足りる。課金が要るのはデプロイ時）
+- ⚠️ **ローカル用のキーでもソースに書かない**。ローカルSupabaseの service_role キーを
+  テストに直書きしたところ、GitHub の push protection に**pushを拒否された**。
+  実行時に `supabase status -o json` から取得するか、環境変数で渡すこと
+  （実装例: `worker/tests/test_creative_repo.py` の `_local_connection()`）。
+  なお push が拒否されたら、**そのコミットを `--amend` 等で作り直す**こと。
+  後続コミットで消しても履歴に残っている限り拒否され続ける。
 
 ## 8. 完了確認（必ず実行）
 
