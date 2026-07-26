@@ -1,9 +1,18 @@
-# 思想蒸留型RAG / X執行 MVP
+# 思想蒸留型RAG / X漱石 + 創作モード
 
-執行草舟の思想・語り口をもとにした会員向けAIアバター「X執行」。
-仕様: [xshigyo_mvp_spec_v1_1.md](./xshigyo_mvp_spec_v1_1.md)
+夏目漱石の思想・語り口をもとにしたAIアバター「X漱石」と、
+『夢十夜』を参照した新作を生成する**創作モード**。
 
-原典チャンクの一括ベクトル検索ではなく、質問 → thought_id ルーティング → approved思想カード必読 → 原典チャンク補強、という固定ワークフローで回答する。
+- 創作モード正本仕様: [docs/CREATIVE_MODE_SPEC_v0.2.md](./docs/CREATIVE_MODE_SPEC_v0.2.md)
+- 実装設計: [docs/T1_CREATIVE_MODE_DESIGN.md](./docs/T1_CREATIVE_MODE_DESIGN.md)
+- 現状と未了事項: [HANDOFF.md](./HANDOFF.md)
+
+思想モードは、原典チャンクの一括ベクトル検索ではなく、質問 → thought_id ルーティング →
+approved思想カード必読 → 原典チャンク補強、という固定ワークフローで回答する。
+
+このリポジトリは `thinker-maurice`（メルロ=ポンティ版）からのフォーク。
+人物ごとにリポジトリとクラウドスタックを分ける方式で、汎用的な修正は upstream へ還流する。
+別人物で立ち上げる際は [docs/NEW_PERSON_CHECKLIST.md](./docs/NEW_PERSON_CHECKLIST.md) に従うこと。
 
 ## 構成
 

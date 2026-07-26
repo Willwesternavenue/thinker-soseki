@@ -44,6 +44,10 @@
 
 ## 環境構築チェックリスト（maurice で踏んだ罠を回避）
 
+> 📋 **別人物で新規に立ち上げる場合は [docs/NEW_PERSON_CHECKLIST.md](docs/NEW_PERSON_CHECKLIST.md) を使うこと**。
+> 執行草舟→メルロ=ポンティ→漱石の3世代で実際に踏んだ置換漏れ・事故を網羅した汎用チェックリスト。
+> 以下は漱石スタック固有の進捗管理。
+
 maurice 立ち上げ時の実績手順。詳細は `/Users/will/.claude/projects/-Users-will-thinker-maurice/memory/` の
 `maurice-stack.md` / `maurice-local-dev-adc.md` / `maurice-prod-deploy.md` を参照。
 

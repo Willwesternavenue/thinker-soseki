@@ -1,7 +1,9 @@
 // 親のadmin layoutがcookie認証を行うため、このページも動的レンダリングにする
 export const dynamic = "force-dynamic";
 
-const GITHUB = "https://github.com/Willwesternavenue/thinkerllm/blob/main";
+// 人物ごとにリポジトリを分けているため、フォーク時に必ず自リポジトリへ差し替える
+// (docs/NEW_PERSON_CHECKLIST.md「外部リンク」の項)
+const GITHUB = "https://github.com/Willwesternavenue/thinker-soseki/blob/main";
 
 /** 回答パイプラインのステップ定義(表示用) */
 const ANSWER_STEPS = [

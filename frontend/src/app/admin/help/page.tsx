@@ -119,14 +119,14 @@ export default function HelpPage() {
             ["docs/ フォルダ一覧(最新版はここから)", "tree/main/docs"],
             ["L3 Judgment Rule データ仕様書 v0.2(判断文法)", "blob/main/docs/judgment_rules_spec_v0_2.md"],
             ["理由一致型 Regression Suite 仕様書 v0.2(評価)", "blob/main/docs/regression_suite_spec_v0_2.md"],
-            ["初期 Judgment Rule ドラフト(レビュー用・15規則)", "blob/main/docs/judgment_rules_initial_draft.md"],
-            ["MVP全体仕様 v1.1", "blob/main/xshigyo_mvp_spec_v1_1.md"],
+            ["創作モード指示書 v0.2(正本)", "blob/main/docs/CREATIVE_MODE_SPEC_v0.2.md"],
+            ["創作モード T1 実装設計", "blob/main/docs/T1_CREATIVE_MODE_DESIGN.md"],
             ["HANDOFF(現状と未了事項)", "blob/main/HANDOFF.md"],
             ["クラウドSupabase セットアップ / オンボード", "blob/main/CLOUD_SETUP.md"],
           ].map(([label, path]) => (
             <li key={path}>
               <a
-                href={`https://github.com/Willwesternavenue/thinkerllm/${path}`}
+                href={`https://github.com/Willwesternavenue/thinker-soseki/${path}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-700 underline hover:text-blue-900"
