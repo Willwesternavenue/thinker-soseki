@@ -32,9 +32,14 @@
 
 ## 次にやること（順番）
 
-1. **T0 正式監査レポート**: docs/T0_AUDIT_NOTES.md を土台に、フォーク後の実コードと照合して指示書 §18 の 1〜12 項目の形式で正本化
-2. **指示書 v0.2 改訂案**: docs/CREATIVE_MODE_REVIEW.md の内容（スコープ削減・ジョブ型・直交フラグ等）を反映した改訂を発注者に提示
-3. T1 以降（正本仕様 → DB → 管理 → パイプライン → UI）は指示書 §17 のフェーズどおり
+> **進捗（2026-07-26 更新）**: 1・2 は完了、T1 も正本化済み。
+> T0 正式版 = [docs/T0_AUDIT_REPORT.md](docs/T0_AUDIT_REPORT.md) / 正本仕様（発注者承認済み）= [docs/CREATIVE_MODE_SPEC_v0.2.md](docs/CREATIVE_MODE_SPEC_v0.2.md) /
+> T1 実装設計 = [docs/T1_CREATIVE_MODE_DESIGN.md](docs/T1_CREATIVE_MODE_DESIGN.md) / 青空文庫取得手順 = [docs/AOZORA_INGESTION.md](docs/AOZORA_INGESTION.md)。
+> 次は T1 設計書 §11 のタスク分割どおり T2（migration）から。並行の環境構築はユーザー作成分担（GitHub/Firebase/Supabase）が起点。
+
+1. ~~T0 正式監査レポート~~ 完了 → docs/T0_AUDIT_REPORT.md
+2. ~~指示書 v0.2 改訂案~~ 完了・発注者承認済み → docs/CREATIVE_MODE_SPEC_v0.2.md（v0.1 を置換）
+3. T1 以降（正本仕様 → DB → 管理 → パイプライン → UI）は v0.2 §17 のフェーズどおり。実装順の正本は T1 設計書 §11
 4. 並行して環境構築: フォーク→person置換（natsume_soseki）→新スタック接続（下記チェックリスト）
 
 ## 環境構築チェックリスト（maurice で踏んだ罠を回避）

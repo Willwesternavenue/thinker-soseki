@@ -1,7 +1,7 @@
 # Thinker「創作モード」追加指示書 v0.1
 
-> 発注者から受領した指示書の正本（2026-07-26 受領・原文ママ）。
-> これへのレビューと合意済み改訂方針は [CREATIVE_MODE_REVIEW.md](CREATIVE_MODE_REVIEW.md) を参照。
+> 発注者から受領した指示書（2026-07-26 受領・原文ママ）。**現行の正本は [CREATIVE_MODE_SPEC_v0.2.md](CREATIVE_MODE_SPEC_v0.2.md)**（2026-07-26 発注者承認）。
+> 本書は歴史的資料として原文のまま保持。レビューと改訂方針は [CREATIVE_MODE_REVIEW.md](CREATIVE_MODE_REVIEW.md) を参照。
 
 ## 0. この指示の目的
 

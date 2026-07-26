@@ -1,9 +1,10 @@
-# Thinker「創作モード」指示書 v0.2 改訂案
+# Thinker「創作モード」指示書 v0.2
 
-> **状態: 改訂案（発注者未承認）**。承認されるまでの正本は [CREATIVE_MODE_SPEC_v0.1.md](CREATIVE_MODE_SPEC_v0.1.md)。
+> **状態: 正本（発注者承認 2026-07-26。[CREATIVE_MODE_SPEC_v0.1.md](CREATIVE_MODE_SPEC_v0.1.md) を置き換える）**。
 > 本改訂は [CREATIVE_MODE_REVIEW.md](CREATIVE_MODE_REVIEW.md)（レビュー・合意済み改訂方針）と
 > [T0_AUDIT_REPORT.md](T0_AUDIT_REPORT.md)（実コード監査）を v0.1 に反映したもの。
 > v0.1 からの変更点は冒頭の「改訂サマリ」に集約し、本文は自己完結の仕様として書き直している。
+> 実装レベルの設計は [T1_CREATIVE_MODE_DESIGN.md](T1_CREATIVE_MODE_DESIGN.md)、原典取得は [AOZORA_INGESTION.md](AOZORA_INGESTION.md) を参照。
 
 ## 改訂サマリ（v0.1 → v0.2）
 
@@ -443,7 +444,7 @@ POST   creative card approve/reject
 
 **T5：ユーザーUI** — 創作入力 / 生成中ポーリング / 作品表示 / 構成 / trace / guard / disclosure
 
-**T6：『夢十夜』初期 profile** — 原典 ingestion（底本記録）/ 蒸留による初期カード draft / 承認 / sample prompts / test fixtures
+**T6：『夢十夜』初期 profile** — 原典 ingestion（取得・前処理・底本記録は [AOZORA_INGESTION.md](AOZORA_INGESTION.md)）/ 蒸留による初期カード draft / 承認 / sample prompts / test fixtures
 
 **T7：ドキュメント同期** — architecture / schema / API / operations / tests / limitations / copyright・disclosure 方針
 
@@ -451,7 +452,7 @@ POST   creative card approve/reject
 
 ## 18. 初回の回答で提出するもの
 
-提出済み（T0_AUDIT_REPORT.md が旧§18 の 1〜12 項目に対応）。本改訂案の承認をもって T1 に進む。
+提出済み（T0_AUDIT_REPORT.md が旧§18 の 1〜12 項目に対応）。本改訂は 2026-07-26 に発注者承認済みで、T1 に進行中。
 
 ## 19. v0.1で実施しないもの
 
