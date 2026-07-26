@@ -95,6 +95,12 @@ def cmd_ingest_phase_a(_args) -> None:
     print(f"合計 {len(PHASE_A_EDITIONS)}資料 / {total}チャンク")
 
 
+def cmd_embed(_args) -> None:
+    """未生成のチャンクにembeddingを付ける(OpenAIの実キーが要る)。"""
+    done = ingest.embed_pending_chunks()
+    print(f"embedding生成: {done}件")
+
+
 def cmd_report(_args) -> None:
     """コーパスの状態とデータ品質を出す(指示書§14.6)。"""
     c = db.client()
@@ -151,6 +157,8 @@ def main(argv=None) -> int:
     p_ingest.set_defaults(func=cmd_ingest)
     sub.add_parser("ingest-phase-a", help="Phase A 13資料を取り込む").set_defaults(
         func=cmd_ingest_phase_a)
+    sub.add_parser("embed", help="未生成チャンクのembeddingを作る").set_defaults(
+        func=cmd_embed)
     sub.add_parser("report", help="コーパスの状態を出す").set_defaults(func=cmd_report)
 
     args = parser.parse_args(argv)

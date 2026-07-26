@@ -14,6 +14,7 @@ import zipfile
 from datetime import datetime, timezone
 
 from .. import db
+from ..steps import embed as embed_step
 from . import chunk as chunk_mod
 from . import parse, tag
 
@@ -179,3 +180,41 @@ def ingest_edition(edition_id: str, *, client=None, fetch=None) -> dict:
         "corpus_role": corpus_role,
         "garbling_ratio": garbling,
     }
+
+
+# 1回のDB書き込みでまとめる件数。OpenAI側のバッチはembed_texts内で行う
+EMBED_BATCH = 64
+
+
+def embed_pending_chunks(*, client=None, embed=None, limit: int | None = None) -> int:
+    """embedding未生成の青空文庫チャンクを埋める。
+
+    対象は `chunker_version='aozora_v1'` かつ embedding が null のものだけ。
+    既存の思想モード(`v1`)のチャンクには触らない。
+    何度実行しても対象が尽きれば0を返す(冪等)。
+    """
+    c = client or db.client()
+    embed = embed or embed_step.embed_texts
+
+    total = 0
+    while True:
+        query = (
+            c.table("source_chunks")
+            .select("chunk_id, text")
+            .eq("chunker_version", chunk_mod.CHUNKER_VERSION)
+            .is_("embedding", "null")
+            .order("chunk_id")
+            .limit(EMBED_BATCH)
+        )
+        rows = query.execute().data
+        if not rows:
+            return total
+
+        vectors = embed([r["text"] for r in rows])
+        for row, vector in zip(rows, vectors, strict=True):
+            c.table("source_chunks").update({"embedding": vector}).eq(
+                "chunk_id", row["chunk_id"]
+            ).execute()
+        total += len(rows)
+        if limit is not None and total >= limit:
+            return total

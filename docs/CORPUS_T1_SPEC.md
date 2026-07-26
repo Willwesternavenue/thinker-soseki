@@ -480,8 +480,13 @@ CLI（`worker/src/aozora/cli.py`）だけで、空のDBから以下まで再現�
 uv run python -m src.aozora.cli manifest        # CSV 113行 → 作品106 / 版113 / 要確認1
 uv run python -m src.aozora.cli in-progress     # 作業中8件を記録(本文は取らない)
 uv run python -m src.aozora.cli ingest-phase-a  # Phase A 13資料 → 483チャンク
+uv run python -m src.aozora.cli embed           # embedding 483件(実測12秒)
 uv run python -m src.aozora.cli report          # 状態とデータ品質
 ```
+
+⚠️ `embed` には OpenAI の実キーが要る（`text-embedding-3-small` / 1536次元）。
+対象は `chunker_version='aozora_v1'` かつ embedding が null のものだけで、
+既存の思想モード（`v1`）のチャンクには触らない。
 
 | 指標 | 実測 |
 |---|---|
@@ -496,6 +501,22 @@ uv run python -m src.aozora.cli report          # 状態とデータ品質
 | 未解決の同定キュー | 1件（吾輩は猫である） |
 
 **指示書§14.6「core thought内のfiction混入率」= 0** を実データで満たしている。
+
+### 12.2 retrieval test の実測（指示書 §14.4）
+
+483チャンクに実 embedding を付けた状態で、論理Index によるフィルタが効くことを確認した。
+
+| ケース | 結果 |
+|---|---|
+| **思想質問**「近代化と開化について、内発的か外発的か」を `core_thought` + `author_direct` で検索 | 『現代日本の開化』の該当箇所が上位を占める（「内発的ででもあるかのごとき顔をして」等） |
+| **創作質問** を `creative_grammar` で検索 | 『写生文』の作風論が返る |
+| 同じく `narrative_reference` で検索 | 夢十夜の第一夜・第三夜が `speaker_role=narrator` で返る |
+| **「夢の中で女が死ぬ話」を `core_thought` で検索** | 10件すべて講演。**小説由来 0件** |
+
+最後のケースが指示書の核心の裏付けになる。夢十夜そのものを狙った質問でも、
+思想Index には小説が1件も入らない。
+
+---
 
 ---
 

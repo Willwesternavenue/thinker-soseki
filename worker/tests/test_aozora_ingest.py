@@ -190,3 +190,65 @@ def test_ingest_rejects_high_garbling_ratio(clean_corpus, client):
         ingest.ingest_edition(
             "000799", client=client, fetch=lambda url: broken.getvalue()
         )
+
+
+# ── embedding(C-T5 後段) ──
+
+
+def test_embed_pending_only_targets_aozora_chunks_without_embedding(clean_corpus, client):
+    """embedding未生成の aozora チャンクだけを対象にする(既存チャンクを触らない)。"""
+    _seed_edition(client)
+    result = ingest.ingest_edition(
+        "000799", client=client, fetch=lambda url: _zip_bytes(SAMPLE)
+    )
+
+    calls = []
+
+    def fake_embed(texts):
+        calls.append(list(texts))
+        return [[0.01] * 1536 for _ in texts]
+
+    done = ingest.embed_pending_chunks(client=client, embed=fake_embed)
+
+    assert done == result["chunks"]
+    assert len(calls) == 1, "1バッチで処理されること"
+    # 2回目は対象が無い(冪等)
+    assert ingest.embed_pending_chunks(client=client, embed=fake_embed) == 0
+
+
+def test_embed_pending_writes_vectors(clean_corpus, client):
+    """生成したベクトルが source_chunks.embedding に入ること。"""
+    _seed_edition(client)
+    ingest.ingest_edition("000799", client=client, fetch=lambda url: _zip_bytes(SAMPLE))
+
+    ingest.embed_pending_chunks(
+        client=client, embed=lambda texts: [[0.02] * 1536 for _ in texts]
+    )
+
+    rows = (
+        client.table("source_chunks").select("chunk_id, embedding")
+        .eq("chunker_version", "aozora_v1").execute().data
+    )
+    assert rows
+    assert all(r["embedding"] is not None for r in rows)
+
+
+def test_embed_pending_skips_existing_thought_mode_chunks(clean_corpus, client):
+    """既存の思想モード(chunker_version='v1')のチャンクは対象にしない。"""
+    _seed_edition(client)
+    ingest.ingest_edition("000799", client=client, fetch=lambda url: _zip_bytes(SAMPLE))
+    client.table("source_chunks").insert({
+        "chunk_id": "LEGACY_001", "source_id": "AOZORA_000799",
+        "person_id": "natsume_soseki", "text": "既存形式のチャンク",
+        "chunker_version": "v1", "chunk_hash": "legacy",
+    }).execute()
+
+    embedded = []
+
+    def fake_embed(texts):
+        embedded.extend(texts)
+        return [[0.03] * 1536 for _ in texts]
+
+    ingest.embed_pending_chunks(client=client, embed=fake_embed)
+
+    assert "既存形式のチャンク" not in embedded
