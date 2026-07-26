@@ -69,6 +69,27 @@ def client():
 
 
 @pytest.fixture
+def clean_corpus(client):
+    """コーパス層のテーブルを前後で空にする。
+
+    canonical_works / work_editions は person 単位で作られないテストもあるため、
+    profile フィクスチャの後片付けではカバーできない。取り込みは冪等なので
+    テスト間で残骸が残ると件数の検証が崩れる。
+    """
+    def _wipe():
+        # FKの順に消す(editions → works)
+        client.table("canonical_work_review_queue").delete().neq(
+            "queue_id", "00000000-0000-0000-0000-000000000000").execute()
+        client.table("aozora_manifest_entries").delete().neq("entry_id", "").execute()
+        client.table("work_editions").delete().neq("edition_id", "").execute()
+        client.table("canonical_works").delete().neq("canonical_work_id", "").execute()
+
+    _wipe()
+    yield client
+    _wipe()
+
+
+@pytest.fixture
 def profile(client):
     """テスト用の人物・プロファイルを作り、後片付けする。"""
     pid = f"test_{uuid.uuid4().hex[:8]}"
