@@ -91,7 +91,7 @@ CSVで個別に確認済み。C-T5 は取得面のリスクなしに着手でき
 |---|---|---|---|---|
 | 1 | 創作カード種別 | 12値（style/narrative/motif/character/ending/prohibition/setting/dialogue/perspective/rhythm/theme/historical_language） | 8値。うち **`criticism` が現行に無い** | **`criticism` を追加**（additive。check制約の入替） |
 | 2 | 創作カードの根拠種別 | 無し | `evidence_type`: author_creative_theory / demonstrated_in_fiction / critic_interpretation | **列を追加**。「創作論由来」と「小説本文由来」を区別できないと §11.2 を満たせない |
-| 3 | 承認状態の語 | `draft`/reviewing/approved/rejected/deprecated | **`candidate`**/reviewing/approved/rejected/deprecated | **`draft` を維持**を推奨。既存 `thought_cards` と揃っており、意味は同一。指示書の `candidate` は読み替え（要承認） |
+| 3 | 承認状態の語 | `draft`/reviewing/approved/rejected/deprecated | **`candidate`**/reviewing/approved/rejected/deprecated | ✅ **`draft` を維持**（2026-07-27 発注者確認済み）。指示書の `candidate` は `draft` と読み替える。check制約の変更不要 |
 | 4 | 原典スコープの指定 | `creative_profiles.source_scope = {"source_ids": [...]}` | canonical_work / edition / corpus_role で指定 | **後方互換で拡張**（`source_ids` を残しつつ `corpus_roles` / `edition_ids` を追加） |
 | 5 | 原典投入の単位 | 章（chapter_title）単位で全文投入 | corpus_role 別 Index + routing | v0.1 の簡略化として維持し、C-T7 で routing へ移行 |
 
@@ -395,17 +395,20 @@ Supabase実DB、接続不可なら理由付きskip）を踏襲する。
 
 ---
 
-## 16. 不明点（発注者に確認したい）
+## 16. 発注者判断（2026-07-27 確定）
 
-1. **承認状態の語**（§3-3）: `draft` を維持してよいか（既存 `thought_cards` と統一）。
-   それとも `candidate` へ揃えるか
-2. **NDL資料（文学論・文学評論）の扱い**: 指示書 §4.3 は「別 source provider」とするが、
-   NDLの全文テキスト取得可否・OCR品質・利用条件は未確認。**実装前に確認が必要**（§4.3）。
-   本書ではスコープに含めず、C-T5 は青空文庫のみで完結させる案とした
-3. **Phase C（小説10作品）の投入時期**: 指示書 §6 に優先作品が挙がっているが、
-   C-T5（Phase A 13資料）の後に別フェーズとしてよいか
-4. **既存の思想モード用チャンク**: 現在 maurice 由来のスキーマのみで漱石の実データは未投入。
-   `chunker_version` を分ける方針（§7）で問題ないか
+1. ✅ **承認状態の語は `draft` を維持**（発注者確認済み）。指示書 §11.3 の `candidate` は
+   `draft` と読み替える。既存 `thought_cards` / `creative_cards` と用語が統一され、
+   check制約の変更も不要になる。読み替え表は C-T1 の tag辞書に明記する
+2. ✅ **今回は青空文庫のみ**（発注者確認済み）。NDL資料（『文学論』『文学評論』全編）は
+   スコープ外とし、C-T5 は青空文庫だけで完結させる。ただし将来の追加に備え、
+   `sources.source_provider`（aozora / ndl / manual_upload / licensed_source）は
+   最初から持たせ、provider 切替が additive で済む形にしておく
+
+### 残る確認事項（実装を止めるものではない）
+
+3. **Phase C（小説10作品）の投入時期**: C-T5（Phase A 13資料）の後に別フェーズとする前提で進める
+4. **`chunker_version` の分離**（§7）: `aozora_v1` として既存 `v1` と別系統にする前提で進める
 5. **推理小説用の構想**（§0）: 「別資料として管理し、今回のschema/Indexへ先回りして混ぜない」
    を厳守する。関連する要望が出ても本実装には入れない
 
