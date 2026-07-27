@@ -36,6 +36,7 @@ const NAV: NavEntry[] = [
     items: [
       { href: "/admin/creative-profiles", label: "創作プロファイル" },
       { href: "/admin/creative-cards", label: "創作カード" },
+      { href: "/admin/creative-generations", label: "生成ジョブ" },
       { href: "/creative", label: "創作画面" },
     ],
   },
