@@ -1,0 +1,1816 @@
+{
+  "counts": {
+    "canonical_works": 106,
+    "chunks": 483,
+    "sources": 13,
+    "work_editions": 113
+  },
+  "digest": "3fa5b42ff303535c4b6a9dc9e1618025782bbc077e0b6c19bb6c95331e0e33de",
+  "editions": [
+    {
+      "aozora_work_id": "000751",
+      "canonical_work_id": "cw_35f7ecb19740",
+      "content_sha256": null,
+      "edition_id": "000751",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000752",
+      "canonical_work_id": "cw_b9a43d2d158f",
+      "content_sha256": null,
+      "edition_id": "000752",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000753",
+      "canonical_work_id": "cw_f254ac295e9c",
+      "content_sha256": null,
+      "edition_id": "000753",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000754",
+      "canonical_work_id": "cw_ef566192ca23",
+      "content_sha256": null,
+      "edition_id": "000754",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000755",
+      "canonical_work_id": "cw_2512cf4013f3",
+      "content_sha256": "7fcf94de0c939ddd58cd9525b5ac9b1062e9552b5ca05a506f173ce16d58bf68",
+      "edition_id": "000755",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": "aozora_v1",
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000756",
+      "canonical_work_id": "cw_be2de5a19638",
+      "content_sha256": "1002f914c43a6a8e4c1bcdbf735e66faa43de6201c822cceb90ce0e4d868c092",
+      "edition_id": "000756",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": "aozora_v1",
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000757",
+      "canonical_work_id": "cw_4ae7fcf9fd34",
+      "content_sha256": "2eb19dbfaaf5559081dcfc76f01499258b6f58e4a6f905404a693ef33627ef3c",
+      "edition_id": "000757",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": "aozora_v1",
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000758",
+      "canonical_work_id": "cw_6d59d73a47cd",
+      "content_sha256": null,
+      "edition_id": "000758",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000759",
+      "canonical_work_id": "cw_58a1402606ab",
+      "content_sha256": "3982171c20fa7ebcf99d01c1ca1ea747386222513219c46d5164390596458a29",
+      "edition_id": "000759",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": "aozora_v1",
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000760",
+      "canonical_work_id": "cw_af232e19d550",
+      "content_sha256": null,
+      "edition_id": "000760",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000761",
+      "canonical_work_id": "cw_b8654f92f6cb",
+      "content_sha256": null,
+      "edition_id": "000761",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000762",
+      "canonical_work_id": "cw_b3b216077043",
+      "content_sha256": null,
+      "edition_id": "000762",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000763",
+      "canonical_work_id": "cw_b730b974c144",
+      "content_sha256": null,
+      "edition_id": "000763",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000764",
+      "canonical_work_id": "cw_b730b974c144",
+      "content_sha256": null,
+      "edition_id": "000764",
+      "is_primary_retrieval_edition": false,
+      "orthography": "旧字旧仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000765",
+      "canonical_work_id": "cw_7102f3c9fff0",
+      "content_sha256": null,
+      "edition_id": "000765",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000766",
+      "canonical_work_id": "cw_14d37e2fa253",
+      "content_sha256": null,
+      "edition_id": "000766",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000767",
+      "canonical_work_id": "cw_87e689e3622e",
+      "content_sha256": null,
+      "edition_id": "000767",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字旧仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000768",
+      "canonical_work_id": "cw_e4723e1555f9",
+      "content_sha256": null,
+      "edition_id": "000768",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000769",
+      "canonical_work_id": "cw_ad187302b970",
+      "content_sha256": null,
+      "edition_id": "000769",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000770",
+      "canonical_work_id": "cw_c866588830e2",
+      "content_sha256": null,
+      "edition_id": "000770",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000771",
+      "canonical_work_id": "cw_8aede2e36cb9",
+      "content_sha256": null,
+      "edition_id": "000771",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000772",
+      "canonical_work_id": "cw_df41cf2d694a",
+      "content_sha256": "cb30bf7d21a71171e0dae8224a9207a2d44e6dc4397fb3596407b9e848294bab",
+      "edition_id": "000772",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": "aozora_v1",
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000773",
+      "canonical_work_id": "cw_673b62a57506",
+      "content_sha256": null,
+      "edition_id": "000773",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000774",
+      "canonical_work_id": "cw_2d57c6d39d69",
+      "content_sha256": null,
+      "edition_id": "000774",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000775",
+      "canonical_work_id": "cw_2ec2210b9ca4",
+      "content_sha256": null,
+      "edition_id": "000775",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000776",
+      "canonical_work_id": "cw_e098ce88d3f2",
+      "content_sha256": null,
+      "edition_id": "000776",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000777",
+      "canonical_work_id": "cw_9c546e9cc638",
+      "content_sha256": null,
+      "edition_id": "000777",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000778",
+      "canonical_work_id": "cw_a91461b191f6",
+      "content_sha256": "89fc22c625ba1b2d7c0fe04743b0a48d6bd158a002cd670deeff11972012e582",
+      "edition_id": "000778",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": "aozora_v1",
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000779",
+      "canonical_work_id": "cw_508d7c5251ea",
+      "content_sha256": null,
+      "edition_id": "000779",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000780",
+      "canonical_work_id": "cw_4c63551cdbb2",
+      "content_sha256": null,
+      "edition_id": "000780",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000781",
+      "canonical_work_id": "cw_5120857d175c",
+      "content_sha256": null,
+      "edition_id": "000781",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000782",
+      "canonical_work_id": "cw_183bc7db02ae",
+      "content_sha256": null,
+      "edition_id": "000782",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000783",
+      "canonical_work_id": "cw_5e2e41b874aa",
+      "content_sha256": null,
+      "edition_id": "000783",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000784",
+      "canonical_work_id": "cw_a2b43e4e998e",
+      "content_sha256": null,
+      "edition_id": "000784",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000785",
+      "canonical_work_id": "cw_39c5537dade5",
+      "content_sha256": null,
+      "edition_id": "000785",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000786",
+      "canonical_work_id": "cw_0fc6a541c54c",
+      "content_sha256": null,
+      "edition_id": "000786",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000787",
+      "canonical_work_id": "cw_76b64b43a799",
+      "content_sha256": null,
+      "edition_id": "000787",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000788",
+      "canonical_work_id": "cw_c365c84a4dad",
+      "content_sha256": "9038fee6613e0da4094572fad7812237bbdf839110e8254a7e363e701d6bc57e",
+      "edition_id": "000788",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": "aozora_v1",
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000789",
+      "canonical_work_id": "cw_cd90db585240",
+      "content_sha256": null,
+      "edition_id": "000789",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000790",
+      "canonical_work_id": "cw_cd90db585240",
+      "content_sha256": null,
+      "edition_id": "000790",
+      "is_primary_retrieval_edition": false,
+      "orthography": "旧字旧仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000791",
+      "canonical_work_id": "cw_5b3811cae388",
+      "content_sha256": null,
+      "edition_id": "000791",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000792",
+      "canonical_work_id": "cw_4294d08b534a",
+      "content_sha256": null,
+      "edition_id": "000792",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000793",
+      "canonical_work_id": "cw_d7dd1c5abf55",
+      "content_sha256": "884195c4646d7ba48419c64691d7c3c7fe44bd33311bbca06fbbf8d8b99809a1",
+      "edition_id": "000793",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": "aozora_v1",
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000794",
+      "canonical_work_id": "cw_3210e70f7005",
+      "content_sha256": null,
+      "edition_id": "000794",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000795",
+      "canonical_work_id": "cw_d7f9a8789519",
+      "content_sha256": null,
+      "edition_id": "000795",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000796",
+      "canonical_work_id": "cw_444f8979275c",
+      "content_sha256": "e9e757628026a5b45be6fe8c19ce9b605e8442bee4c6864923e3875f41062c5e",
+      "edition_id": "000796",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": "aozora_v1",
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000797",
+      "canonical_work_id": "cw_f0140da70c56",
+      "content_sha256": null,
+      "edition_id": "000797",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000798",
+      "canonical_work_id": "cw_fb67096d5481",
+      "content_sha256": null,
+      "edition_id": "000798",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "000799",
+      "canonical_work_id": "cw_4f6f8cc1bfdb",
+      "content_sha256": "ce801ed427c808ec46ff99e7946e21ce1a6d0ff22fdabe9e0549b354ab43d372",
+      "edition_id": "000799",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": "aozora_v1",
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "001046",
+      "canonical_work_id": "cw_72328d95cc00",
+      "content_sha256": null,
+      "edition_id": "001046",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "001073",
+      "canonical_work_id": "cw_5d6f33b0be10",
+      "content_sha256": null,
+      "edition_id": "001073",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "001076",
+      "canonical_work_id": "cw_878cd055feb1",
+      "content_sha256": null,
+      "edition_id": "001076",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "001086",
+      "canonical_work_id": "cw_3e4177765de9",
+      "content_sha256": null,
+      "edition_id": "001086",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "001102",
+      "canonical_work_id": "cw_c55a0f125d66",
+      "content_sha256": "e3d00f43f3b8c5dc2ac00e83e0a72af1184cf6a399d37b10a2760738514a1373",
+      "edition_id": "001102",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": "aozora_v1",
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "001104",
+      "canonical_work_id": "cw_617023b4e784",
+      "content_sha256": null,
+      "edition_id": "001104",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "001746",
+      "canonical_work_id": "cw_768297de5c69",
+      "content_sha256": null,
+      "edition_id": "001746",
+      "is_primary_retrieval_edition": false,
+      "orthography": "新字旧仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "001747",
+      "canonical_work_id": "cw_0ed562caee00",
+      "content_sha256": "cd7394f2e38abf7e3e7837856a187b0e141d65dc7073d6bf4150129d0567afb1",
+      "edition_id": "001747",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": "aozora_v1",
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "001749",
+      "canonical_work_id": "cw_d7f9a8789519",
+      "content_sha256": null,
+      "edition_id": "001749",
+      "is_primary_retrieval_edition": false,
+      "orthography": "旧字旧仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "001750",
+      "canonical_work_id": "cw_5ba313aed6a0",
+      "content_sha256": null,
+      "edition_id": "001750",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "001751",
+      "canonical_work_id": "cw_0a2d96c3ea82",
+      "content_sha256": null,
+      "edition_id": "001751",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "002313",
+      "canonical_work_id": "cw_de61624a7de3",
+      "content_sha256": null,
+      "edition_id": "002313",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "002314",
+      "canonical_work_id": "cw_78fa98234d62",
+      "content_sha256": null,
+      "edition_id": "002314",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "002315",
+      "canonical_work_id": "cw_f60e9c22bc32",
+      "content_sha256": null,
+      "edition_id": "002315",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "002370",
+      "canonical_work_id": "cw_902abece0e11",
+      "content_sha256": null,
+      "edition_id": "002370",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "002371",
+      "canonical_work_id": "cw_bc930006972a",
+      "content_sha256": null,
+      "edition_id": "002371",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "002372",
+      "canonical_work_id": "cw_c1103d0599d5",
+      "content_sha256": null,
+      "edition_id": "002372",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "002373",
+      "canonical_work_id": "cw_8f4737cf037c",
+      "content_sha256": null,
+      "edition_id": "002373",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "002375",
+      "canonical_work_id": "cw_8bb70c373f13",
+      "content_sha256": null,
+      "edition_id": "002375",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "002376",
+      "canonical_work_id": "cw_dc896db33f39",
+      "content_sha256": null,
+      "edition_id": "002376",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "002383",
+      "canonical_work_id": "cw_7847e17ba16b",
+      "content_sha256": null,
+      "edition_id": "002383",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "002575",
+      "canonical_work_id": "cw_c305c941f41b",
+      "content_sha256": null,
+      "edition_id": "002575",
+      "is_primary_retrieval_edition": true,
+      "orthography": "旧字旧仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "002667",
+      "canonical_work_id": "cw_ca3a9f8657fd",
+      "content_sha256": "2638fbbbc22c2136f95c14ce92fb093c667ce89e7f25b2828a6fcbd39459b2d2",
+      "edition_id": "002667",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": "aozora_v1",
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "002668",
+      "canonical_work_id": "cw_bb5f8465ae67",
+      "content_sha256": null,
+      "edition_id": "002668",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "002669",
+      "canonical_work_id": "cw_ffedb66496e7",
+      "content_sha256": null,
+      "edition_id": "002669",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "002670",
+      "canonical_work_id": "cw_0041f649f2b9",
+      "content_sha256": null,
+      "edition_id": "002670",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "002671",
+      "canonical_work_id": "cw_75219aa311d2",
+      "content_sha256": null,
+      "edition_id": "002671",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "002672",
+      "canonical_work_id": "cw_5cd61f2e009c",
+      "content_sha256": null,
+      "edition_id": "002672",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "002673",
+      "canonical_work_id": "cw_6ced71e4bbf4",
+      "content_sha256": null,
+      "edition_id": "002673",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "002674",
+      "canonical_work_id": "cw_14e4ae4d178d",
+      "content_sha256": null,
+      "edition_id": "002674",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "002675",
+      "canonical_work_id": "cw_b4be2f2fd9e0",
+      "content_sha256": null,
+      "edition_id": "002675",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "002676",
+      "canonical_work_id": "cw_8e99a91da657",
+      "content_sha256": null,
+      "edition_id": "002676",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "002677",
+      "canonical_work_id": "cw_e2366ea30a04",
+      "content_sha256": null,
+      "edition_id": "002677",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "002678",
+      "canonical_work_id": "cw_b134461362bb",
+      "content_sha256": null,
+      "edition_id": "002678",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "002679",
+      "canonical_work_id": "cw_0931f47ebf74",
+      "content_sha256": null,
+      "edition_id": "002679",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "002680",
+      "canonical_work_id": "cw_9b5cc2344485",
+      "content_sha256": null,
+      "edition_id": "002680",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "002681",
+      "canonical_work_id": "cw_b70736f94310",
+      "content_sha256": null,
+      "edition_id": "002681",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "002682",
+      "canonical_work_id": "cw_0795d05ec783",
+      "content_sha256": null,
+      "edition_id": "002682",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "004672",
+      "canonical_work_id": "cw_4f8b04257b28",
+      "content_sha256": null,
+      "edition_id": "004672",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字旧仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "004681",
+      "canonical_work_id": "cw_42de433a7db1",
+      "content_sha256": null,
+      "edition_id": "004681",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字旧仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "004682",
+      "canonical_work_id": "cw_72ff5e14f339",
+      "content_sha256": null,
+      "edition_id": "004682",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字旧仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "004683",
+      "canonical_work_id": "cw_21571d97f4ac",
+      "content_sha256": null,
+      "edition_id": "004683",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字旧仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "004684",
+      "canonical_work_id": "cw_4dc32f75619d",
+      "content_sha256": null,
+      "edition_id": "004684",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字旧仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "004685",
+      "canonical_work_id": "cw_c1bb993bd23c",
+      "content_sha256": null,
+      "edition_id": "004685",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字旧仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "004686",
+      "canonical_work_id": "cw_ce87becaa823",
+      "content_sha256": null,
+      "edition_id": "004686",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字旧仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "004687",
+      "canonical_work_id": "cw_ef55dc4b43c1",
+      "content_sha256": null,
+      "edition_id": "004687",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字旧仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "004688",
+      "canonical_work_id": "cw_202afdafefa5",
+      "content_sha256": null,
+      "edition_id": "004688",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字旧仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "004689",
+      "canonical_work_id": "cw_55e88d003afb",
+      "content_sha256": null,
+      "edition_id": "004689",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字旧仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "042156",
+      "canonical_work_id": "cw_a98b7b1f618f",
+      "content_sha256": null,
+      "edition_id": "042156",
+      "is_primary_retrieval_edition": true,
+      "orthography": "旧字旧仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "042297",
+      "canonical_work_id": "cw_25f8e4368d28",
+      "content_sha256": null,
+      "edition_id": "042297",
+      "is_primary_retrieval_edition": true,
+      "orthography": "旧字旧仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "042320",
+      "canonical_work_id": "cw_315d7d70319a",
+      "content_sha256": null,
+      "edition_id": "042320",
+      "is_primary_retrieval_edition": true,
+      "orthography": "旧字旧仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "047148",
+      "canonical_work_id": "cw_7aae4f3d89a8",
+      "content_sha256": null,
+      "edition_id": "047148",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "050420",
+      "canonical_work_id": "cw_f6f02a16b30b",
+      "content_sha256": null,
+      "edition_id": "050420",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字旧仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "050478",
+      "canonical_work_id": "cw_2759ad662ff7",
+      "content_sha256": null,
+      "edition_id": "050478",
+      "is_primary_retrieval_edition": true,
+      "orthography": "旧字旧仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "055936",
+      "canonical_work_id": "cw_9c546e9cc638",
+      "content_sha256": null,
+      "edition_id": "055936",
+      "is_primary_retrieval_edition": false,
+      "orthography": "旧字旧仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "056143",
+      "canonical_work_id": "cw_768297de5c69",
+      "content_sha256": null,
+      "edition_id": "056143",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "056900",
+      "canonical_work_id": "cw_2ba4e0c03869",
+      "content_sha256": null,
+      "edition_id": "056900",
+      "is_primary_retrieval_edition": true,
+      "orthography": "旧字旧仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "056923",
+      "canonical_work_id": "cw_39c5537dade5",
+      "content_sha256": null,
+      "edition_id": "056923",
+      "is_primary_retrieval_edition": false,
+      "orthography": "旧字旧仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "058276",
+      "canonical_work_id": "cw_de0fbcd32298",
+      "content_sha256": null,
+      "edition_id": "058276",
+      "is_primary_retrieval_edition": true,
+      "orthography": "旧字旧仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "058277",
+      "canonical_work_id": "cw_afb19a1b22b0",
+      "content_sha256": null,
+      "edition_id": "058277",
+      "is_primary_retrieval_edition": true,
+      "orthography": "旧字旧仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "058278",
+      "canonical_work_id": "cw_1de4952c225f",
+      "content_sha256": null,
+      "edition_id": "058278",
+      "is_primary_retrieval_edition": true,
+      "orthography": "旧字旧仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "058842",
+      "canonical_work_id": "cw_3210e70f7005",
+      "content_sha256": null,
+      "edition_id": "058842",
+      "is_primary_retrieval_edition": false,
+      "orthography": "新字旧仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "059017",
+      "canonical_work_id": "cw_b942673ee9c9",
+      "content_sha256": null,
+      "edition_id": "059017",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字新仮名",
+      "parser_version": null,
+      "work_status": "published"
+    },
+    {
+      "aozora_work_id": "060818",
+      "canonical_work_id": "cw_f9764668d3ba",
+      "content_sha256": null,
+      "edition_id": "060818",
+      "is_primary_retrieval_edition": true,
+      "orthography": "新字旧仮名",
+      "parser_version": null,
+      "work_status": "published"
+    }
+  ],
+  "person_id": "natsume_soseki",
+  "snapshot_version": "corpus_snapshot_v1",
+  "sources": [
+    {
+      "authority_level": "author_direct",
+      "chunk_count": 82,
+      "chunks_fingerprint": "631908349d5b8944e1e27a121a82fd8813861d4417cdc61ecef3d538835c774f",
+      "corpus_role": "core_thought",
+      "document_genre": "lecture",
+      "edition_id": "000755",
+      "source_id": "AOZORA_000755",
+      "title": "文芸の哲学的基礎"
+    },
+    {
+      "authority_level": "author_direct",
+      "chunk_count": 28,
+      "chunks_fingerprint": "9a01d1c1c5abc06e07608bb2d753f65f05578002d1f577532a2dc70bb3385663",
+      "corpus_role": "core_thought",
+      "document_genre": "lecture",
+      "edition_id": "000756",
+      "source_id": "AOZORA_000756",
+      "title": "文芸と道徳"
+    },
+    {
+      "authority_level": "author_direct",
+      "chunk_count": 28,
+      "chunks_fingerprint": "d6020673e70e1f363259d1b55628a0599c776e345ef51fd3aa2aa2419754bb7e",
+      "corpus_role": "core_thought",
+      "document_genre": "lecture",
+      "edition_id": "000757",
+      "source_id": "AOZORA_000757",
+      "title": "道楽と職業"
+    },
+    {
+      "authority_level": "author_direct",
+      "chunk_count": 30,
+      "chunks_fingerprint": "70b80da1aea1559c4685d18a57f0a1dab3502afb29b2933d33efedc8b1f6239e",
+      "corpus_role": "core_thought",
+      "document_genre": "lecture",
+      "edition_id": "000759",
+      "source_id": "AOZORA_000759",
+      "title": "現代日本の開化"
+    },
+    {
+      "authority_level": "author_direct",
+      "chunk_count": 40,
+      "chunks_fingerprint": "fa808afff1257f5e4f7d9f27ba6bd24ad9bf60a08fc2b46531cbf46a00518236",
+      "corpus_role": "core_thought",
+      "document_genre": "lecture",
+      "edition_id": "000772",
+      "source_id": "AOZORA_000772",
+      "title": "私の個人主義"
+    },
+    {
+      "authority_level": "author_direct",
+      "chunk_count": 12,
+      "chunks_fingerprint": "7da6af7659f2dab57db5a8c1695148320b4cd5b5a0ae48a9b206ebfea69508a9",
+      "corpus_role": "core_thought",
+      "document_genre": "lecture",
+      "edition_id": "000778",
+      "source_id": "AOZORA_000778",
+      "title": "教育と文芸"
+    },
+    {
+      "authority_level": "author_direct",
+      "chunk_count": 25,
+      "chunks_fingerprint": "82a191c1d89d4c24e48e307f0b464ea5325c371c087a5505bf963f61ecadf34b",
+      "corpus_role": "core_thought",
+      "document_genre": "lecture",
+      "edition_id": "000788",
+      "source_id": "AOZORA_000788",
+      "title": "中味と形式"
+    },
+    {
+      "authority_level": "author_direct",
+      "chunk_count": 11,
+      "chunks_fingerprint": "72639795c7b8e8310fa85d48c21786a86cdee8e18d0d7346b4e3d6ea61687e28",
+      "corpus_role": "creative_grammar",
+      "document_genre": "criticism",
+      "edition_id": "000793",
+      "source_id": "AOZORA_000793",
+      "title": "作物の批評"
+    },
+    {
+      "authority_level": "author_direct",
+      "chunk_count": 8,
+      "chunks_fingerprint": "5f88fd916b09f61b9545a9e1d0dcd0f4953f3165b625a8baefc1702f2007b73f",
+      "corpus_role": "creative_grammar",
+      "document_genre": "literary_theory",
+      "edition_id": "000796",
+      "source_id": "AOZORA_000796",
+      "title": "写生文"
+    },
+    {
+      "authority_level": "fictional_indirect",
+      "chunk_count": 75,
+      "chunks_fingerprint": "b6a8f6c1ade9a36f665be3026e8c1834367f91f4270257d14fe2a7b7ba506c8f",
+      "corpus_role": "narrative_reference",
+      "document_genre": "short_story",
+      "edition_id": "000799",
+      "source_id": "AOZORA_000799",
+      "title": "夢十夜"
+    },
+    {
+      "authority_level": "author_direct",
+      "chunk_count": 99,
+      "chunks_fingerprint": "5e31f51ac709776fece7a55ef8ce44f73579512ae2069a4c4adb107124aaf98c",
+      "corpus_role": "core_thought",
+      "document_genre": "lecture",
+      "edition_id": "001102",
+      "source_id": "AOZORA_001102",
+      "title": "創作家の態度"
+    },
+    {
+      "authority_level": "author_direct",
+      "chunk_count": 33,
+      "chunks_fingerprint": "f0c8c7d1c88d7a671b1baccac5491f21652afbed2446b75b16ee002bc482395b",
+      "corpus_role": "core_thought",
+      "document_genre": "lecture",
+      "edition_id": "001747",
+      "source_id": "AOZORA_001747",
+      "title": "模倣と独立"
+    },
+    {
+      "authority_level": "author_direct",
+      "chunk_count": 12,
+      "chunks_fingerprint": "282b71d8682ef0627fe7528ebe3b5f97cdc3e6f0f504f4fa5610d8dd78ca8545",
+      "corpus_role": "creative_grammar",
+      "document_genre": "preface",
+      "edition_id": "002667",
+      "source_id": "AOZORA_002667",
+      "title": "高浜虚子著『鶏頭』序"
+    }
+  ],
+  "versions": {
+    "chunker": {
+      "aozora_v1": 483
+    },
+    "parser": {
+      "aozora_v1": 13,
+      "unknown": 100
+    }
+  },
+  "works": [
+    {
+      "canonical_title": "木下杢太郎『唐草表紙』序",
+      "canonical_title_reading": "きのしたもくたろう『からくさひょうし』じょ",
+      "canonical_work_id": "cw_0041f649f2b9"
+    },
+    {
+      "canonical_title": "長塚節氏の小説「土」",
+      "canonical_title_reading": "ながつかたかししのしょうせつ「つち」",
+      "canonical_work_id": "cw_0795d05ec783"
+    },
+    {
+      "canonical_title": "文士の生活",
+      "canonical_title_reading": "ぶんしのせいかつ",
+      "canonical_work_id": "cw_0931f47ebf74"
+    },
+    {
+      "canonical_title": "正岡子規",
+      "canonical_title_reading": "まさおかしき",
+      "canonical_work_id": "cw_0a2d96c3ea82"
+    },
+    {
+      "canonical_title": "模倣と独立",
+      "canonical_title_reading": "もほうとどくりつ",
+      "canonical_work_id": "cw_0ed562caee00"
+    },
+    {
+      "canonical_title": "無題",
+      "canonical_title_reading": "むだい",
+      "canonical_work_id": "cw_0fc6a541c54c"
+    },
+    {
+      "canonical_title": "コンラッドの描きたる自然について",
+      "canonical_title_reading": "コンラッドのえがきたるしぜんについて",
+      "canonical_work_id": "cw_14d37e2fa253"
+    },
+    {
+      "canonical_title": "元日",
+      "canonical_title_reading": "がんじつ",
+      "canonical_work_id": "cw_14e4ae4d178d"
+    },
+    {
+      "canonical_title": "明暗",
+      "canonical_title_reading": "めいあん",
+      "canonical_work_id": "cw_183bc7db02ae"
+    },
+    {
+      "canonical_title": "水底の感",
+      "canonical_title_reading": "みなそこのかん",
+      "canonical_work_id": "cw_1de4952c225f"
+    },
+    {
+      "canonical_title": "『心』自序",
+      "canonical_title_reading": "『こころ』じじょ",
+      "canonical_work_id": "cw_202afdafefa5"
+    },
+    {
+      "canonical_title": "猫の広告文",
+      "canonical_title_reading": "ねこのこうこくぶん",
+      "canonical_work_id": "cw_21571d97f4ac"
+    },
+    {
+      "canonical_title": "文芸の哲学的基礎",
+      "canonical_title_reading": "ぶんげいのてつがくてききそ",
+      "canonical_work_id": "cw_2512cf4013f3"
+    },
+    {
+      "canonical_title": "「自然を写す文章」",
+      "canonical_title_reading": "「しぜんをうつすぶんしょう」",
+      "canonical_work_id": "cw_25f8e4368d28"
+    },
+    {
+      "canonical_title": "「額の男」を読む",
+      "canonical_title_reading": "「ひたいのおとこ」をよむ",
+      "canonical_work_id": "cw_2759ad662ff7"
+    },
+    {
+      "canonical_title": "「土」に就て",
+      "canonical_title_reading": "「つち」について",
+      "canonical_work_id": "cw_2ba4e0c03869"
+    },
+    {
+      "canonical_title": "坑夫",
+      "canonical_title_reading": "こうふ",
+      "canonical_work_id": "cw_2d57c6d39d69"
+    },
+    {
+      "canonical_title": "行人",
+      "canonical_title_reading": "こうじん",
+      "canonical_work_id": "cw_2ec2210b9ca4"
+    },
+    {
+      "canonical_title": "西洋にはない",
+      "canonical_title_reading": "せいようにはない",
+      "canonical_work_id": "cw_315d7d70319a"
+    },
+    {
+      "canonical_title": "三四郎",
+      "canonical_title_reading": "さんしろう",
+      "canonical_work_id": "cw_3210e70f7005"
+    },
+    {
+      "canonical_title": "二百十日",
+      "canonical_title_reading": "にひゃくとおか",
+      "canonical_work_id": "cw_35f7ecb19740"
+    },
+    {
+      "canonical_title": "門",
+      "canonical_title_reading": "もん",
+      "canonical_work_id": "cw_39c5537dade5"
+    },
+    {
+      "canonical_title": "一夜",
+      "canonical_title_reading": "いちや",
+      "canonical_work_id": "cw_3e4177765de9"
+    },
+    {
+      "canonical_title": "思い出す事など",
+      "canonical_title_reading": "おもいだすことなど",
+      "canonical_work_id": "cw_4294d08b534a"
+    },
+    {
+      "canonical_title": "『それから』予告",
+      "canonical_title_reading": "『それから』よこく",
+      "canonical_work_id": "cw_42de433a7db1"
+    },
+    {
+      "canonical_title": "写生文",
+      "canonical_title_reading": "しゃせいぶん",
+      "canonical_work_id": "cw_444f8979275c"
+    },
+    {
+      "canonical_title": "道楽と職業",
+      "canonical_title_reading": "どうらくとしょくぎょう",
+      "canonical_work_id": "cw_4ae7fcf9fd34"
+    },
+    {
+      "canonical_title": "幻影の盾",
+      "canonical_title_reading": "まぼろしのたて",
+      "canonical_work_id": "cw_4c63551cdbb2"
+    },
+    {
+      "canonical_title": "『煤煙』の序",
+      "canonical_title_reading": "『ばいえん』のじょ",
+      "canonical_work_id": "cw_4dc32f75619d"
+    },
+    {
+      "canonical_title": "夢十夜",
+      "canonical_title_reading": "ゆめじゅうや",
+      "canonical_work_id": "cw_4f6f8cc1bfdb"
+    },
+    {
+      "canonical_title": "点頭録",
+      "canonical_title_reading": "てんとうろく",
+      "canonical_work_id": "cw_4f8b04257b28"
+    },
+    {
+      "canonical_title": "倫敦消息",
+      "canonical_title_reading": "ロンドンしょうそく",
+      "canonical_work_id": "cw_508d7c5251ea"
+    },
+    {
+      "canonical_title": "満韓ところどころ",
+      "canonical_title_reading": "まんかんところどころ",
+      "canonical_work_id": "cw_5120857d175c"
+    },
+    {
+      "canonical_title": "『心』広告文",
+      "canonical_title_reading": "『こころ』こうこくぶん",
+      "canonical_work_id": "cw_55e88d003afb"
+    },
+    {
+      "canonical_title": "現代日本の開化",
+      "canonical_title_reading": "げんだいにほんのかいか",
+      "canonical_work_id": "cw_58a1402606ab"
+    },
+    {
+      "canonical_title": "野分",
+      "canonical_title_reading": "のわき",
+      "canonical_work_id": "cw_5b3811cae388"
+    },
+    {
+      "canonical_title": "僕の昔",
+      "canonical_title_reading": "ぼくのむかし",
+      "canonical_work_id": "cw_5ba313aed6a0"
+    },
+    {
+      "canonical_title": "『吾輩は猫である』下篇自序",
+      "canonical_title_reading": "『わがはいはねこである』げへんじじょ",
+      "canonical_work_id": "cw_5cd61f2e009c"
+    },
+    {
+      "canonical_title": "琴のそら音",
+      "canonical_title_reading": "ことのそらね",
+      "canonical_work_id": "cw_5d6f33b0be10"
+    },
+    {
+      "canonical_title": "道草",
+      "canonical_title_reading": "みちくさ",
+      "canonical_work_id": "cw_5e2e41b874aa"
+    },
+    {
+      "canonical_title": "趣味の遺伝",
+      "canonical_title_reading": "しゅみのいでん",
+      "canonical_work_id": "cw_617023b4e784"
+    },
+    {
+      "canonical_title": "こころ",
+      "canonical_title_reading": "こころ",
+      "canonical_work_id": "cw_673b62a57506"
+    },
+    {
+      "canonical_title": "入社の辞",
+      "canonical_title_reading": "にゅうしゃのじ",
+      "canonical_work_id": "cw_6ced71e4bbf4"
+    },
+    {
+      "canonical_title": "永日小品",
+      "canonical_title_reading": "えいじつしょうひん",
+      "canonical_work_id": "cw_6d59d73a47cd"
+    },
+    {
+      "canonical_title": "彼岸過迄",
+      "canonical_title_reading": "ひがんすぎまで",
+      "canonical_work_id": "cw_7102f3c9fff0"
+    },
+    {
+      "canonical_title": "カーライル博物館",
+      "canonical_title_reading": "カーライルはくぶつかん",
+      "canonical_work_id": "cw_72328d95cc00"
+    },
+    {
+      "canonical_title": "『三四郎』予告",
+      "canonical_title_reading": "『さんしろう』よこく",
+      "canonical_work_id": "cw_72ff5e14f339"
+    },
+    {
+      "canonical_title": "『吾輩は猫である』中篇自序",
+      "canonical_title_reading": "『わがはいはねこである』ちゅうへんじじょ",
+      "canonical_work_id": "cw_75219aa311d2"
+    },
+    {
+      "canonical_title": "それから",
+      "canonical_title_reading": "それから",
+      "canonical_work_id": "cw_768297de5c69"
+    },
+    {
+      "canonical_title": "博士問題とマードック先生と余",
+      "canonical_title_reading": "はかせもんだいとマードックせんせいとよ",
+      "canonical_work_id": "cw_76b64b43a799"
+    },
+    {
+      "canonical_title": "学者と名誉",
+      "canonical_title_reading": "がくしゃとめいよ",
+      "canonical_work_id": "cw_7847e17ba16b"
+    },
+    {
+      "canonical_title": "イズムの功過",
+      "canonical_title_reading": "イズムのこうか",
+      "canonical_work_id": "cw_78fa98234d62"
+    },
+    {
+      "canonical_title": "『吾輩は猫である』上篇自序",
+      "canonical_title_reading": "『わがはいはねこである』じょうへんじじょ",
+      "canonical_work_id": "cw_7aae4f3d89a8"
+    },
+    {
+      "canonical_title": "倫敦塔",
+      "canonical_title_reading": "ロンドンとう",
+      "canonical_work_id": "cw_878cd055feb1"
+    },
+    {
+      "canonical_title": "人生",
+      "canonical_title_reading": "じんせい",
+      "canonical_work_id": "cw_87e689e3622e"
+    },
+    {
+      "canonical_title": "ケーベル先生の告別",
+      "canonical_title_reading": "ケーベルせんせいのこくべつ",
+      "canonical_work_id": "cw_8aede2e36cb9"
+    },
+    {
+      "canonical_title": "マードック先生の『日本歴史』",
+      "canonical_title_reading": "マードックせんせいの『にほんれきし』",
+      "canonical_work_id": "cw_8bb70c373f13"
+    },
+    {
+      "canonical_title": "落第",
+      "canonical_title_reading": "らくだい",
+      "canonical_work_id": "cw_8e99a91da657"
+    },
+    {
+      "canonical_title": "虚子君へ",
+      "canonical_title_reading": "きょしくんへ",
+      "canonical_work_id": "cw_8f4737cf037c"
+    },
+    {
+      "canonical_title": "田山花袋君に答う",
+      "canonical_title_reading": "たやまかたいくんにこたう",
+      "canonical_work_id": "cw_902abece0e11"
+    },
+    {
+      "canonical_title": "処女作追懐談",
+      "canonical_title_reading": "しょじょさくついかいだん",
+      "canonical_work_id": "cw_9b5cc2344485"
+    },
+    {
+      "canonical_title": "京に着ける夕",
+      "canonical_title_reading": "きょうにつけるゆうべ",
+      "canonical_work_id": "cw_9c546e9cc638"
+    },
+    {
+      "canonical_title": "三山居士",
+      "canonical_title_reading": "さんざんこじ",
+      "canonical_work_id": "cw_a2b43e4e998e"
+    },
+    {
+      "canonical_title": "教育と文芸",
+      "canonical_title_reading": "きょういくとぶんげい",
+      "canonical_work_id": "cw_a91461b191f6"
+    },
+    {
+      "canonical_title": "『伝説の時代』序",
+      "canonical_title_reading": "『でんせつのじだい』じょ",
+      "canonical_work_id": "cw_a98b7b1f618f"
+    },
+    {
+      "canonical_title": "薤露行",
+      "canonical_title_reading": "かいろこう",
+      "canonical_work_id": "cw_ad187302b970"
+    },
+    {
+      "canonical_title": "硝子戸の中",
+      "canonical_title_reading": "がらすどのうち",
+      "canonical_work_id": "cw_af232e19d550"
+    },
+    {
+      "canonical_title": "従軍行",
+      "canonical_title_reading": "じゅうぐんこう",
+      "canonical_work_id": "cw_afb19a1b22b0"
+    },
+    {
+      "canonical_title": "予の描かんと欲する作品",
+      "canonical_title_reading": "よのえがかんとほっするさくひん",
+      "canonical_work_id": "cw_b134461362bb"
+    },
+    {
+      "canonical_title": "長谷川君と余",
+      "canonical_title_reading": "はせがわくんとよ",
+      "canonical_work_id": "cw_b3b216077043"
+    },
+    {
+      "canonical_title": "余と万年筆",
+      "canonical_title_reading": "よとまんねんひつ",
+      "canonical_work_id": "cw_b4be2f2fd9e0"
+    },
+    {
+      "canonical_title": "文芸は男子一生の事業とするに足らざる乎",
+      "canonical_title_reading": "ぶんげいはだんしいっしょうのじぎょうとするにたらざるか",
+      "canonical_work_id": "cw_b70736f94310"
+    },
+    {
+      "canonical_title": "変な音",
+      "canonical_title_reading": "へんなおと",
+      "canonical_work_id": "cw_b730b974c144"
+    },
+    {
+      "canonical_title": "虞美人草",
+      "canonical_title_reading": "ぐびじんそう",
+      "canonical_work_id": "cw_b8654f92f6cb"
+    },
+    {
+      "canonical_title": "おはなし",
+      "canonical_title_reading": "おはなし",
+      "canonical_work_id": "cw_b942673ee9c9"
+    },
+    {
+      "canonical_title": "坊っちゃん",
+      "canonical_title_reading": "ぼっちゃん",
+      "canonical_work_id": "cw_b9a43d2d158f"
+    },
+    {
+      "canonical_title": "『土』に就て",
+      "canonical_title_reading": "『つち』について",
+      "canonical_work_id": "cw_bb5f8465ae67"
+    },
+    {
+      "canonical_title": "文壇の趨勢",
+      "canonical_title_reading": "ぶんだんのすうせい",
+      "canonical_work_id": "cw_bc930006972a"
+    },
+    {
+      "canonical_title": "文芸と道徳",
+      "canonical_title_reading": "ぶんげいとどうとく",
+      "canonical_work_id": "cw_be2de5a19638"
+    },
+    {
+      "canonical_title": "明治座の所感を虚子君に問れて",
+      "canonical_title_reading": "めいじざのしょかんをきょしくんにとわれて",
+      "canonical_work_id": "cw_c1103d0599d5"
+    },
+    {
+      "canonical_title": "文芸とヒロイツク",
+      "canonical_title_reading": "ぶんげいとヒロイック",
+      "canonical_work_id": "cw_c1bb993bd23c"
+    },
+    {
+      "canonical_title": "鈴木三重吉宛書簡―明治三十九年",
+      "canonical_title_reading": "すずきみえきちあてしょかん―めいじさんじゅうくねん",
+      "canonical_work_id": "cw_c305c941f41b"
+    },
+    {
+      "canonical_title": "中味と形式",
+      "canonical_title_reading": "なかみとけいしき",
+      "canonical_work_id": "cw_c365c84a4dad"
+    },
+    {
+      "canonical_title": "創作家の態度",
+      "canonical_title_reading": "そうさくかのたいど",
+      "canonical_work_id": "cw_c55a0f125d66"
+    },
+    {
+      "canonical_title": "ケーベル先生",
+      "canonical_title_reading": "ケーベルせんせい",
+      "canonical_work_id": "cw_c866588830e2"
+    },
+    {
+      "canonical_title": "高浜虚子著『鶏頭』序",
+      "canonical_title_reading": "たかはまきょしちょ『けいとう』じょ",
+      "canonical_work_id": "cw_ca3a9f8657fd"
+    },
+    {
+      "canonical_title": "吾輩は猫である",
+      "canonical_title_reading": "わがはいはねこである",
+      "canonical_work_id": "cw_cd90db585240"
+    },
+    {
+      "canonical_title": "艇長の遺書と中佐の詩",
+      "canonical_title_reading": "ていちょうのいしょとちゅうさのし",
+      "canonical_work_id": "cw_ce87becaa823"
+    },
+    {
+      "canonical_title": "作物の批評",
+      "canonical_title_reading": "さくぶつのひひょう",
+      "canonical_work_id": "cw_d7dd1c5abf55"
+    },
+    {
+      "canonical_title": "子規の画",
+      "canonical_title_reading": "しきのえ",
+      "canonical_work_id": "cw_d7f9a8789519"
+    },
+    {
+      "canonical_title": "博士問題の成行",
+      "canonical_title_reading": "はかせもんだいのなりゆき",
+      "canonical_work_id": "cw_dc896db33f39"
+    },
+    {
+      "canonical_title": "鬼哭寺の一夜",
+      "canonical_title_reading": "きこくじのいちや",
+      "canonical_work_id": "cw_de0fbcd32298"
+    },
+    {
+      "canonical_title": "『東洋美術図譜』",
+      "canonical_title_reading": "『とうようびじゅつずふ』",
+      "canonical_work_id": "cw_de61624a7de3"
+    },
+    {
+      "canonical_title": "私の個人主義",
+      "canonical_title_reading": "わたしのこじんしゅぎ",
+      "canonical_work_id": "cw_df41cf2d694a"
+    },
+    {
+      "canonical_title": "草枕",
+      "canonical_title_reading": "くさまくら",
+      "canonical_work_id": "cw_e098ce88d3f2"
+    },
+    {
+      "canonical_title": "私の経過した学生時代",
+      "canonical_title_reading": "わたしのけいかしたがくせいじだい",
+      "canonical_work_id": "cw_e2366ea30a04"
+    },
+    {
+      "canonical_title": "自転車日記",
+      "canonical_title_reading": "じてんしゃにっき",
+      "canonical_work_id": "cw_e4723e1555f9"
+    },
+    {
+      "canonical_title": "『心』予告",
+      "canonical_title_reading": "『こころ』よこく",
+      "canonical_work_id": "cw_ef55dc4b43c1"
+    },
+    {
+      "canonical_title": "文芸委員は何をするか",
+      "canonical_title_reading": "ぶんげいいいんはなにをするか",
+      "canonical_work_id": "cw_ef566192ca23"
+    },
+    {
+      "canonical_title": "初秋の一日",
+      "canonical_title_reading": "しょしゅうのいちにち",
+      "canonical_work_id": "cw_f0140da70c56"
+    },
+    {
+      "canonical_title": "文鳥",
+      "canonical_title_reading": "ぶんちょう",
+      "canonical_work_id": "cw_f254ac295e9c"
+    },
+    {
+      "canonical_title": "戦争からきた行き違い",
+      "canonical_title_reading": "せんそうからきたいきちがい",
+      "canonical_work_id": "cw_f60e9c22bc32"
+    },
+    {
+      "canonical_title": "坊っちやん",
+      "canonical_title_reading": "ぼっちゃん",
+      "canonical_work_id": "cw_f6f02a16b30b"
+    },
+    {
+      "canonical_title": "『文学論』序",
+      "canonical_title_reading": "『ぶんがくろん』じょ",
+      "canonical_work_id": "cw_f9764668d3ba"
+    },
+    {
+      "canonical_title": "手紙",
+      "canonical_title_reading": "てがみ",
+      "canonical_work_id": "cw_fb67096d5481"
+    },
+    {
+      "canonical_title": "岡本一平著並画『探訪画趣』序",
+      "canonical_title_reading": "おかもといっぺいちょならびにが『たんぼうがしゅ』じょ",
+      "canonical_work_id": "cw_ffedb66496e7"
+    }
+  ]
+}

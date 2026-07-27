@@ -483,7 +483,7 @@ uv run python -m src.aozora.cli gen-cards
 | C-T5 | **完了 2026-07-27** Phase A 13資料の投入 + 論理Index検証 | 実データ 483チャンク | C-T4a |
 | C-T6 | L2/L3候補生成（思想/創作/規則/Bridge Rule） | | C-T5 |
 | C-T7 | **worker側まで完了 2026-07-27** 拡張RPC・論理Index・質問種別ルーティング・trace列。frontend への配線は UI(T5)と同時 | `worker/src/aozora/routing.py` + `20260727000002_corpus_routing.sql` | C-T6 |
-| C-T8 | テスト・ドキュメント・snapshot | | C-T7 |
+| C-T8 | **完了 2026-07-27** snapshot（受入#18）+ データ品質レポート（受入#20）+ Retrieval シナリオテスト。実測は §12.2 | `worker/src/aozora/snapshot.py` | C-T7 |
 
 **創作モードとの関係**: 生成パイプラインは T4c まで完成済み。創作モードの T6（夢十夜 profile 投入）は
 **C-T5 に吸収**される。C-T5 完了時点で、実データを既存パイプラインに流せる。
@@ -499,7 +499,8 @@ uv run python -m src.aozora.cli manifest        # CSV 113行 → 作品106 / 版
 uv run python -m src.aozora.cli in-progress     # 作業中8件を記録(本文は取らない)
 uv run python -m src.aozora.cli ingest-phase-a  # Phase A 13資料 → 483チャンク
 uv run python -m src.aozora.cli embed           # embedding 483件(実測12秒)
-uv run python -m src.aozora.cli report          # 状態とデータ品質
+uv run python -m src.aozora.cli report          # 状態とデータ品質(§12.2)
+uv run python -m src.aozora.cli snapshot --out snapshot.json  # 再現性の照合用(§12.2)
 ```
 
 ⚠️ `embed` には OpenAI の実キーが要る（`text-embedding-3-small` / 1536次元）。
@@ -629,6 +630,73 @@ PostgreSQL の関数解決では**成り立たない**。
 
 ---
 
+## 12.2 C-T8 の実測結果（2026-07-27）
+
+### snapshot による再現性の照合（受入#18）
+
+```bash
+uv run python -m src.aozora.cli snapshot --out snapshot.json      # 保存
+uv run python -m src.aozora.cli snapshot --compare snapshot.json  # 照合
+```
+
+snapshot は**決定的**でなければ照合に使えないため、時刻・UUID・DBの返却順といった
+「同じ内容でも変わる値」を一切含めない。本文そのものも載せず、チャンクの hash を
+文書単位でまとめた指紋（`chunks_fingerprint`）にしている。
+
+実測（空のDBから `manifest` → `in-progress` → `ingest-phase-a` を2回）:
+
+| 回 | digest | 件数 |
+|---|---|---|
+| 1回目 | `3fa5b42ff303535c...` | works 106 / editions 113 / sources 13 / chunks 483 |
+| 2回目（全テストでDBを空にした後） | `3fa5b42ff303535c...` | 同上 |
+
+**一致**。取り込みは空のDBから再現できる。
+
+### データ品質レポート（受入#20 / 指示書§14.6）
+
+`uv run python -m src.aozora.cli report` が10項目を判定する。Phase A 13資料での実測:
+
+| 項目 | 実測 | 判定 |
+|---|---|---|
+| 文字化けを含むチャンクの割合 | 0.000% | OK |
+| chunk_hash が重複するチャンクの割合 | 0.000% | OK |
+| speaker_role 未分類の割合 | 0.000% | OK |
+| 思想の中核Indexに入っている小説由来チャンク | 0件 | OK |
+| source_url が無い文書 | 0件 | OK |
+| content_sha256 が無い版 | 0件 | OK |
+| parser_version が無い版 | 0件 | OK |
+| embedding 未生成のチャンク | 0件 | OK |
+| 根拠チャンクが実在しない承認済み創作カード | 0件 | OK |
+| 未解決の作品同定キュー | 1件（000789 / 000790） | **要対応** |
+
+最後の1件は §1.2 の既知の案件（吾輩は猫である / 吾輩ハ猫デアル の読みが割れる）。
+人が判断するために積んであるものなので、レポートが NG を出し続けるのは正しい。
+
+### 小説混入に対する防御が3層あることを実データで確認
+
+「小説中の登場人物の発言を作者の思想として扱わない」は、独立した3つの条件で守られている。
+実データで1つずつ壊して確かめた:
+
+| 壊した層 | 結果 |
+|---|---|
+| `corpus_role` のみ（夢十夜を core_thought に変更） | **混入しない**。`speaker_role`（narrator/character）と `thought_eligibility=excluded` が残るため |
+| `corpus_role` + `thought_eligibility` | 品質レポートが **75件を検出**（NG） |
+
+思想の中核Index の実体は `corpus_role=core_thought` かつ `speaker_role=author_direct` かつ
+`thought_eligibility≠excluded`。1層の設定ミスでは混入に至らない。
+
+### Retrieval シナリオテスト（§11）
+
+`tests/test_aozora_retrieval_scenarios.py` を追加。既存の `test_aozora_routing.py` が
+**ルーティングの定義**を検証するのに対し、こちらは**実データを引いた結果**を検証する。
+
+| §11 の要求 | 状態 |
+|---|---|
+| 近代化質問（講演優先・人物発言を主根拠にしない） | 実装・検証済み |
+| 第十一夜生成（creative_grammar と夢十夜本文を取得） | 実装・検証済み |
+| 生成AI質問（直接原典が無い） | 中核Indexが空を返すことまで検証済み。留保の**表示**は frontend 配線時 |
+| 代助質問（character_judgment） | **Phase C 待ち**。Phase A に長編小説が無いため、いまは「空であること」を固定してある。Phase C 完了時に「代助の発言が引けること」へ差し替える |
+
 ---
 
 ## 13. 受入条件（指示書 §15 の20項目）
@@ -652,12 +720,25 @@ PostgreSQL の関数解決では**成り立たない**。
 | 15 | 思想検索と創作検索のルーティングを分離できる | C-T7（§6） |
 | 16 | 既存Thinkerのテストがすべて通る | 全タスクで維持 |
 | 17 | migration が additive で rollback 可能 | C-T2a（§10） |
-| 18 | corpus snapshot を再現できる | C-T8 |
+| 18 | corpus snapshot を再現できる | **C-T8 完了**（§12.2。空のDBから2回取り込んで digest 一致） |
 | 19 | parser / embedding / prompt の version を保存できる | C-T3b・C-T4b |
-| 20 | データ品質レポートを出力できる | C-T8（§8・§11） |
+| 20 | データ品質レポートを出力できる | **C-T8 完了**（§12.2。10項目・`cli report`） |
 
 ⚠️ **#11 は今回スコープ外**（発注者確定: 今回は青空文庫のみ）。`source_provider` を最初から
 持たせることで、将来 NDL を追加する際に additive で済む形にしてある。
+
+### C-T8 時点で残っている項目（2026-07-27）
+
+20項目のうち、まだ満たしていないものと理由:
+
+| # | 条件 | 残っている理由 |
+|---|---|---|
+| 7・8 | speaker role / 発話者の区別 | 決定的タグ（Pass1）は動いている。**Pass2（LLM分類）が C-T4b で未着手**。現状は会話文・地の文・引用ブロックの機械判定のみで、実データでは未分類0%・レビュー要0件 |
+| 13 | L2/L3 の全項目に evidence と provenance | 創作カードは evidence 必須で実装済み。**判断規則（L3）と Bridge Rule は C-T6 で未着手** |
+| 14・15 | trace の区別 / ルーティング分離 | worker 側は完了。**frontend のチャット経路への配線が未了**（`frontend/src/lib/rag/` は既存の思想モード経路のまま） |
+
+#9（小説人物の発言が思想Indexへ混入しない）は §12.2 のとおり、実データで3層の防御を
+1つずつ壊して確認済み。
 
 ---
 

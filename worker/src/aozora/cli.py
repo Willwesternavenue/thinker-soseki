@@ -5,7 +5,9 @@
   uv run python -m src.aozora.cli in-progress         # 作業中8件の記録(本文は取らない)
   uv run python -m src.aozora.cli ingest 000799       # 版を1つ取り込む
   uv run python -m src.aozora.cli ingest-phase-a      # Phase A 13資料をまとめて取り込む
-  uv run python -m src.aozora.cli report              # コーパスの状態を出す
+  uv run python -m src.aozora.cli report              # コーパスの状態と品質を出す
+  uv run python -m src.aozora.cli snapshot --out s.json    # スナップショットを保存
+  uv run python -m src.aozora.cli snapshot --compare s.json  # 取り込みの再現を照合
 
 正本仕様: docs/CORPUS_T1_SPEC.md
 """
@@ -13,13 +15,15 @@
 import argparse
 import csv
 import io
+import json
 import sys
 import urllib.request
 import zipfile
 from collections import Counter
+from pathlib import Path
 
 from .. import db
-from . import gen_creative_cards, ingest, manifest, person_page
+from . import gen_creative_cards, ingest, manifest, person_page, snapshot as snapshot_mod
 
 PERSON_ID = "natsume_soseki"
 YUME_PROFILE_ID = "cp_yume_juya"
@@ -229,13 +233,46 @@ def cmd_report(_args) -> None:
           f"うち小説由来 {len(fiction_in_core)}件 "
           f"{'OK' if not fiction_in_core else '← NG(混入している)'}")
 
-    queue = (
-        c.table("canonical_work_review_queue").select("*")
-        .eq("status", "open").execute().data
-    )
-    print(f"未解決の作品同定キュー: {len(queue)}件")
-    for q in queue:
-        print(f"  {q['aozora_work_ids']}: {q['reason'][:80]}")
+    # データ品質レポート(受入#20 / 指示書§14.6)
+    report = snapshot_mod.build_quality_report()
+    print(f"\nデータ品質: {'OK' if report['passed'] else 'NG'}")
+    for check in report["checks"]:
+        mark = "  " if check["passed"] else "← NG"
+        value = (
+            f"{check['value']:.3%}" if isinstance(check["value"], float)
+            else f"{check['value']}件"
+        )
+        print(f"  {check['label']}: {value} {mark}")
+        if not check["passed"] and check["detail"]:
+            print(f"      {', '.join(map(str, check['detail']))}")
+
+
+def cmd_snapshot(args) -> None:
+    """corpus snapshot(受入#18)。取り込みを再現できたかを digest で照合する。"""
+    snap = snapshot_mod.build_snapshot()
+    print(f"digest: {snap['digest']}")
+    print(f"件数: {snap['counts']}")
+
+    if args.compare:
+        previous = json.loads(Path(args.compare).read_text(encoding="utf-8"))
+        diff = snapshot_mod.compare_snapshots(previous, snap)
+        if diff["same"]:
+            print(f"\n{args.compare} と一致(取り込みを再現できている)")
+        else:
+            print(f"\n{args.compare} と不一致:")
+            for key, values in diff["counts"].items():
+                print(f"  {key}: {values['old']} → {values['new']}")
+            for label, key in (("追加", "sources_added"), ("欠落", "sources_removed"),
+                               ("内容変更", "sources_changed")):
+                if diff[key]:
+                    print(f"  {label}: {', '.join(diff[key])}")
+
+    if args.out:
+        Path(args.out).write_text(
+            json.dumps(snap, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        print(f"\n保存: {args.out}")
 
 
 def main(argv=None) -> int:
@@ -268,7 +305,11 @@ def main(argv=None) -> int:
     p_ng.add_argument("card_ids", nargs="+")
     p_ng.add_argument("--by", default="cli", help="却下者")
     p_ng.set_defaults(func=cmd_reject)
-    sub.add_parser("report", help="コーパスの状態を出す").set_defaults(func=cmd_report)
+    sub.add_parser("report", help="コーパスの状態と品質を出す").set_defaults(func=cmd_report)
+    p_snap = sub.add_parser("snapshot", help="corpus snapshot を出す/照合する")
+    p_snap.add_argument("--out", help="スナップショットを書き出すパス")
+    p_snap.add_argument("--compare", help="照合するスナップショットのパス")
+    p_snap.set_defaults(func=cmd_snapshot)
 
     args = parser.parse_args(argv)
     args.func(args)
