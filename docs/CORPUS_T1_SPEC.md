@@ -464,7 +464,7 @@ system_inference / confidence / abstention_reason
 | C-T4b | Pass2 LLM分類 + Pass4 レビューキュー | 同上 | C-T4a |
 | C-T5 | **完了 2026-07-27** Phase A 13資料の投入 + 論理Index検証 | 実データ 483チャンク | C-T4a |
 | C-T6 | L2/L3候補生成（思想/創作/規則/Bridge Rule） | | C-T5 |
-| C-T7 | Router・Trace（人物質問判定・corpus_roleフィルタ・留保） | | C-T6 |
+| C-T7 | **worker側まで完了 2026-07-27** 拡張RPC・論理Index・質問種別ルーティング・trace列。frontend への配線は UI(T5)と同時 | `worker/src/aozora/routing.py` + `20260727000002_corpus_routing.sql` | C-T6 |
 | C-T8 | テスト・ドキュメント・snapshot | | C-T7 |
 
 **創作モードとの関係**: 生成パイプラインは T4c まで完成済み。創作モードの T6（夢十夜 profile 投入）は
@@ -579,6 +579,35 @@ FakeLLM を使う単体テストでは再現せず、実データ通しで初め
 | Guard が通らず安全側失敗が続く | judge にカードの**タイトルしか渡していなかった**ため、「語り手の気づき」を「仕組みの説明」と過検出 | カードの `positive_patterns` / `negative_patterns`（＝境界）を judge へ渡す。判定の原則も明記し `guard_judge` を v2 へ |
 
 3件目は Guard が**正しく安全側に倒れた**うえでの調整であり、違反したまま公開されたわけではない。
+
+---
+
+### 12.5 C-T7（Router）の実測
+
+拡張RPC（`target_corpus_roles` / `target_speaker_roles` / `primary_edition_only`、
+すべて default 付き）と論理Index 8種のプリセットを実装し、実データで検証した。
+
+| 質問 | 判定 | 検索順の実際 |
+|---|---|---|
+| 漱石は近代化をどう考えたか | `thought` | core → support → creative_grammar → narrative_reference（**明示付き**） |
+| 『夢十夜』の第十一夜を書け | `creative` | creative_grammar → narrative_reference → style_reference → core_thought（**Bridge Rule 経由のみ**） |
+| 代助は日本社会をどう考えたか | `character` | character_judgment（明示付き）→ narrative_reference（明示付き）→ core_thought（**比較対象のみ**） |
+
+- 「夢の中で女が死ぬ話」を思想ルート第1段で引いても **小説由来 0件**
+- 人物質問は登場人物名（代助 → `daisuke`）で判定。**名前が挙がらない質問は人物質問にしない**
+  （誤判定すると作者の思想を主根拠から外してしまうため）
+- 『それから』は Phase C（未投入）のため character_judgment は0件だが、
+  ルーティング自体は正しく人物ルートへ分岐する
+
+#### ⚠️ `create or replace` の落とし穴（実DBで判明）
+
+RPC にパラメータを足すと `create or replace` は**置換ではなく多重定義**になる。
+旧シグネチャが残ると PostgREST が候補を選べず、**既存の3引数呼び出し**（思想モードの
+現行RAG）が `PGRST203: Could not choose the best candidate function` で落ちる。
+
+→ 新版を作る前に **旧シグネチャを明示的に `drop function`** すること。
+migration にその手順を入れてある。「default 付きで足せば後方互換」は
+PostgreSQL の関数解決では**成り立たない**。
 
 ---
 
