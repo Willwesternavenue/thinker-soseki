@@ -30,8 +30,14 @@ INDEXES: dict[str, dict] = {
         "speaker_roles": None,
         "generation_input": True,
     },
+    # ⚠️ corpus_role='character_judgment' だけを条件にすると**永久に空になる**。
+    # corpus_role は文書単位の単一値で、取り込みは小説を narrative_reference に
+    # 割り当てるため、その役割が付く文書が存在しない(Phase C で長編を入れても
+    # 解消しない)。作中人物の判断は小説の中にあり、誰の発言かはチャンクの
+    # speaker_role が持っている。仕様§5 の定義を実データに合わせて改めた。
+    # character_judgment を残してあるのは、人手で明示的に割り当てた文書も拾うため。
     "character_judgment": {
-        "corpus_roles": ["character_judgment"],
+        "corpus_roles": ["character_judgment", "narrative_reference"],
         "speaker_roles": ["character"],
         "generation_input": True,
     },

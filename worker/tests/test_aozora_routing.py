@@ -20,9 +20,23 @@ def test_core_thought_index_excludes_fiction_speakers():
 
 
 def test_character_judgment_index_targets_characters():
+    """作中人物の発言は**小説の中**にある。
+
+    ⚠️ `corpus_role='character_judgment'` だけを条件にすると、この Index は
+    永久に空になる。corpus_role は文書単位の単一値で、取り込みは小説を
+    narrative_reference に割り当てるため。誰の発言かはチャンクの speaker_role が
+    持っている(仕様§5 の定義を実データに合わせて改めた)。
+    """
     f = routing.INDEXES["character_judgment"]
-    assert f["corpus_roles"] == ["character_judgment"]
+    assert "narrative_reference" in f["corpus_roles"]
+    # 明示的に character_judgment と付けた文書も拾う(人手で割り当てた場合)
+    assert "character_judgment" in f["corpus_roles"]
     assert f["speaker_roles"] == ["character"]
+
+
+def test_character_index_does_not_pick_up_narration():
+    """語り手の文は人物の判断ではない。"""
+    assert "narrator" not in routing.INDEXES["character_judgment"]["speaker_roles"]
 
 
 def test_validation_only_index_is_not_used_for_generation():

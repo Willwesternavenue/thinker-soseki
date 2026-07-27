@@ -42,7 +42,15 @@ const INDEXES: Record<string, { corpusRoles: string[]; speakerRoles: string[] | 
     speakerRoles: ["author_direct"],
   },
   creative_grammar: { corpusRoles: ["creative_grammar"], speakerRoles: null },
-  character_judgment: { corpusRoles: ["character_judgment"], speakerRoles: ["character"] },
+  // ⚠️ corpus_role='character_judgment' だけを条件にすると**永久に空になる**。
+  // corpus_role は文書単位の単一値で、取り込みは小説を narrative_reference に
+  // 割り当てるため、その役割が付く文書が存在しない（Phase C で長編を入れても
+  // 解消しない）。作中人物の判断は小説の中にあり、誰の発言かはチャンクの
+  // speaker_role が持っている。仕様§5 の定義を実データに合わせて改めた。
+  character_judgment: {
+    corpusRoles: ["character_judgment", "narrative_reference"],
+    speakerRoles: ["character"],
+  },
   narrative_reference: { corpusRoles: ["narrative_reference"], speakerRoles: null },
   style_reference: { corpusRoles: ["style_reference"], speakerRoles: null },
 };
@@ -136,7 +144,9 @@ export function retrievalFiltersFor(kind: CorpusRouteKind): {
 } {
   const usable = corpusRouteFor(kind).filter((s) => !s.requires_bridge_rule);
   return {
-    corpusRoles: usable.flatMap((s) => s.corpusRoles),
+    // 段どうしで役割が重なることがある(人物ルートの character_judgment と
+    // narrative_reference)。検索条件としては1回でよい
+    corpusRoles: [...new Set(usable.flatMap((s) => s.corpusRoles))],
     // speaker_role は段ごとに違うため、検索では絞らずチャンク側の値で判断する
     // (絞ると narrative_reference の語り手文が丸ごと落ちる)
     speakerRoles: null,

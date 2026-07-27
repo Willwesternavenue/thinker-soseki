@@ -52,7 +52,7 @@ def phase_a(client):
 def _chunks(client, *, corpus_roles=None, speaker_roles=None, source_ids=None):
     """論理Indexのフィルタをそのまま SQL 相当の絞り込みに落として引く。"""
     q = client.table("source_chunks").select(
-        "chunk_id,source_id,text,speaker_role,thought_eligibility,creative_eligibility"
+        "chunk_id,source_id,text,speaker_role,character_id,thought_eligibility,creative_eligibility"
     ).eq("person_id", PERSON_ID)
     if speaker_roles:
         q = q.in_("speaker_role", speaker_roles)
@@ -155,11 +155,50 @@ def test_question_without_direct_source_finds_nothing_in_core_index(phase_a):
 # ── シナリオ4: 登場人物の判断についての質問 ──
 
 
-def test_character_judgment_index_is_empty_until_novels_are_ingested(phase_a):
-    """代助（『それから』）の質問は Phase C の取り込み待ち。
+def test_character_index_finds_speech_inside_novels(phase_a):
+    """作中人物の発言が引ける。
 
-    Phase A に長編小説は含まれない。ここが空であることを固定しておき、
-    Phase C 完了時に本テストを「代助の発言が引けること」へ差し替える。
+    ⚠️ 以前は `corpus_role='character_judgment'` だけを条件にしていたため、
+    この Index は**構造上ずっと空**だった（取り込みは小説を narrative_reference に
+    割り当てるので、その corpus_role が付く文書が存在しない）。
+    Phase C で長編を入れても解消しない種類の欠落だった。
     """
-    assert _index_chunks(phase_a, "character_judgment") == []
-    assert routing.route_for("character")[0]["index"] == "character_judgment"
+    chunks = _index_chunks(phase_a, "character_judgment")
+
+    assert chunks, "作中人物の発言が1件も引けていない"
+    assert {c["source_id"] for c in chunks} == {YUME}
+    assert {c["speaker_role"] for c in chunks} == {"character"}
+
+
+def test_character_index_excludes_the_narrator(phase_a):
+    """語り手の文は人物の判断として引かない。"""
+    chunk_ids = {c["chunk_id"] for c in _index_chunks(phase_a, "character_judgment")}
+    narration = {
+        c["chunk_id"]
+        for c in _chunks(phase_a, source_ids=[YUME], speaker_roles=["narrator"])
+    }
+
+    assert narration, "語り手の文が無い(前提が崩れている)"
+    assert not (chunk_ids & narration)
+
+
+def test_character_speech_is_still_excluded_from_thought(phase_a):
+    """人物ルートで引けるようにしても、思想の根拠にはならないままであること。"""
+    character = _index_chunks(phase_a, "character_judgment")
+
+    assert {c["thought_eligibility"] for c in character} == {"excluded"}
+    core_ids = {c["chunk_id"] for c in _index_chunks(phase_a, "author_thought_core")}
+    assert not ({c["chunk_id"] for c in character} & core_ids)
+
+
+def test_named_characters_await_phase_c(phase_a):
+    """代助（『それから』）のような固有名の人物は Phase C の取り込み待ち。
+
+    `character_id` は Pass2 でも埋めていないため、いまは「誰の発言か」まで
+    絞り込めない。夢十夜の登場人物は無名なので当面は困らない。
+    """
+    assert routing.detect_character("代助はなぜ働かないのか") == "daisuke"
+    named = [
+        c for c in _index_chunks(phase_a, "character_judgment") if c.get("character_id")
+    ]
+    assert named == [], "character_id はまだ埋めていない"

@@ -109,11 +109,21 @@ describe("retrievalFiltersFor(実際に引く範囲)", () => {
   });
 
   it("人物ルートは人物判断・小説・比較用の思想を引く", () => {
+    // 段どうしで重なる役割は1回だけ(character_judgment 段と narrative_reference 段)
     expect(retrievalFiltersFor("character").corpusRoles).toEqual([
       "character_judgment",
       "narrative_reference",
       "core_thought",
     ]);
+  });
+
+  it("人物判断は小説の中から引く", () => {
+    // ⚠️ corpus_role='character_judgment' だけを条件にすると永久に空になる。
+    // 取り込みは小説を narrative_reference に割り当てるため。
+    const step = corpusRouteFor("character")[0];
+    expect(step.index).toBe("character_judgment");
+    expect(step.corpusRoles).toContain("narrative_reference");
+    expect(step.speakerRoles).toEqual(["character"]);
   });
 });
 

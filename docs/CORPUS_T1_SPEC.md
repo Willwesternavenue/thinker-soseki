@@ -318,13 +318,42 @@ Pass1 が拾うブロック引用は**0件**（引用占有率の最大は 0.51�
 | `author_thought_core_index` | `corpus_role='core_thought'` AND `speaker_role='author_direct'` AND `thought_eligibility!='excluded'` |
 | `author_thought_support_index` | `corpus_role='supporting_thought'` AND `speaker_role='author_direct'` |
 | `creative_grammar_index` | `corpus_role='creative_grammar'` |
-| `character_judgment_index` | `corpus_role='character_judgment'` AND `speaker_role='character'`（+ `character_id` 絞り） |
+| `character_judgment_index` | `corpus_role IN ('character_judgment','narrative_reference')` AND `speaker_role='character'`（+ `character_id` 絞り）⚠️ **2026-07-27 改訂**。詳細は §5.2 |
 | `narrative_reference_index` | `corpus_role='narrative_reference'`（+ canonical_work 絞り） |
 | `style_reference_index` | `corpus_role='style_reference'` |
 | `biographical_context_index` | `corpus_role='biographical_context'` |
 | `validation_only_index` | `corpus_role='validation_only'`（カード生成の入力にしない。事後検証専用） |
 
 **既定の検索は `is_primary_retrieval_edition=true` の版に限定**する（版違いで同じ段落を重複して返さない）。
+
+### 5.2 ⚠️ character_judgment_index の定義を実データに合わせて改めた（2026-07-27）
+
+当初の定義 `corpus_role='character_judgment'` は、**構造上ずっと空になる**。
+
+- `corpus_role` は `sources` の**単一カラム**（文書単位）
+- 取り込み（`tag._GENRE_TO_ROLE`）は novel / short_story / sketch を
+  `narrative_reference` に割り当てる
+- したがって `corpus_role='character_judgment'` が付く文書は生まれない
+
+実測（Phase A）: 仕様どおりの条件で **0件** / 実際に作中人物の発言があるチャンクは
+`narrative_reference` + `character` に **34件**。
+
+**Phase C で長編10作品を入れても解消しない**種類の欠落だった。1万チャンクを
+取り込んでから気づくと、役割の付け直しが同規模になる。
+
+作中人物の判断は小説の中にあり、**誰の発言かはチャンクの `speaker_role` が持っている**。
+文書の役割（narrative_reference）と発話者の役割（character）は別の軸なので、
+Index の条件も両方を見る形に改めた。`character_judgment` を残してあるのは、
+人手で明示的に割り当てた文書も拾うため。
+
+⚠️ 同種の注意: 仕様§4.1 は夢十夜に `narrative_reference` + `style_reference` の
+2つを割り当てているが、`corpus_role` は単一値なので**両方は持てない**。
+実装は `narrative_reference` のみ。`style_reference_index` も現状は空。
+
+⚠️ `character_id`（誰の発言か）は Pass1・Pass2 とも埋めていない。夢十夜の登場人物は
+無名なので当面は困らないが、Phase C で代助・三四郎を扱うには実装が要る。
+
+---
 
 ### 5.1 既存RPCの拡張方針
 
@@ -695,7 +724,7 @@ snapshot は**決定的**でなければ照合に使えないため、時刻・U
 | 近代化質問（講演優先・人物発言を主根拠にしない） | 実装・検証済み |
 | 第十一夜生成（creative_grammar と夢十夜本文を取得） | 実装・検証済み |
 | 生成AI質問（直接原典が無い） | 中核Indexが空を返すことまで検証済み。留保の**表示**は frontend 配線時 |
-| 代助質問（character_judgment） | **Phase C 待ち**。Phase A に長編小説が無いため、いまは「空であること」を固定してある。Phase C 完了時に「代助の発言が引けること」へ差し替える |
+| 代助質問（character_judgment） | Index の定義を直し（§5.2）、夢十夜の作中人物の発言34件が引けるようになった。**固有名の人物**（代助・三四郎）は Phase C の取り込みと `character_id` の実装待ち |
 
 ---
 
