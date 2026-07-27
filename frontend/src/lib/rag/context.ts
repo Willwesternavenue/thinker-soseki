@@ -1,5 +1,6 @@
 import "server-only";
 import type { MergedCards } from "./cards";
+import { attributionFor } from "./corpus-routing";
 import type { EvidenceChunk, Persona } from "./types";
 
 export type AnswerContext = {
@@ -49,6 +50,8 @@ export function buildAnswerContext(options: {
   misunderstandingSignal: boolean;
   /** assist時のみ。発火したapproved判断規則(L3) */
   judgmentRules?: JudgmentRuleForPrompt[];
+  /** 直接の原典が無い場合の留保理由(受入#14)。 */
+  abstentionReason?: string | null;
 }): AnswerContext {
   const {
     persona,
@@ -60,6 +63,7 @@ export function buildAnswerContext(options: {
     quotable,
     misunderstandingSignal,
     judgmentRules,
+    abstentionReason,
   } = options;
 
   const maxQuoteLength = persona.quote_policy?.max_quote_length ?? 100;
@@ -135,12 +139,29 @@ export function buildAnswerContext(options: {
   }
 
   if (evidence.length) {
-    const evidenceTexts = evidence.map(
-      (c) =>
-        `### ${c.source_title ?? c.source_id} ${c.chapter_title ?? ""}\n${c.summary ?? c.text.slice(0, 400)}`
-    );
+    const evidenceTexts = evidence.map((c) => {
+      // 誰の発言かを本文と同じ場所に書く。別枠の注意書きにすると、
+      // 生成時に登場人物の言葉が本人の主張へ滑る(指示書§10.1)
+      const notice = attributionFor({
+        corpus_role: c.corpus_role ?? null,
+        speaker_role: c.speaker_role ?? null,
+      });
+      const head = `### ${c.source_title ?? c.source_id} ${c.chapter_title ?? ""}`;
+      return [
+        head,
+        notice ? `⚠️ ${notice}` : "",
+        c.summary ?? c.text.slice(0, 400),
+      ]
+        .filter(Boolean)
+        .join("\n");
+    });
+    parts.push(`## 【原典本文(参考・引用不可)】\n` + evidenceTexts.join("\n\n"));
+  }
+
+  if (abstentionReason) {
     parts.push(
-      `## 【原典本文(参考・引用不可)】\n` + evidenceTexts.join("\n\n")
+      `## 【留保】\n${abstentionReason}\n` +
+        `原典に基づく主張として断定しない。分からないことは分からないと述べる。`
     );
   }
 
@@ -156,6 +177,8 @@ export function buildAnswerContext(options: {
 - 一人称は「${persona.first_person}」。自分を「社長」と呼ばない
 - 回答本文にRAG・資料・検索結果・カード・チャンク等の内部語を出さない。内部参照の仕組みを説明しない
 - 【回答方針】の文章を本人の発言として引用しない
+- ⚠️ が付いた原典は自分の主張として述べない。触れるなら「作中の人物がそう言う」「そういう作品を書いた」と、誰の言葉かが分かる形にする
+- 文体が似ていることを、考えが同じであることの根拠にしない
 - 引用してよいのは【引用可能箇所】のテキストのみ。${maxQuoteLength}字以内の短い引用に限る${quotable.length === 0 ? "(今回、引用可能箇所はない。引用符を使った引用はしない)" : ""}
 - 人物・書名・特定の言葉に触れるときは、それが誰/何で、何が重要か(何と言ったか)を同じ文脈で必ず説明する。背景を欠いた名前や「ある言葉」を仄めかしたまま終えない。裏づけが足りなければ、固有名を出さず一般化して語る
 - 確認できない事実、医学的効能、政治的賛否、家族や故人についての未確認情報は断定しない

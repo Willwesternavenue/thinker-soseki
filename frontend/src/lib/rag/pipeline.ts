@@ -12,10 +12,20 @@ import {
 } from "./cards";
 import { buildAnswerContext } from "./context";
 import {
+  buildRetrievalRoute,
+  corpusRouteKind,
+  decideAbstention,
+  detectCharacter,
+  directSourceIds,
+  rankByRoute,
+  retrievalFiltersFor,
+} from "./corpus-routing";
+import {
   diversifyEvidence,
   fetchLinkedEvidence,
   filterQuotableChunks,
   mergeEvidence,
+  retrieveRoutedEvidence,
   retrieveUnscopedEvidence,
 } from "./evidence";
 import {
@@ -133,15 +143,32 @@ export async function answerQuestion(
   // 原典全体の関連検索は常に行う。カードに紐づかない原典(未リンクの著作・経歴・
   // エピソード等)を取りこぼさないため。thought_idで絞る検索だけだと、リンク未整備の
   // 原典は related_thought_ids が空で永久にヒットしない。
-  const [unscoped, linked] = await Promise.all([
+  // コーパス層のルーティング(受入#15)。質問種別に応じて引く範囲を変える。
+  // ⚠️ 既存の無絞り込み検索は残す。コーパス層より前に投入した原典は corpus_role が
+  // null で、絞り込みだけにすると丸ごと落ちるため。
+  const routeKind = corpusRouteKind(classification.queryKind, retrievalQuery);
+  const characterId = detectCharacter(retrievalQuery);
+  const { corpusRoles } = retrievalFiltersFor(routeKind);
+
+  const [unscoped, routed, linked] = await Promise.all([
     retrieveUnscopedEvidence(db, PERSON_ID, retrievalQuery),
+    retrieveRoutedEvidence(db, PERSON_ID, retrievalQuery, corpusRoles),
     thoughtIds.length > 0
       ? fetchLinkedEvidence(db, PERSON_ID, thoughtIds)
       : Promise.resolve([] as EvidenceChunk[]),
   ]);
-  // linked(承認リンクの代表原典)を最優先し、関連度検索(unscoped)を足す。
+  // linked(承認リンクの代表原典)を最優先し、関連度検索を足す。
   // 重複はchunk_idで排除、スコア順に多様性制御(source/role偏り防止、3〜8件)。
-  const evidence = diversifyEvidence(mergeEvidence(linked, unscoped, []));
+  // そのうえで、思想質問では小説由来を作者の直接発言より後ろへ下げる
+  // (ベクトル検索は文体の似た小説をよく引く。順序をそのまま使うと、
+  //  文体の一致が思想の一致として提示されてしまう)。
+  const evidence = rankByRoute(
+    diversifyEvidence(mergeEvidence(linked, routed, unscoped)),
+    routeKind
+  );
+
+  // 直接の原典が無いまま断定させない(受入#14 / 指示書§13)
+  const abstentionReason = decideAbstention({ kind: routeKind, evidence });
 
   // 引用可能フィルタ(仕様7.8、コードで強制)
   const quotable = filterQuotableChunks(evidence);
@@ -171,6 +198,7 @@ export async function answerQuestion(
     quotable,
     misunderstandingSignal: route.misunderstandingSignal,
     judgmentRules: l3InjectedRules,
+    abstentionReason,
   });
 
   // 11. 回答生成(Sonnet)
@@ -193,6 +221,15 @@ export async function answerQuestion(
     answer
   );
 
+  const retrievalRoute = buildRetrievalRoute({
+    kind: routeKind,
+    characterId,
+    evidence: evidence.map((c) => ({
+      chunk_id: c.chunk_id,
+      corpus_role: c.corpus_role ?? null,
+      speaker_role: c.speaker_role ?? null,
+    })),
+  });
   const trace: AnswerTrace = {
     query_kind: classification.queryKind,
     routing_method: route.routingMethod,
@@ -202,6 +239,9 @@ export async function answerQuestion(
     retrieved_chunk_ids: evidence.map((c) => c.chunk_id),
     top_hits: evidence.map(toTopHit),
     guard_result: guardResult.guard,
+    retrieval_route: retrievalRoute,
+    direct_source_ids: directSourceIds(evidence, routeKind),
+    abstention_reason: abstentionReason,
   };
 
   // 14. trace保存・L3痕跡回収・セッション要約はレスポンス送信後に実行(after)。
@@ -228,6 +268,16 @@ export async function answerQuestion(
         top_hits: trace.top_hits,
         guard_result: trace.guard_result,
         l3_shadow: l3Shadow,
+        // コーパス層(C-T7)の痕跡。原典とAI外挿を分けて残す(受入#14・#15)
+        retrieval_route: trace.retrieval_route,
+        direct_source_ids: trace.direct_source_ids,
+        abstention_reason: trace.abstention_reason,
+        activated_rules: l3InjectedRules.map((r) => ({
+          rule_id: r.rule_id,
+          title: r.title,
+        })),
+        // 棄却した規則も残す(発火だけでなく棄却理由も記録する。指示書§18)
+        rejected_rules: l3Outcome.trace.rejected ?? [],
       });
       // セッション要約の更新(非致命)
       await maybeUpdateSessionSummary(db, sessionId, persona, sessionContext);

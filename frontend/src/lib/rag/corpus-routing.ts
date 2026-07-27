@@ -1,0 +1,301 @@
+/**
+ * コーパス層のルーティングと帰属表示（受入#14・#15 / 仕様 docs/CORPUS_T1_SPEC.md §6・§9）。
+ *
+ * 目的は一つに尽きる: **小説中の登場人物の発言を、作者本人の思想として提示しない**。
+ * そのために(1)質問種別で引く範囲を変え、(2)引いたものが誰の発言かを常に持ち回り、
+ * (3)直接の原典が無いときは留保する。
+ *
+ * ⚠️ INDEXES / ROUTES は worker 側 `worker/src/aozora/routing.py` と対になる。
+ * 片方だけ変えると、生成と回答で別の規則が働く。`corpus-routing.test.ts` が
+ * 並びとフラグを固定しているので、変える場合は両方を同時に変えること。
+ */
+
+import type { QueryKind } from "./types";
+
+/**
+ * コーパス層のタグ。コーパス層より前に投入した原典では未設定(null / undefined)。
+ * 省略可能にしてあるのは、既存の `EvidenceChunk` をそのまま渡せるようにするため。
+ */
+export type CorpusTagged = {
+  corpus_role?: string | null;
+  speaker_role?: string | null;
+};
+
+export type CorpusRouteKind = "thought" | "creative" | "character";
+
+export type RouteStep = {
+  index: string;
+  corpusRoles: string[];
+  speakerRoles: string[] | null;
+  /** 小説由来を出すときは「作者本人の発言ではない」と明示する(指示書§10.1) */
+  requires_attribution_notice: boolean;
+  /** 思想を創作へ持ち込むのは Bridge Rule を介する場合のみ(指示書§12.2) */
+  requires_bridge_rule: boolean;
+  /** 比較対象としてのみ使う(主根拠にしない) */
+  comparison_only: boolean;
+};
+
+const INDEXES: Record<string, { corpusRoles: string[]; speakerRoles: string[] | null }> = {
+  author_thought_core: { corpusRoles: ["core_thought"], speakerRoles: ["author_direct"] },
+  author_thought_support: {
+    corpusRoles: ["supporting_thought"],
+    speakerRoles: ["author_direct"],
+  },
+  creative_grammar: { corpusRoles: ["creative_grammar"], speakerRoles: null },
+  character_judgment: { corpusRoles: ["character_judgment"], speakerRoles: ["character"] },
+  narrative_reference: { corpusRoles: ["narrative_reference"], speakerRoles: null },
+  style_reference: { corpusRoles: ["style_reference"], speakerRoles: null },
+};
+
+function step(
+  index: string,
+  flags: { attribution?: boolean; bridge?: boolean; comparison?: boolean } = {}
+): RouteStep {
+  return {
+    index,
+    ...INDEXES[index],
+    requires_attribution_notice: flags.attribution ?? false,
+    requires_bridge_rule: flags.bridge ?? false,
+    comparison_only: flags.comparison ?? false,
+  };
+}
+
+const ROUTES: Record<CorpusRouteKind, RouteStep[]> = {
+  // 思想: 本人の直接発言から。小説は比較・補助として最後に、明示付きで
+  thought: [
+    step("author_thought_core"),
+    step("author_thought_support"),
+    step("creative_grammar"),
+    step("narrative_reference", { attribution: true }),
+  ],
+  // 創作: 作風の論から。思想は Bridge Rule を介する場合のみ
+  creative: [
+    step("creative_grammar"),
+    step("narrative_reference"),
+    step("style_reference"),
+    step("author_thought_core", { bridge: true }),
+  ],
+  // 人物: 作中人物の判断から。作者思想は比較対象としてのみ
+  character: [
+    step("character_judgment", { attribution: true }),
+    step("narrative_reference", { attribution: true }),
+    step("author_thought_core", { comparison: true }),
+  ],
+};
+
+/**
+ * 既知の登場人物。人物質問の判定に使う。
+ * ⚠️ 名前が挙がらない質問を人物質問にしない。誤判定すると作者の思想が主根拠から外れる。
+ */
+export const KNOWN_CHARACTERS: Record<string, string> = {
+  代助: "daisuke",
+  美禰子: "mineko",
+  三四郎: "sanshiro",
+  宗助: "sosuke",
+  健三: "kenzo",
+  津田: "tsuda",
+  お延: "onobu",
+  苦沙弥: "kushami",
+  迷亭: "meitei",
+  寒月: "kangetsu",
+};
+
+export function detectCharacter(query: string): string | null {
+  for (const [name, id] of Object.entries(KNOWN_CHARACTERS)) {
+    if (query.includes(name)) return id;
+  }
+  return null;
+}
+
+/**
+ * 既存の `QueryKind`(8値)を、コーパスの検索ルート(3値)へ写す。
+ *
+ * ⚠️ 既存 `QueryKind` の `"creative"` は「創作依頼」の意味で、創作モード
+ * (`/creative` の作品生成)とは**別概念**。ここでは前者を扱う。
+ */
+export function corpusRouteKind(queryKind: QueryKind, query: string): CorpusRouteKind {
+  // 創作依頼が先。人物名が入っていても、書かせることが主目的なので創作ルートで引く
+  if (queryKind === "creative") return "creative";
+  if (detectCharacter(query)) return "character";
+  return "thought";
+}
+
+export function corpusRouteFor(kind: CorpusRouteKind): RouteStep[] {
+  return ROUTES[kind] ?? ROUTES.thought;
+}
+
+/**
+ * 実際に検索で使う corpus_role の集合。
+ *
+ * **Bridge Rule を要する段は外す**。創作規則(L3)は未実装なので、思想チャンクを
+ * 素通しで創作依頼へ渡さないためにここで落とす(仕様§6の禁止事項)。
+ */
+export function retrievalFiltersFor(kind: CorpusRouteKind): {
+  corpusRoles: string[];
+  speakerRoles: string[] | null;
+} {
+  const usable = corpusRouteFor(kind).filter((s) => !s.requires_bridge_rule);
+  return {
+    corpusRoles: usable.flatMap((s) => s.corpusRoles),
+    // speaker_role は段ごとに違うため、検索では絞らずチャンク側の値で判断する
+    // (絞ると narrative_reference の語り手文が丸ごと落ちる)
+    speakerRoles: null,
+  };
+}
+
+/** 小説・評伝など、作者本人の直接発言ではない corpus_role。 */
+const INDIRECT_CORPUS_ROLES = new Set([
+  "narrative_reference",
+  "character_judgment",
+  "style_reference",
+]);
+
+const SPEAKER_NOTICES: Record<string, string> = {
+  character: "作品内の登場人物の発言であり、本人の直接の主張ではない",
+  narrator: "作品の語り手の文であり、本人の直接の主張ではない",
+  quoted_person: "本人が引用した第三者の発言であり、本人の主張ではない",
+};
+
+/**
+ * このチャンクを回答に使うとき、帰属の明示が要るか(指示書§10.1)。
+ *
+ * `corpus_role` も `speaker_role` も無いチャンクは、コーパス層より前に投入された
+ * 既存の原典。従来どおり注記を付けない(既存の思想モードの挙動を変えない)。
+ */
+export function attributionFor(chunk: CorpusTagged): string | null {
+  if (chunk.speaker_role && SPEAKER_NOTICES[chunk.speaker_role]) {
+    return SPEAKER_NOTICES[chunk.speaker_role];
+  }
+  if (chunk.corpus_role && INDIRECT_CORPUS_ROLES.has(chunk.corpus_role)) {
+    return "作品由来の記述であり、本人の直接の主張ではない";
+  }
+  return null;
+}
+
+/** 作者本人の直接発言として扱えるチャンクか。 */
+function isAuthorDirect(chunk: CorpusTagged) {
+  return attributionFor(chunk) === null;
+}
+
+/**
+ * 思想質問では、関連度が高くても小説を作者の発言より後ろへ下げる。
+ *
+ * ベクトル検索は文体の似ている小説をよく引く。順序をそのまま使うと、
+ * **文体の一致が思想の一致として提示される**(指示書§18)。
+ * 人物質問では下げない — その場合は人物の発言こそが根拠だから。
+ */
+export function rankByRoute<T extends CorpusTagged & { score: number }>(
+  chunks: T[],
+  kind: CorpusRouteKind
+): T[] {
+  if (kind === "character") return chunks;
+  // 呼び出し側がスコア順に並べてあるかに依存しない(並べ替えの前提を外へ出さない)
+  const byScore = (a: T, b: T) => b.score - a.score;
+  return [
+    ...chunks.filter(isAuthorDirect).sort(byScore),
+    ...chunks.filter((c) => !isAuthorDirect(c)).sort(byScore),
+  ];
+}
+
+/**
+ * 「直接の原典」と数えるための関連度の下限。
+ *
+ * ベクトル検索は関連が無くても常に上位N件を返すため、ヒットの有無だけでは
+ * 「原典がある」ことにならない。閾値が無いと**現代の質問にも必ず原典があること
+ * になり、留保が一度も発火しない**。
+ *
+ * 実測(Phase A 483チャンク・text-embedding-3-small):
+ *   「現代日本の開化について」 0.68 / 「生成AIをどう思うか」 0.35 /
+ *   「ブロックチェーンの規制について」 0.21 / 「暗号資産の確定申告」 0.24
+ * 原典にある話題と現代語の間がはっきり空くので、その間に置く。
+ */
+export const MIN_DIRECT_SOURCE_SCORE = 0.45;
+
+/** そのルートにとって「直接の原典」と言える根拠があるか。 */
+export function hasDirectSource(
+  evidence: Array<CorpusTagged & { score?: number }>,
+  kind: CorpusRouteKind
+): boolean {
+  const relevant = evidence.filter(
+    (c) => (c.score ?? 0) >= MIN_DIRECT_SOURCE_SCORE
+  );
+  if (kind === "character") {
+    // 人物質問は、その人物の発言そのものが直接の原典
+    return relevant.some(
+      (c) => c.speaker_role === "character" || c.corpus_role === "character_judgment"
+    );
+  }
+  return relevant.some(isAuthorDirect);
+}
+
+/**
+ * 留保の理由(指示書§13)。直接の原典が無いまま断定させないための記録。
+ *
+ * 「小説しか無い思想質問」も留保する。作中人物の言葉から作者の思想を
+ * 名乗らせないための、最後の歯止め。
+ */
+export function decideAbstention(options: {
+  kind: CorpusRouteKind;
+  evidence: Array<CorpusTagged & { score?: number }>;
+}): string | null {
+  const { kind, evidence } = options;
+  if (hasDirectSource(evidence, kind)) return null;
+
+  const relevant = evidence.filter((c) => (c.score ?? 0) >= MIN_DIRECT_SOURCE_SCORE);
+  if (relevant.length === 0) {
+    return "この主題を直接扱った原典が見つからなかった。原典に基づく主張として述べていない。";
+  }
+  return (
+    "直接の原典が無く、作品由来の記述しか見つからなかった。" +
+    "作品内の表現を本人の主張として扱っていない。"
+  );
+}
+
+/**
+ * 直接の原典として実際に使えた source_id(受入#14)。
+ *
+ * `hasDirectSource` と同じ条件で数える。片方だけ緩いと、留保を出しているのに
+ * trace には原典が並ぶという矛盾した記録になり、監査の役に立たなくなる。
+ */
+export function directSourceIds(
+  evidence: Array<CorpusTagged & { source_id: string; score?: number }>,
+  kind: CorpusRouteKind
+): string[] {
+  const qualifies = (c: CorpusTagged & { score?: number }) =>
+    (c.score ?? 0) >= MIN_DIRECT_SOURCE_SCORE &&
+    (kind === "character"
+      ? c.speaker_role === "character" || c.corpus_role === "character_judgment"
+      : isAuthorDirect(c));
+  return [...new Set(evidence.filter(qualifies).map((c) => c.source_id))];
+}
+
+export type RetrievalRouteTrace = {
+  kind: CorpusRouteKind;
+  indexes: string[];
+  character_id: string | null;
+  counts_by_corpus_role: Record<string, number>;
+  attributed_chunk_ids: string[];
+};
+
+/** `answer_traces.retrieval_route` に残す内容(どのルートで何を引いたか)。 */
+export function buildRetrievalRoute(options: {
+  kind: CorpusRouteKind;
+  characterId: string | null;
+  evidence: Array<CorpusTagged & { chunk_id: string }>;
+}): RetrievalRouteTrace {
+  const counts: Record<string, number> = {};
+  for (const c of options.evidence) {
+    // role未設定も数える。コーパス層へ移行しきれていない原典を見つけられるように
+    const key = c.corpus_role ?? "unclassified";
+    counts[key] = (counts[key] ?? 0) + 1;
+  }
+  return {
+    kind: options.kind,
+    indexes: corpusRouteFor(options.kind).map((s) => s.index),
+    character_id: options.characterId,
+    counts_by_corpus_role: counts,
+    attributed_chunk_ids: options.evidence
+      .filter((c) => attributionFor(c) !== null)
+      .map((c) => c.chunk_id),
+  };
+}

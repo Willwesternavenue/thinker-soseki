@@ -67,6 +67,13 @@ export type EvidenceChunk = {
   quote_allowed: boolean; // links由来の場合のみ
   score: number;
   origin: "linked" | "vector" | "keyword";
+  /**
+   * コーパス層のタグ(C-T7)。誰の発言か・どの役割の文書かを回答まで持ち回り、
+   * 作者本人の発言と作中人物の発言を混同させないために使う(受入#14)。
+   * コーパス層より前に投入した原典では null。
+   */
+  speaker_role?: string | null;
+  corpus_role?: string | null;
 };
 
 export type GuardResult = {
@@ -100,4 +107,10 @@ export type AnswerTrace = {
   retrieved_chunk_ids: string[];
   top_hits: TopHit[];
   guard_result: GuardResult;
+  /** コーパス層のルーティング痕跡(受入#15)。 */
+  retrieval_route?: unknown;
+  /** 直接の原典として使えた source_id(受入#14)。 */
+  direct_source_ids?: string[];
+  /** 直接の原典が無い場合の留保理由(受入#14)。 */
+  abstention_reason?: string | null;
 };

@@ -129,6 +129,55 @@ export async function retrieveUnscopedEvidence(
   return mergeEvidence([], vectorHits, keywordHits);
 }
 
+/**
+ * ルートで絞った原典検索(受入#15)。
+ *
+ * 既存の `retrieveUnscopedEvidence` を**置き換えない**。コーパス層より前に投入した
+ * 原典は `corpus_role` が null で、絞り込むと丸ごと落ちるため。両方引いて統合する。
+ * ここは「そのルートで引くべきものを確実に取る」ための追加検索。
+ */
+export async function retrieveRoutedEvidence(
+  db: SupabaseClient,
+  personId: string,
+  query: string,
+  corpusRoles: string[]
+): Promise<EvidenceChunk[]> {
+  if (corpusRoles.length === 0) return [];
+  const embedding = await embedText(query);
+  const [vectorRes, keywordRes] = await Promise.all([
+    db.rpc("match_source_chunks_all", {
+      query_embedding: JSON.stringify(embedding),
+      target_person_id: personId,
+      match_count: 10,
+      target_corpus_roles: corpusRoles,
+      // 版違いで同じ段落を重複して返さない(仕様§1.3)
+      primary_edition_only: true,
+    }),
+    db.rpc("search_source_chunks_fulltext", {
+      query_text: query,
+      thought_ids: null,
+      target_person_id: personId,
+      match_count: 10,
+      target_corpus_roles: corpusRoles,
+      primary_edition_only: true,
+    }),
+  ]);
+  // 拡張RPCが未適用の環境でも回答は続ける(絞り込み無しの検索結果で答える)
+  if (vectorRes.error && keywordRes.error) return [];
+
+  const vectorHits = ((vectorRes.data ?? []) as Record<string, unknown>[]).map((r) =>
+    toChunk(r, "vector")
+  );
+  const keywordHits = keywordRes.error
+    ? []
+    : ((keywordRes.data ?? []) as Record<string, unknown>[]).map((r) => {
+        const chunk = toChunk(r, "keyword");
+        chunk.score = 0.5;
+        return chunk;
+      });
+  return mergeEvidence([], vectorHits, keywordHits);
+}
+
 function toChunk(r: Record<string, unknown>, origin: "vector" | "keyword"): EvidenceChunk {
   return {
     chunk_id: r.chunk_id as string,
@@ -144,6 +193,9 @@ function toChunk(r: Record<string, unknown>, origin: "vector" | "keyword"): Evid
     quote_allowed: false,
     score: (r.similarity as number) ?? 0.5,
     origin,
+    // 拡張RPCが返すコーパス層のタグ。旧シグネチャの呼び出しでは undefined
+    speaker_role: (r.speaker_role as string | null) ?? null,
+    corpus_role: (r.corpus_role as string | null) ?? null,
   };
 }
 
