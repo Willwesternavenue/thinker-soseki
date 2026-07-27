@@ -7,21 +7,17 @@
  * シェルの環境変数での一時上書きを想定。ファイルとしての .env は使わない)。
  */
 
-/**
- * GCP / Firebase プロジェクトID(Secret Manager・firebase-admin が使う)。
- * ⚠️ TBD: 漱石用 Firebase プロジェクト作成後に実値へ差し替える(HANDOFF.md チェックリスト)。
- * maurice の値を残すと誤って maurice 本番へ接続するため、確定までプレースホルダにしてある。
- */
-export const GCP_PROJECT_ID = "thinker-soseki-TBD";
+/** GCP / Firebase プロジェクトID(Secret Manager・firebase-admin が使う) */
+export const GCP_PROJECT_ID = "thinker-soseki";
 
-/** Firebase クライアント設定(公開情報。APIキーは秘密ではない)。⚠️ TBD: Webアプリ登録後に6項目を転記 */
+/** Firebase クライアント設定(公開情報。APIキーは秘密ではない) */
 export const FIREBASE_CONFIG = {
-  apiKey: "TBD",
-  authDomain: "thinker-soseki-TBD.firebaseapp.com",
+  apiKey: "AIzaSyD9HjnR1hZ9AWyiGw_1ib-aBEesXAfimS8",
+  authDomain: "thinker-soseki.firebaseapp.com",
   projectId: GCP_PROJECT_ID,
-  storageBucket: "thinker-soseki-TBD.firebasestorage.app",
-  messagingSenderId: "TBD",
-  appId: "TBD",
+  storageBucket: "thinker-soseki.firebasestorage.app",
+  messagingSenderId: "43122904293",
+  appId: "1:43122904293:web:5951fb53bc1e9babe1d80c",
 } as const;
 
 /**

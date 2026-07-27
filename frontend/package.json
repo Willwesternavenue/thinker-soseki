@@ -7,8 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "deploy": "firebase apphosting:rollouts:create web-frontend --project thinker-soseki-TBD --git-branch main",
-    "deploy:worker": "cd ../worker && gcloud builds submit --project thinker-soseki-TBD --tag asia-northeast1-docker.pkg.dev/thinker-soseki-TBD/thinker-soseki/worker:latest && gcloud run deploy thinker-soseki-worker --project thinker-soseki-TBD --image asia-northeast1-docker.pkg.dev/thinker-soseki-TBD/thinker-soseki/worker:latest --region asia-northeast1 --no-allow-unauthenticated --min-instances=1 --max-instances=1 --no-cpu-throttling --memory=1Gi"
+    "deploy": "firebase apphosting:rollouts:create web-frontend --project thinker-soseki --git-branch main",
+    "deploy:worker": "cd ../worker && gcloud builds submit --project thinker-soseki --tag asia-northeast1-docker.pkg.dev/thinker-soseki/thinker-soseki/worker:latest && gcloud run deploy thinker-soseki-worker --project thinker-soseki --image asia-northeast1-docker.pkg.dev/thinker-soseki/thinker-soseki/worker:latest --region asia-northeast1 --no-allow-unauthenticated --min-instances=1 --max-instances=1 --no-cpu-throttling --memory=1Gi"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0",

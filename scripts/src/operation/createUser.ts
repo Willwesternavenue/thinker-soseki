@@ -7,7 +7,7 @@
  *   npm run create-user -- --email x@example.com --password <8文字以上>  # パスワード指定
  *
  * - 既に同じメールのユーザーがいる場合は作り直さず、ロール/表示名/パスワード(指定時)を更新する。
- * - 認証はADC(gcloud auth application-default login)。thinker-soseki-TBDの権限が必要:
+ * - 認証はサービスアカウントキー(GOOGLE_APPLICATION_CREDENTIALS)。thinker-soseki の権限が必要:
  *   Firebase Authユーザー作成 = roles/firebaseauth.admin相当、Secret Manager読み取り。
  * - Firebaseコンソール(Authentication → Users)での手動発行と同じ結果になる。
  *   どちらを使ってもよい(docs/FIREBASE_MIGRATION.md 1章)。
@@ -21,7 +21,7 @@ import { createClient } from "@supabase/supabase-js";
 import { SecretManagerServiceClient } from "@google-cloud/secret-manager";
 
 // 正本は frontend/src/lib/const.ts / worker/src/config.py(変えるときは全て揃える)
-const GCP_PROJECT_ID = "thinker-soseki-TBD";
+const GCP_PROJECT_ID = "thinker-soseki";
 // ⚠️ TBD: 漱石用Supabaseプロジェクト作成後に実値へ。ローカル開発時は
 // SUPABASE_URL=http://127.0.0.1:55421 を環境変数で渡す。
 const SUPABASE_URL =
