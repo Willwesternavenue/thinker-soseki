@@ -5,6 +5,8 @@
   uv run python -m src.aozora.cli in-progress         # 作業中8件の記録(本文は取らない)
   uv run python -m src.aozora.cli ingest 000799       # 版を1つ取り込む
   uv run python -m src.aozora.cli ingest-phase-a      # Phase A 13資料をまとめて取り込む
+  uv run python -m src.aozora.cli gen-thought-cards   # 思想カード候補(draft)
+  uv run python -m src.aozora.cli gen-rules           # 判断規則 + Bridge Rule 候補
   uv run python -m src.aozora.cli retag               # Pass2(LLM分類)を未適用チャンクへ
   uv run python -m src.aozora.cli review-tags         # Pass4 レビュー待ちを見る
   uv run python -m src.aozora.cli report              # コーパスの状態と品質を出す
@@ -25,9 +27,10 @@ from collections import Counter
 from pathlib import Path
 
 from .. import db
+from ..steps import gen_questions
 from . import (
-    gen_creative_cards, ingest, manifest, person_page, retag,
-    snapshot as snapshot_mod,
+    gen_creative_cards, gen_rules, gen_thought_cards, ingest, manifest,
+    person_page, retag, snapshot as snapshot_mod,
 )
 
 PERSON_ID = "natsume_soseki"
@@ -153,6 +156,79 @@ def cmd_gen_cards(_args) -> None:
     for card in cards:
         print(f"  {card['card_id']} [{card['status']:8s}] {card['card_type']:12s} "
               f"{card['evidence_type'][:24]:24s} {card['title']}")
+
+
+def cmd_gen_thought_cards(_args) -> None:
+    """思想カード候補を生成する(必ず draft)。"""
+    result = gen_thought_cards.generate()
+    print(f"思想カード候補: 新規{result['created']}件 / "
+          f"既存スキップ{result['skipped_existing']}件 / "
+          f"根拠不足スキップ{result['skipped_no_evidence']}件")
+    c = db.client()
+    for card in (c.table("thought_cards").select("card_id,thought_id,title,status")
+                 .eq("person_id", PERSON_ID).order("thought_id").execute().data):
+        print(f"  {card['card_id']} [{card['status']:8s}] {card['thought_id']:24s} "
+              f"{card['title']}")
+
+
+def cmd_approve_thought(args) -> None:
+    for card_id in args.card_ids:
+        try:
+            gen_thought_cards.approve_card(card_id, reviewed_by=args.by)
+            print(f"承認: {card_id}")
+        except ValueError as exc:
+            print(f"承認できず: {card_id}: {exc}")
+
+
+def cmd_gen_questions(_args) -> None:
+    """承認済み思想カードの代表質問を生成する。
+
+    これが無いと Thought Router がベクトル検索で当てられず、思想質問が
+    すべてフォールバックカードへ流れる(回答は返るが、質問に合ったカードが選ばれない)。
+    """
+    c = db.client()
+    cards = (
+        c.table("thought_cards").select("card_id, title")
+        .eq("person_id", PERSON_ID).eq("status", "approved")
+        .order("thought_id").execute().data
+    )
+    existing = {
+        r["target_card_id"]
+        for r in c.table("thought_questions").select("target_card_id")
+        .eq("person_id", PERSON_ID).execute().data
+    }
+    total = 0
+    for card in cards:
+        if card["card_id"] in existing:
+            continue
+        n = gen_questions.run(card["card_id"])
+        total += n
+        print(f"  {card['card_id']} {card['title'][:40]}: {n}件")
+    print(f"代表質問: {total}件")
+
+
+def cmd_gen_rules(_args) -> None:
+    """判断規則と Bridge Rule の候補を生成する(必ず draft)。"""
+    j = gen_rules.generate_judgment_rules()
+    print(f"判断規則: 新規{j['created']}件 / 既存{j['skipped_existing']}件 / "
+          f"不正{j['skipped_invalid']}件")
+    b = gen_rules.generate_bridge_rules()
+    print(f"Bridge Rule: 新規{b['created']}件 / 既存{b['skipped_existing']}件 / "
+          f"不正{b['skipped_invalid']}件")
+    c = db.client()
+    for r in (c.table("judgment_rules").select("rule_id,rule_scope,rule_type,title")
+              .eq("person_id", PERSON_ID).order("rule_scope").execute().data):
+        print(f"  {r['rule_id']} [{r['rule_scope']:12s}] {r['rule_type']:20s} "
+              f"{r['title']}")
+
+
+def cmd_approve_rule(args) -> None:
+    for rule_id in args.rule_ids:
+        try:
+            gen_rules.approve_rule(rule_id, reviewed_by=args.by)
+            print(f"承認: {rule_id}")
+        except ValueError as exc:
+            print(f"承認できず: {rule_id}: {exc}")
 
 
 def cmd_show_card(args) -> None:
@@ -339,6 +415,21 @@ def main(argv=None) -> int:
     p_ng.add_argument("card_ids", nargs="+")
     p_ng.add_argument("--by", default="cli", help="却下者")
     p_ng.set_defaults(func=cmd_reject)
+    sub.add_parser("gen-thought-cards", help="思想カード候補を生成する").set_defaults(
+        func=cmd_gen_thought_cards)
+    p_at = sub.add_parser("approve-thought", help="思想カードを承認する")
+    p_at.add_argument("card_ids", nargs="+")
+    p_at.add_argument("--by", default="cli")
+    p_at.set_defaults(func=cmd_approve_thought)
+    sub.add_parser(
+        "gen-questions", help="承認済み思想カードの代表質問を生成する"
+    ).set_defaults(func=cmd_gen_questions)
+    sub.add_parser("gen-rules", help="判断規則 + Bridge Rule 候補を生成する").set_defaults(
+        func=cmd_gen_rules)
+    p_ar = sub.add_parser("approve-rule", help="規則を承認する")
+    p_ar.add_argument("rule_ids", nargs="+")
+    p_ar.add_argument("--by", default="cli")
+    p_ar.set_defaults(func=cmd_approve_rule)
     p_retag = sub.add_parser("retag", help="Pass2(LLM分類)を未適用チャンクへ適用する")
     p_retag.add_argument("--limit", type=int, help="処理するチャンク数の上限")
     p_retag.set_defaults(func=cmd_retag)

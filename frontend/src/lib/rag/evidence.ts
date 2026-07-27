@@ -17,7 +17,10 @@ export async function fetchLinkedEvidence(
   const { data } = await db
     .from("thought_evidence_links")
     .select(
-      "chunk_id, evidence_role, strength, quote_allowed, source_chunks(chunk_id, source_id, chapter_title, section_title, source_page, printed_page, text, summary, verbatim, status), sources(title)"
+      // speaker_role / corpus_role も取る。これが無いと承認リンク由来の根拠だけ
+      // 帰属が判定できず(誰の発言か不明のまま回答へ入り)、trace でも
+      // unclassified として数えられてしまう
+      "chunk_id, evidence_role, strength, quote_allowed, source_chunks(chunk_id, source_id, chapter_title, section_title, source_page, printed_page, text, summary, verbatim, status, speaker_role), sources(title, corpus_role)"
     )
     .eq("person_id", personId)
     .eq("status", "approved")
@@ -46,6 +49,8 @@ export async function fetchLinkedEvidence(
       quote_allowed: link.quote_allowed,
       score: strengthScore[link.strength] ?? 0.7,
       origin: "linked",
+      speaker_role: (chunk.speaker_role as string | null) ?? null,
+      corpus_role: (source?.corpus_role as string | null) ?? null,
     });
   }
   return result;

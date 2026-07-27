@@ -88,6 +88,16 @@ def clean_corpus(client):
         client.table("creative_generations").delete().neq("profile_id", "").execute()
         client.table("creative_cards").delete().neq("card_id", "").execute()
         client.table("creative_profiles").delete().neq("profile_id", "").execute()
+        # コーパス由来の思想カード(C-T6)も消す。残っていると「既存カードはスキップ」
+        # の判定に引っ掛かり、次のテストで1枚も作られなくなる。
+        # judgment_rule_evidence → judgment_rules → thought_cards の順(FKのため)。
+        client.table("judgment_rule_evidence").delete().neq("rule_id", "").execute()
+        client.table("judgment_rule_versions").delete().neq("rule_id", "").execute()
+        client.table("judgment_rules").delete().neq("rule_id", "").execute()
+        client.table("thought_evidence_links").delete().neq("link_id", "").execute()
+        # 代表質問はカードを参照する。先に消さないと thought_cards の削除がFKで落ちる
+        client.table("thought_questions").delete().neq("question_id", "").execute()
+        client.table("thought_cards").delete().neq("card_id", "").execute()
         client.table("sources").delete().neq("edition_id", "").execute()
         client.table("work_editions").delete().neq("edition_id", "").execute()
         client.table("canonical_works").delete().neq("canonical_work_id", "").execute()

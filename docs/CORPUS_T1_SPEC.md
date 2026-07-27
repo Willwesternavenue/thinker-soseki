@@ -481,7 +481,7 @@ uv run python -m src.aozora.cli gen-cards
 | C-T4a | **完了** Pass1 決定的タグ + Pass3 整合性検査 + Pass4 レビュー判定 | `worker/src/aozora/tag.py` | C-T3c |
 | C-T4b | **完了 2026-07-27** Pass2 LLM分類 + Pass4 レビューキュー。実測は §12.4 | `worker/src/aozora/tag.py` + `retag.py` | C-T4a |
 | C-T5 | **完了 2026-07-27** Phase A 13資料の投入 + 論理Index検証 | 実データ 483チャンク | C-T4a |
-| C-T6 | L2/L3候補生成（思想/創作/規則/Bridge Rule） | | C-T5 |
+| C-T6 | **完了 2026-07-27** L2思想カード / L3判断規則 / Bridge Rule + 代表質問。実測は §12.5 | `worker/src/aozora/gen_thought_cards.py` + `gen_rules.py` | C-T5 |
 | C-T7 | **worker側まで完了 2026-07-27** 拡張RPC・論理Index・質問種別ルーティング・trace列。frontend への配線は UI(T5)と同時 | `worker/src/aozora/routing.py` + `20260727000002_corpus_routing.sql` | C-T6 |
 | C-T8 | **完了 2026-07-27** snapshot（受入#18）+ データ品質レポート（受入#20）+ Retrieval シナリオテスト。実測は §12.2 | `worker/src/aozora/snapshot.py` | C-T7 |
 
@@ -699,6 +699,75 @@ snapshot は**決定的**でなければ照合に使えないため、時刻・U
 
 ---
 
+## 12.5 C-T6（L2/L3候補生成）の実測（2026-07-27）
+
+```bash
+uv run python -m src.aozora.cli gen-thought-cards            # 思想カード候補(draft)
+uv run python -m src.aozora.cli approve-thought <card_id>    # 承認
+uv run python -m src.aozora.cli gen-questions                # 代表質問(ルーティング用)
+uv run python -m src.aozora.cli gen-rules                    # 判断規則 + Bridge Rule
+uv run python -m src.aozora.cli approve-rule <rule_id>
+```
+
+### 承認の関門を迂回させない鎖
+
+| 段 | 入力 | 制約 |
+|---|---|---|
+| 思想カード | `author_thought_core` Index のチャンクのみ | 3条件（corpus_role / speaker_role / thought_eligibility）を**すべて**満たすもの。LLM が Index 外のIDを根拠に挙げたら捨てる |
+| 判断規則 | **承認済み**思想カード | 原典から直接作らない。カード承認という人手の関門を規則が迂回できてしまうため |
+| Bridge Rule | **両側が承認済み**の思想カード + 創作カード | 片側でも未承認なら橋を架けない |
+
+承認時にも再検証する。思想カードは「根拠が今も思想Indexに居るか」、規則は
+「元の思想カードが承認済みのままか」を見る。取り込み直しやタグの修正で
+根拠が小説側へ移ることがあるため。
+
+### Bridge Rule の禁止事項は LLM 任せにしない
+
+仕様§6 の禁止（思想チャンクを登場人物の台詞へそのまま注入しない）は、
+LLM の出力に関わらず必ず `forbidden_inferences` へ入れる。実測でも
+LLM 由来の禁止2件に加えて既定の1件が入っている。
+
+### ⚠️ 全チャンクを1プロンプトに詰めると1資料しか入らない
+
+最初の実装は思想Index 377チャンクをまとめて渡していた。文字数上限（12000字）で
+**9資料中1つの冒頭しか入らず、カード9枚すべてが『文芸の哲学的基礎』由来**になった。
+資料ごとに分けて呼ぶよう直した結果、8資料すべてから出るようになった。
+
+### 実測
+
+| 対象 | 実測 |
+|---|---|
+| 思想カード | 57枚（全 draft → 12枚を承認）。8資料すべてから出ている |
+| 代表質問 | 113件（承認済み12枚ぶん） |
+| 判断規則 | 23件（`distinction` / `priority` / `value_transformation` / `boundary` / `temporal_override`） |
+| Bridge Rule | 6件（思想カード → 創作カードの対応） |
+
+⚠️ `gen-rules` は実行のたびに新しい候補を提案する（LLM が別の `rule_family_id` を出すため）。
+既存と同名のものはスキップするが、**回を重ねると候補が積み上がる**。承認して使うものを
+選び、残りは却下する運用が要る。
+
+### 思想対話が動くようになった
+
+C-T6 の前は `thought_cards` 0件・`fallback_card_id` 未設定で、`thought` /
+`life_advice` に分類された質問は既存の不変条件で 500 になっていた。
+
+| 質問 | routing_method | 選ばれたカード |
+|---|---|---|
+| 近代化についてどう考えますか | （代表質問の生成前）フォールバック | 傍観者の観察は対象と同化できない |
+| 文学は科学のように進歩するものでしょうか | `llm_classifier`・フォールバック**不使用** | 文学は科学と異なり一本道に発達しない |
+
+⚠️ **代表質問（`thought_questions`）が無いと Thought Router は当てられない**。
+無くても回答は返るが、すべてフォールバックカードへ流れる。`gen-questions` は
+思想カードを承認したら必ず流すこと。
+
+### 承認リンク由来の根拠がコーパスタグを落としていた（修正済み）
+
+`fetchLinkedEvidence` が `speaker_role` / `corpus_role` を取っておらず、
+承認リンク経由の根拠だけ帰属が判定できない状態だった（trace でも `unclassified`
+として数えられていた）。列を追加して解消。
+
+---
+
 ## 12.4 C-T4b（Pass2 LLM分類 / Pass4 レビューキュー）の実測（2026-07-27）
 
 ```bash
@@ -816,8 +885,8 @@ text-embedding-3-small）:
 - 承認済み思想カードが0枚・フォールバック未設定の現状では、`thought` / `life_advice`
   に分類された質問は**既存の不変条件で 500 になる**（本配線とは無関係の既存仕様）。
   上表の検証は `fact` / `person_or_work` に分類される聞き方で行った。
-- 創作ルートの `author_thought_core` は Bridge Rule（C-T6）待ちのため、検索対象から
-  外してある。思想チャンクを登場人物の台詞へそのまま注入させないため。
+- 創作ルートの `author_thought_core` は検索対象から外してある。Bridge Rule（C-T6 で
+  実装済み）を介した経路のみを許すためで、frontend への Bridge Rule 配線は未了。
 
 ---
 
@@ -837,7 +906,7 @@ text-embedding-3-small）:
 | 10 | 主要12資料を取り込める | C-T5（実際は13件） |
 | 11 | 『文学論』『文学評論』を別providerとして管理できる | **スコープ外**。`source_provider` 列で将来対応可能な形にする |
 | 12 | approved カード・規則のみ assist で使用する | 実装済み（創作モード） |
-| 13 | L2/L3 の全項目に evidence と provenance がある | C-T6 |
+| 13 | L2/L3 の全項目に evidence と provenance がある | **完了**（§12.5。思想カードは `thought_evidence_links`、規則は `judgment_rule_evidence` にカードと原典チャンクの両方） |
 | 14 | 原典とAI外挿を trace 上で区別できる | **完了**（§12.3。`frontend/src/lib/rag/corpus-routing.ts` + pipeline 配線） |
 | 15 | 思想検索と創作検索のルーティングを分離できる | **完了**（§12.3） |
 | 16 | 既存Thinkerのテストがすべて通る | 全タスクで維持 |
@@ -855,7 +924,6 @@ text-embedding-3-small）:
 
 | # | 条件 | 残っている理由 |
 |---|---|---|
-| 13 | L2/L3 の全項目に evidence と provenance | 創作カードは evidence 必須で実装済み。**判断規則（L3）と Bridge Rule は C-T6 で未着手** |
 
 #9（小説人物の発言が思想Indexへ混入しない）は §12.2 のとおり、実データで3層の防御を
 1つずつ壊して確認済み。
