@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 5555",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 5555",
     "lint": "eslint",
     "deploy": "firebase apphosting:rollouts:create web-frontend --project thinker-soseki --git-branch main",
     "deploy:worker": "cd ../worker && gcloud builds submit --project thinker-soseki --tag asia-northeast1-docker.pkg.dev/thinker-soseki/thinker-soseki/worker:latest && gcloud run deploy thinker-soseki-worker --project thinker-soseki --image asia-northeast1-docker.pkg.dev/thinker-soseki/thinker-soseki/worker:latest --region asia-northeast1 --no-allow-unauthenticated --min-instances=1 --max-instances=1 --no-cpu-throttling --memory=1Gi"
