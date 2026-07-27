@@ -54,6 +54,7 @@ maurice 立ち上げ時の実績手順。詳細は `/Users/will/.claude/projects
 - [x] GitHub: `thinker-soseki` リポジトリ作成 → maurice(b92e60f) を履歴ごと統合、origin=thinker-soseki / upstream=thinker-maurice 設定済み（2026-07-26）
 - [x] person置換: `merleau_ponty` → `natsume_soseki` 完了（2026-07-26。コード・SQL・UI呼称・正規化ロジック・テスト。接続先6行はTBDプレースホルダ化して maurice 誤接続を防止。既存テスト green: worker 28 / frontend 43 / tsc）
 - [ ] Firebase プロジェクト新規作成（ユーザー作業）→ Webアプリ登録 → firebaseConfig 6項目をコードへ
+  → **手順は [docs/FIREBASE_SETUP.md](docs/FIREBASE_SETUP.md)**（漱石の実値に落とした版）
   - ⚠️ Firebase が別サフィックス付きprojectIdを作ることがある（maurice では thinker-maurice と thinker-maurice-9082f の2つが生まれ混乱した）
   - ⚠️ Authentication → メール/パスワード有効化を忘れない
 - [x] ローカル Supabase スタックの分離（2026-07-26）: `config.toml` の `project_id` が maurice と同じ
