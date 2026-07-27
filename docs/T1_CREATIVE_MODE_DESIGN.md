@@ -250,7 +250,7 @@ T0 レポート §7 の図を正とする（frontend INSERT → worker ポーリ
 |---|---|---|---|
 | T2a | **完了 2026-07-26** migration 作成 + `db reset` 全チェーン適用 + 制約9項目の実地検証 + 既存テスト green | フォーク | `20260726000001_creative_mode.sql` |
 | T2b | **完了 2026-07-26** worker repository 層（profiles/cards/generations/traces の CRUD）+ 実DBに対する結合テスト14件 | T2a | `worker/src/creative/repo.py` |
-| T3a | admin: creative-profiles 画面 + actions | T2a | profile 登録が可能に |
+| T3a | **完了 2026-07-27** admin: creative-profiles 一覧/新規/編集 + 状態変更。表示題名の型を検証（`{title}` 必須・`{title}` 単独は禁止・未知の置換子は禁止）。active 化は承認済みカード1枚以上を要求 | T2a | `frontend/src/app/admin/creative-profiles/` |
 | T3b | **完了 2026-07-27** admin: creative-cards 一覧/詳細 + 承認フロー。主張と根拠原文を並置し、承認前に根拠チャンクの実在をサーバー側でも検証（クライアントの `disabled` に依存しない） | T2a | `frontend/src/app/admin/creative-cards/` |
 | T4a | **完了 2026-07-26** worker: ポーリング分岐 + Step1〜4 + 不変条件 | T2b | `creative/generate.py` `creative/prompts.py` + main.py 分岐 |
 | T4b | **完了 2026-07-27** worker: outline / draft + prompts.py（版管理） | T4a | `build_outline` / `build_draft` |

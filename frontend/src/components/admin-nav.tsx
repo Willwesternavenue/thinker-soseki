@@ -34,6 +34,7 @@ const NAV: NavEntry[] = [
     // 創作モードは思想モードと別データ。誤認しないようメニューを分ける(仕様§9.1)
     label: "創作",
     items: [
+      { href: "/admin/creative-profiles", label: "創作プロファイル" },
       { href: "/admin/creative-cards", label: "創作カード" },
       { href: "/creative", label: "創作画面" },
     ],
