@@ -448,6 +448,24 @@ system_inference / confidence / abstention_reason
 | **Approval**（§14.5） | draft はassistへ入らない / rejected は検索候補から除外 / approved のみ本番利用 / version変更時に過去traceが再現可能 / evidence切れのカードを検出 |
 | **Data Quality**（§14.6） | 全公開作品マニフェスト取得 / 作業中は本文未取得 / orphan chunkなし / source URL欠落なし / content hash保存 / parser version保存 / 文字化け率 / 重複率 / speaker_role未分類率 / core thought内のfiction混入率 / evidence span整合性 |
 
+### 11.1 ⚠️ worker の pytest はローカルのコーパスを消す
+
+`worker/tests/conftest.py` の `clean_corpus` fixture が sources / source_chunks /
+creative_* を FK 順に truncate するため、**`uv run pytest` を流すとローカルの取り込み済み
+データと承認済みカードが消える**。テストの独立性のために必要な挙動なので変えない。
+
+UI を触る前にテストを流したら、下記で作り直す（`gen-cards` と `embed` は課金あり）:
+
+```bash
+uv run python -m src.aozora.cli manifest && \
+uv run python -m src.aozora.cli ingest-phase-a && \
+uv run python -m src.aozora.cli embed && \
+uv run python -m src.aozora.cli create-profile && \
+uv run python -m src.aozora.cli gen-cards
+```
+
+カードは再生成のたびに `card_id` が変わるので、承認は作り直しのたびに必要になる。
+
 ---
 
 ## 12. タスク分割

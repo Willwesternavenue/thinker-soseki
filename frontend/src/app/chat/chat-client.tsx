@@ -185,6 +185,10 @@ export function ChatClient({
         </div>
         <div className="border-t border-stone-200 p-3 text-xs text-stone-500">
           <p>{displayName}</p>
+          {/* 創作は思想対話と別機能。動線は用意しつつ呼称で区別する(仕様§9.1) */}
+          <a href="/creative" className="block underline hover:text-stone-700">
+            創作（新作を書く）
+          </a>
           {isAdmin && !embedded && (
             <a href="/admin/sources" className="underline hover:text-stone-700">
               管理画面へ

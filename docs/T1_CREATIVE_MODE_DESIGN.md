@@ -255,7 +255,7 @@ T0 レポート §7 の図を正とする（frontend INSERT → worker ポーリ
 | T4a | **完了 2026-07-26** worker: ポーリング分岐 + Step1〜4 + 不変条件 | T2b | `creative/generate.py` `creative/prompts.py` + main.py 分岐 |
 | T4b | **完了 2026-07-27** worker: outline / draft + prompts.py（版管理） | T4a | `build_outline` / `build_draft` |
 | T4c | **完了 2026-07-27** worker: guard.py + 再生成フロー + trace 書込み | T4b | `creative/guard.py` + パイプライン完成（Step1〜8） |
-| T5 | `/creative` UI + ポーリング + 結果タブ + admin generations 監視 | T2a（表示は T4c） | ユーザー導線完成 |
+| T5 | **完了 2026-07-27** `/creative` UI（入力検証・冪等送信・8段の進捗ポーリング・結果5タブ・失敗分類表示）。admin generations 監視は未着手 | T2a（表示は T4c） | `frontend/src/app/creative/` |
 | T6a | `aozora_fetch` CLI + 夢十夜 ingestion（底本記録） | 新スタック + person置換 | 夢十夜コーパス |
 | T6b | `creative_distill` CLI → カード draft → 管理画面で承認 → 閾値較正 | T3b, T4c, T6a | approved 初期カード一式 |
 | T6c | E2E 手動シナリオ実施・受入条件（SPEC §16）照合 | 全部 | 受入記録 |
