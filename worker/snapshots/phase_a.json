@@ -5,7 +5,7 @@
     "sources": 13,
     "work_editions": 113
   },
-  "digest": "3fa5b42ff303535c4b6a9dc9e1618025782bbc077e0b6c19bb6c95331e0e33de",
+  "digest": "369b0b0fbfa0c9bd47d88d2993391bc966a3b02f1a39ceb87ae0b2b3eff4b6ab",
   "editions": [
     {
       "aozora_work_id": "000751",
@@ -1144,7 +1144,7 @@
     {
       "authority_level": "author_direct",
       "chunk_count": 82,
-      "chunks_fingerprint": "631908349d5b8944e1e27a121a82fd8813861d4417cdc61ecef3d538835c774f",
+      "chunks_fingerprint": "654c2f9137fa7d54678e20da1b167cbc7833c185a9a5330c12e69609c0b29a08",
       "corpus_role": "core_thought",
       "document_genre": "lecture",
       "edition_id": "000755",
@@ -1154,7 +1154,7 @@
     {
       "authority_level": "author_direct",
       "chunk_count": 28,
-      "chunks_fingerprint": "9a01d1c1c5abc06e07608bb2d753f65f05578002d1f577532a2dc70bb3385663",
+      "chunks_fingerprint": "35cb57768ac16dae3efc515f92365461f18ed56eee21ae420b01f026d1b95f8f",
       "corpus_role": "core_thought",
       "document_genre": "lecture",
       "edition_id": "000756",
@@ -1164,7 +1164,7 @@
     {
       "authority_level": "author_direct",
       "chunk_count": 28,
-      "chunks_fingerprint": "d6020673e70e1f363259d1b55628a0599c776e345ef51fd3aa2aa2419754bb7e",
+      "chunks_fingerprint": "0f2134e7367b61260b0f33e2503fdc3f142a54fa43fe7a11a3defaf859a40904",
       "corpus_role": "core_thought",
       "document_genre": "lecture",
       "edition_id": "000757",
@@ -1174,7 +1174,7 @@
     {
       "authority_level": "author_direct",
       "chunk_count": 30,
-      "chunks_fingerprint": "70b80da1aea1559c4685d18a57f0a1dab3502afb29b2933d33efedc8b1f6239e",
+      "chunks_fingerprint": "03dd74f6209d550175500fcc6272119ff3cae90fea9d1d41b62bb1444ab3241f",
       "corpus_role": "core_thought",
       "document_genre": "lecture",
       "edition_id": "000759",
@@ -1184,7 +1184,7 @@
     {
       "authority_level": "author_direct",
       "chunk_count": 40,
-      "chunks_fingerprint": "fa808afff1257f5e4f7d9f27ba6bd24ad9bf60a08fc2b46531cbf46a00518236",
+      "chunks_fingerprint": "8b8070fb77b3a67f868ab088d89d323204fe2f430475b156da53d3290807d9f4",
       "corpus_role": "core_thought",
       "document_genre": "lecture",
       "edition_id": "000772",
@@ -1194,7 +1194,7 @@
     {
       "authority_level": "author_direct",
       "chunk_count": 12,
-      "chunks_fingerprint": "7da6af7659f2dab57db5a8c1695148320b4cd5b5a0ae48a9b206ebfea69508a9",
+      "chunks_fingerprint": "abe04b7c47c477392776262dafc3c278378adb76244d014173c7dc9d37d6d3a2",
       "corpus_role": "core_thought",
       "document_genre": "lecture",
       "edition_id": "000778",
@@ -1204,7 +1204,7 @@
     {
       "authority_level": "author_direct",
       "chunk_count": 25,
-      "chunks_fingerprint": "82a191c1d89d4c24e48e307f0b464ea5325c371c087a5505bf963f61ecadf34b",
+      "chunks_fingerprint": "d8421872215d39c5ea040f1d012a293fc3070ae3dc511312645deb525c17ae72",
       "corpus_role": "core_thought",
       "document_genre": "lecture",
       "edition_id": "000788",
@@ -1214,7 +1214,7 @@
     {
       "authority_level": "author_direct",
       "chunk_count": 11,
-      "chunks_fingerprint": "72639795c7b8e8310fa85d48c21786a86cdee8e18d0d7346b4e3d6ea61687e28",
+      "chunks_fingerprint": "e798e9d1e1a52d5bcbd7fecc5555a36c0478ccf9f6d832dc32fe45519dd04181",
       "corpus_role": "creative_grammar",
       "document_genre": "criticism",
       "edition_id": "000793",
@@ -1224,7 +1224,7 @@
     {
       "authority_level": "author_direct",
       "chunk_count": 8,
-      "chunks_fingerprint": "5f88fd916b09f61b9545a9e1d0dcd0f4953f3165b625a8baefc1702f2007b73f",
+      "chunks_fingerprint": "8892f7cb58bd0c383ef9bf47fc788baf8ac0287c223c1c3fb80312f489273fc6",
       "corpus_role": "creative_grammar",
       "document_genre": "literary_theory",
       "edition_id": "000796",
@@ -1234,7 +1234,7 @@
     {
       "authority_level": "fictional_indirect",
       "chunk_count": 75,
-      "chunks_fingerprint": "b6a8f6c1ade9a36f665be3026e8c1834367f91f4270257d14fe2a7b7ba506c8f",
+      "chunks_fingerprint": "04d067e679760ef5a4b2a35a4f6c9c3a6ae503e4e8d2d9f8b6fe4062e3c3396c",
       "corpus_role": "narrative_reference",
       "document_genre": "short_story",
       "edition_id": "000799",
@@ -1244,7 +1244,7 @@
     {
       "authority_level": "author_direct",
       "chunk_count": 99,
-      "chunks_fingerprint": "5e31f51ac709776fece7a55ef8ce44f73579512ae2069a4c4adb107124aaf98c",
+      "chunks_fingerprint": "b0abfac90001e345a4f04ebd45abd40f693a74d95853d7f15e861db591f7a8db",
       "corpus_role": "core_thought",
       "document_genre": "lecture",
       "edition_id": "001102",
@@ -1254,7 +1254,7 @@
     {
       "authority_level": "author_direct",
       "chunk_count": 33,
-      "chunks_fingerprint": "f0c8c7d1c88d7a671b1baccac5491f21652afbed2446b75b16ee002bc482395b",
+      "chunks_fingerprint": "ec80668daffa5d0ffc0b1d2ccff710ce11141ac34b510bb154a6e9ea9b3d2ebb",
       "corpus_role": "core_thought",
       "document_genre": "lecture",
       "edition_id": "001747",
@@ -1264,7 +1264,7 @@
     {
       "authority_level": "author_direct",
       "chunk_count": 12,
-      "chunks_fingerprint": "282b71d8682ef0627fe7528ebe3b5f97cdc3e6f0f504f4fa5610d8dd78ca8545",
+      "chunks_fingerprint": "8728a416da3fc2875803ecc384b5ca16fc24a25af9ad6fe2a47d7ff24066f1c8",
       "corpus_role": "creative_grammar",
       "document_genre": "preface",
       "edition_id": "002667",

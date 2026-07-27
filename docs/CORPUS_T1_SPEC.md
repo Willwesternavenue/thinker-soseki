@@ -479,7 +479,7 @@ uv run python -m src.aozora.cli gen-cards
 | C-T3b | **完了** Parser/Normalizer（3形式・ルビ・注記・奥付） | `worker/src/aozora/parse.py` | C-T3a |
 | C-T3c | **完了** チャンク分割（`aozora_v1`・話者交代・意味段落） | `worker/src/aozora/chunk.py` | C-T3b |
 | C-T4a | **完了** Pass1 決定的タグ + Pass3 整合性検査 + Pass4 レビュー判定 | `worker/src/aozora/tag.py` | C-T3c |
-| C-T4b | Pass2 LLM分類 + Pass4 レビューキュー | 同上 | C-T4a |
+| C-T4b | **完了 2026-07-27** Pass2 LLM分類 + Pass4 レビューキュー。実測は §12.4 | `worker/src/aozora/tag.py` + `retag.py` | C-T4a |
 | C-T5 | **完了 2026-07-27** Phase A 13資料の投入 + 論理Index検証 | 実データ 483チャンク | C-T4a |
 | C-T6 | L2/L3候補生成（思想/創作/規則/Bridge Rule） | | C-T5 |
 | C-T7 | **worker側まで完了 2026-07-27** 拡張RPC・論理Index・質問種別ルーティング・trace列。frontend への配線は UI(T5)と同時 | `worker/src/aozora/routing.py` + `20260727000002_corpus_routing.sql` | C-T6 |
@@ -699,6 +699,68 @@ snapshot は**決定的**でなければ照合に使えないため、時刻・U
 
 ---
 
+## 12.4 C-T4b（Pass2 LLM分類 / Pass4 レビューキュー）の実測（2026-07-27）
+
+```bash
+uv run python -m src.aozora.cli retag         # Pass2 を未適用チャンクへ
+uv run python -m src.aozora.cli review-tags   # Pass4 レビュー待ち（確信度の低い順）
+uv run python -m src.aozora.cli tag-review <chunk_id> --by me --set speaker_role=quoted_person
+```
+
+Pass2 は**取り込みとは別のステップ**にした。取り込みを LLM 無しで再実行できる状態に
+保ちたい（§12.2 の再現性検証で使う）のと、分類だけをやり直せるようにするため。
+
+### Pass2 は安全側の決定を覆せない
+
+`tag.merge_pass2` が上限を掛ける。LLM がどれだけ自信を持って別の値を返しても:
+
+- 小説のチャンクを `author_direct` にできない（`narrator` / `character` に閉じる）
+- `thought_eligibility` を Pass1 より**上げられない**（下げることはできる）
+- 小説は何があっても `thought_eligibility=excluded`
+- 未知の値は Pass1 へ戻し、確信度0でレビューへ回す（握りつぶすと「分類済みの誤り」になる）
+
+人手の修正（`tag-review --set`）にも同じ制限が掛かる。レビューは「LLMの誤りを直す」
+ためのもので、作者と作中人物の区別そのものを覆す手段ではない。
+
+### ⚠️ LLM は講演者を「登場人物」と分類する
+
+実データで出た systematic な誤り。講演で著者が自分を演出している箇所を
+`speaker_role=character` と分類してくる。Pass3 の整合性検査は拾えるが、
+**40件中26件がレビュー行き**になりキューが使えなくなった。
+
+これは本文についての情報ではなく**カテゴリの誤り**なので、レビューへ回さず
+`merge_pass2` で直す（非小説に `narrator` / `character` は存在しない。
+引用だと言っているなら `quoted_person`、それ以外は Pass1 の値へ）。直した事実は
+`classification_reason` に残す。プロンプト側にも明記した。
+
+| | レビュー行き |
+|---|---|
+| 修正前 | 40件中 **26件** |
+| 修正後 | 40件中 **9件**（残りはすべて確信度 0.85〜0.89 の妥当なもの） |
+
+### Phase A 483チャンクへの適用結果
+
+| 指標 | 実測 |
+|---|---|
+| 分類済み | 483件（auto_ok 404 / needs_review 79 = 16%） |
+| speaker_role | author_direct 408 / narrator 39 / character 36 |
+| claim_type | descriptive_observation 114 / conceptual_distinction 96 / normative_claim 72 / fictional_statement 70 / literary_analysis 50 / autobiographical_report 40 ほか |
+| **小説チャンクの thought_eligibility** | **75件すべて excluded**（受入#9 を維持） |
+
+Pass1 は会話文の判定を段落単位でしか見ないため narrator 47 / character 28 だった。
+Pass2 が地の文に埋め込まれた会話を8件拾い、39 / 36 になった（受入#7・#8）。
+
+### ⚠️ snapshot に Pass2 の結果を含めてはいけない
+
+Pass2 は LLM なので非決定的。`speaker_role` などを snapshot の指紋に含めると、
+**同じ取り込みでも digest が揺れて #18 の再現性検証が使えなくなる**。
+指紋は `chunk_id + chunk_hash`（本文とその分割）に限定した。
+タグの状態は品質レポートと Pass4 レビューキューで見る。
+
+実測: `ingest-phase-a` → snapshot 保存 → `retag`（483件分類）→ snapshot 照合 で**一致**。
+
+---
+
 ## 12.3 frontend への routing / trace 配線の実測（2026-07-27）
 
 `frontend/src/lib/rag/corpus-routing.ts` を追加し、回答パイプラインへ配線した。
@@ -769,8 +831,8 @@ text-embedding-3-small）:
 | 4 | raw / normalized / display text を保存できる | C-T3b |
 | 5 | 青空文庫の由来情報を保持できる | C-T2b（bottom_text） |
 | 6 | 文書単位の genre / corpus role を付けられる | C-T4a |
-| 7 | チャンク単位の speaker role を付けられる | C-T4b |
-| 8 | 作者・語り手・登場人物・引用人物を区別できる | C-T4b |
+| 7 | チャンク単位の speaker role を付けられる | **完了**（§12.4。483件・未分類0%） |
+| 8 | 作者・語り手・登場人物・引用人物を区別できる | **完了**（§12.4。author_direct 408 / narrator 39 / character 36） |
 | 9 | core thought Index へ小説人物の発言が混入しない | C-T5（§5） |
 | 10 | 主要12資料を取り込める | C-T5（実際は13件） |
 | 11 | 『文学論』『文学評論』を別providerとして管理できる | **スコープ外**。`source_provider` 列で将来対応可能な形にする |
@@ -781,7 +843,7 @@ text-embedding-3-small）:
 | 16 | 既存Thinkerのテストがすべて通る | 全タスクで維持 |
 | 17 | migration が additive で rollback 可能 | C-T2a（§10） |
 | 18 | corpus snapshot を再現できる | **C-T8 完了**（§12.2。空のDBから2回取り込んで digest 一致） |
-| 19 | parser / embedding / prompt の version を保存できる | C-T3b・C-T4b |
+| 19 | parser / embedding / prompt の version を保存できる | **完了**（`parser_version` / `chunker_version` / `tagger_version`） |
 | 20 | データ品質レポートを出力できる | **C-T8 完了**（§12.2。10項目・`cli report`） |
 
 ⚠️ **#11 は今回スコープ外**（発注者確定: 今回は青空文庫のみ）。`source_provider` を最初から
@@ -793,7 +855,6 @@ text-embedding-3-small）:
 
 | # | 条件 | 残っている理由 |
 |---|---|---|
-| 7・8 | speaker role / 発話者の区別 | 決定的タグ（Pass1）は動いている。**Pass2（LLM分類）が C-T4b で未着手**。現状は会話文・地の文・引用ブロックの機械判定のみで、実データでは未分類0%・レビュー要0件 |
 | 13 | L2/L3 の全項目に evidence と provenance | 創作カードは evidence 必須で実装済み。**判断規則（L3）と Bridge Rule は C-T6 で未着手** |
 
 #9（小説人物の発言が思想Indexへ混入しない）は §12.2 のとおり、実データで3層の防御を

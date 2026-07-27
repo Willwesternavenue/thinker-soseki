@@ -156,7 +156,7 @@ def ingest_edition(edition_id: str, *, client=None, fetch=None) -> dict:
             "thought_eligibility": tags["thought_eligibility"],
             "creative_eligibility": tags["creative_eligibility"],
             "is_quotation": tags["is_quotation"],
-            "tagger_version": tag.TAGGER_VERSION,
+            "tagger_version": tag.PASS1_VERSION,
             "tag_review_status": (
                 "needs_review"
                 if tag.needs_review({**tags, "tag_confidence": 1.0}, issues)

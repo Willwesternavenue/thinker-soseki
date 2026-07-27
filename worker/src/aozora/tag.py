@@ -9,15 +9,24 @@
 ⚠️ LLM分類だけで approved にしない(指示書§9 Pass4)。ここで出すのは候補値。
 """
 
+import json
 import re
 
-TAGGER_VERSION = "aozora_tag_v1"
+from .. import config, llm
+
+# Pass1(決定的タグ)だけを通した状態。取り込みはこれを付ける。
+# ⚠️ 取り込み時点で TAGGER_VERSION を付けてはいけない。「分類済み」と見分けが
+# 付かなくなり、Pass2 が永久に走らないチャンクができる。
+PASS1_VERSION = "aozora_tag_v1_pass1"
+# Pass1+Pass2 まで通した状態。retag が付ける。
+TAGGER_VERSION = "aozora_tag_v2"
 
 # confidence がこれ未満なら人手確認へ回す
 REVIEW_CONFIDENCE_THRESHOLD = 0.7
 
 # 小説系。作者本人の直接発言として扱ってはいけない
-_FICTION_GENRES = ("novel", "short_story", "sketch")
+FICTION_GENRES = ("novel", "short_story", "sketch")
+_FICTION_GENRES = FICTION_GENRES  # 後方互換(既存の内部参照)
 
 # タイトルから genre を推定する手掛かり。NDCだけでは決まらないため併用する(指示書§7.2)
 _TITLE_HINTS = (
@@ -169,6 +178,230 @@ def deterministic_chunk_tags(chunk: dict, *, document_genre: str) -> dict:
         "claim_type": None,  # Pass2(LLM)で決める
         "assertion_status": "asserted",
     }
+
+
+# ── Pass2: LLM分類(候補値を出すだけ。安全側の決定は覆せない) ──
+
+SPEAKER_ROLES = frozenset({
+    "author_direct", "narrator", "character", "quoted_person",
+    "interviewer", "editor", "unknown",
+})
+# 小説では作者本人の発言はあり得ない。LLMがどう答えてもこの2値に閉じる
+FICTION_SPEAKER_ROLES = frozenset({"narrator", "character"})
+_FICTION_SPEAKER_ROLES = FICTION_SPEAKER_ROLES
+
+CLAIM_TYPES = frozenset({
+    "normative_claim", "descriptive_observation", "conceptual_distinction",
+    "priority_claim", "prohibition", "exception", "autobiographical_report",
+    "historical_report", "hypothetical_example", "quotation",
+    "literary_analysis", "fictional_statement", "meta_commentary",
+})
+ASSERTION_STATUSES = frozenset({
+    "asserted", "attributed", "hypothetical", "questioned",
+    "ironic", "ambiguous", "rejected_by_author",
+})
+
+# 適格性の強さ。Pass1 の値が上限で、Pass2 は下げることしかできない
+_ELIGIBILITY_RANK = {"candidate": 2, "support": 1, "excluded": 0}
+
+# 1回のプロンプトに詰め込むチャンク数。多すぎると max_tokens で打ち切られ、
+# その文書のPass2が丸ごと失われる(llm.ensure_not_truncated が例外を投げる)
+PASS2_BATCH_SIZE = 20
+
+_PASS2_SYSTEM = (
+    "あなたは文献の分類器である。夏目漱石の著作のチャンクに、"
+    "誰の発言か・どういう主張かのタグを付ける。"
+    "最も重要な原則: **小説中の登場人物や語り手の言葉を、作者本人の主張として扱わない**。"
+)
+
+_PASS2_PROMPT = """文書種別: {document_genre}
+コーパス上の役割: {corpus_role}
+
+以下の各チャンクを分類せよ。
+
+speaker_role（誰の言葉か）:
+- author_direct: 著者本人が自分の考えとして述べている
+- narrator: 小説の語り手（**小説にのみ現れる**）
+- character: 小説の登場人物（**小説にのみ現れる**）
+- quoted_person: 著者が引用した他者の発言
+- interviewer / editor / unknown
+
+⚠️ narrator と character は文書種別が novel / short_story / sketch の場合にだけ使う。
+講演・評論・随筆では、語っているのは著者本人である。講演で著者が自分を演出していても
+それは author_direct であって character ではない。他者の言葉を引いているなら
+quoted_person を使う。
+
+claim_type（主張の型）:
+normative_claim（べきだ）/ descriptive_observation（事実の観察）/
+conceptual_distinction（概念の区別）/ priority_claim（優先順位）/
+prohibition（禁止）/ exception（例外）/ autobiographical_report（自分の経験）/
+historical_report（歴史の記述）/ hypothetical_example（仮定の例）/
+quotation（引用）/ literary_analysis（作品の分析）/
+fictional_statement（作中の言明）/ meta_commentary（話の進め方への言及）
+
+assertion_status（どう述べているか）:
+asserted（主張している）/ attributed（他者に帰属）/ hypothetical（仮定）/
+questioned（問いかけ）/ ironic（皮肉）/ ambiguous（曖昧）/
+rejected_by_author（著者が否定している）
+
+thought_eligibility（著者の思想の根拠に使えるか）:
+candidate（主たる根拠になる）/ support（補助）/ excluded（使わない）
+
+判断の指針:
+- 鉤括弧があっても、作品名や語句の参照なら引用ではない
+  （例:「坊ちゃん」でもご覧になったのでしょう）
+- 地の文に埋め込まれた他者の発言は quotation として拾う
+- 皮肉・仮定・問いかけを主張と取り違えない
+- 迷う場合は confidence を下げる。無理に断定しない
+
+チャンク:
+{chunks}
+
+出力形式（JSONのみ。全チャンクを必ず含める）:
+{{"chunks": [{{"chunk_id": "...", "speaker_role": "...", "claim_type": "...",
+"assertion_status": "...", "thought_eligibility": "...", "is_quotation": true,
+"is_hypothetical": false, "is_ironic": false, "confidence": 0.0,
+"reason": "判断の根拠を一文で"}}]}}"""
+
+
+def _valid(value, allowed, fallback=None):
+    return value if value in allowed else fallback
+
+
+def merge_pass2(pass1: dict, llm_result: dict, *, document_genre: str) -> dict:
+    """Pass1 の決定的タグに Pass2 の分類を重ねる。
+
+    ⚠️ Pass2 は**安全側の決定を覆せない**。具体的には:
+      - 小説のチャンクを author_direct にできない（作者と作中人物の混同を防ぐ最後の砦）
+      - thought_eligibility を Pass1 より上げられない（下げることはできる）
+    LLMがどれだけ自信を持って別の値を返しても、ここで閉じる。
+
+    未知の値は Pass1 の値へ戻し、確信度を 0 にしてレビューへ回す
+    （握りつぶすと「分類済みの誤り」になり、後から見つけられない）。
+    """
+    merged = dict(pass1)
+    invalid = False
+    coerced: list[str] = []
+    is_fiction = document_genre in _FICTION_GENRES
+
+    # speaker_role
+    role = _valid(llm_result.get("speaker_role"), SPEAKER_ROLES)
+    if role is None and llm_result.get("speaker_role") is not None:
+        invalid = True
+    if role is not None:
+        if is_fiction and role not in FICTION_SPEAKER_ROLES:
+            # 小説で author_direct 等を返してきたら Pass1 の判定を保つ
+            coerced.append(f"{role}→{pass1['speaker_role']}(小説)")
+            role = pass1["speaker_role"]
+        elif not is_fiction and role in FICTION_SPEAKER_ROLES:
+            # 講演・評論に「登場人物」「語り手」はいない。実データで LLM が講演者を
+            # character と分類する傾向が出たが、これは本文についての情報ではなく
+            # カテゴリの誤り。Pass3 でレビューへ回すとキューが埋まって使えなくなる
+            fixed = "quoted_person" if llm_result.get("is_quotation") else pass1["speaker_role"]
+            coerced.append(f"{role}→{fixed}({document_genre}に登場人物はいない)")
+            role = fixed
+        merged["speaker_role"] = role
+
+    # claim_type / assertion_status
+    for key, allowed in (("claim_type", CLAIM_TYPES),
+                         ("assertion_status", ASSERTION_STATUSES)):
+        raw = llm_result.get(key)
+        if raw is None:
+            continue
+        value = _valid(raw, allowed)
+        if value is None:
+            invalid = True
+            continue
+        merged[key] = value
+
+    # thought / creative eligibility: Pass1 が上限
+    for key in ("thought_eligibility", "creative_eligibility"):
+        raw = llm_result.get(key)
+        if raw not in _ELIGIBILITY_RANK:
+            if raw is not None:
+                invalid = True
+            continue
+        if _ELIGIBILITY_RANK[raw] < _ELIGIBILITY_RANK[pass1[key]]:
+            merged[key] = raw
+
+    # 小説は何があっても思想の根拠にしない
+    if is_fiction:
+        merged["thought_eligibility"] = "excluded"
+
+    for flag in ("is_quotation", "is_hypothetical", "is_ironic"):
+        if isinstance(llm_result.get(flag), bool):
+            merged[flag] = llm_result[flag]
+
+    confidence = llm_result.get("confidence")
+    merged["tag_confidence"] = (
+        0.0 if invalid or not isinstance(confidence, (int, float)) else float(confidence)
+    )
+    reason = llm_result.get("reason")
+    # 直した事実は残す。黙って直すと後から追えない
+    notes = [*coerced, *( ["分類結果に不正な値があったため確認が必要"] if invalid else [])]
+    merged["classification_reason"] = "; ".join([*notes, *( [reason] if reason else [])]) or None
+    return merged
+
+
+def classify_chunks(
+    chunks: list[dict], *, document_genre: str, corpus_role: str | None,
+    call_json=None, job_id: str | None = None,
+) -> dict[str, dict]:
+    """Pass2。チャンクをまとめてLLMに分類させ、chunk_id → タグ を返す。
+
+    LLMが返さなかったチャンク・LLM呼び出しが落ちた場合は、Pass1 の結果を残して
+    確信度0（= レビュー行き）にする。**分類できなかったものを分類済みにしない**。
+    """
+    call = call_json or llm.call_json
+    pass1_by_id = {
+        ck["chunk_id"]: deterministic_chunk_tags(ck, document_genre=document_genre)
+        for ck in chunks
+    }
+    result = {
+        cid: merge_pass2({**tags}, {}, document_genre=document_genre)
+        for cid, tags in pass1_by_id.items()
+    }
+
+    for start in range(0, len(chunks), PASS2_BATCH_SIZE):
+        batch = chunks[start : start + PASS2_BATCH_SIZE]
+        payload = json.dumps(
+            [{"chunk_id": ck["chunk_id"], "text": ck.get("text", "")} for ck in batch],
+            ensure_ascii=False,
+        )
+        # プロンプトの組み立ては try の外。ここでの失敗はコードの不具合であって
+        # 「LLMが答えられなかった」ではない。握りつぶすと全チャンクが静かに
+        # 未分類のまま通ってしまう
+        # 引数の組み立ては try の外。ここでの失敗はコードの不具合であって
+        # 「LLMが答えられなかった」ではない。try の中に入れると、設定名の書き間違い
+        # ひとつで全チャンクが静かに未分類のまま通ってしまう
+        kwargs = {
+            "agent_name": "aozora_tag_pass2",
+            "model": config.MODEL_LIGHT_DISTILL,
+            "system": _PASS2_SYSTEM,
+            "prompt": _PASS2_PROMPT.format(
+                document_genre=document_genre,
+                corpus_role=corpus_role or "(未設定)",
+                chunks=payload,
+            ),
+            "input_ref": batch[0]["chunk_id"],
+            "job_id": job_id,
+            "max_tokens": 8192,
+        }
+        try:
+            response = call(**kwargs)
+        except Exception:  # noqa: BLE001 - 分類できなかった事実を残して続ける
+            continue
+
+        for item in (response or {}).get("chunks") or []:
+            cid = item.get("chunk_id")
+            # 存在しない chunk_id は捨てる(他のチャンクへ混ぜない)
+            if cid not in pass1_by_id:
+                continue
+            result[cid] = merge_pass2(
+                {**pass1_by_id[cid]}, item, document_genre=document_genre
+            )
+
+    return result
 
 
 def check_consistency(

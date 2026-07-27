@@ -100,6 +100,27 @@ def test_snapshot_does_not_change_on_reingest_of_same_content(clean_corpus, clie
     assert snapshot.build_snapshot(client=client)["digest"] == before
 
 
+def test_snapshot_ignores_llm_derived_tags(clean_corpus, client):
+    """Pass2(LLM分類)の結果で digest が動かない。
+
+    Pass2 は非決定的なので、digest に含めると「取り込みを再現できたか」の判定に
+    使えなくなる（同じ取り込みでも分類が揺れて不一致になる）。
+    タグの状態は品質レポートとレビューキューで見る。
+    """
+    _seed_source(client, "SRC_A")
+    before = snapshot.build_snapshot(client=client)["digest"]
+
+    client.table("source_chunks").update({
+        "speaker_role": "quoted_person",
+        "claim_type": "quotation",
+        "thought_eligibility": "support",
+        "tag_confidence": 0.5,
+        "tagger_version": "aozora_tag_v2",
+    }).eq("chunk_id", "SRC_A_001").execute()
+
+    assert snapshot.build_snapshot(client=client)["digest"] == before
+
+
 def test_snapshot_records_counts_and_versions(clean_corpus, client):
     _seed_source(client, "SRC_A")
     _seed_source(client, "SRC_B", corpus_role="narrative_reference", genre="short_story",

@@ -8,7 +8,7 @@ import zipfile
 
 import pytest
 
-from src.aozora import ingest
+from src.aozora import ingest, tag
 from tests.conftest import _new_job  # noqa: F401  (フィクスチャの都合で読み込む)
 
 SAMPLE = """夢十夜
@@ -126,6 +126,10 @@ def test_ingest_edition_tags_chunks_by_speaker_role(clean_corpus, client):
     # 小説チャンクは思想の根拠にしない
     assert all(c["thought_eligibility"] == "excluded" for c in chunks)
     assert all(c["chunker_version"] == "aozora_v1" for c in chunks)
+    # 取り込み時点では Pass1 しか通っていない。ここで現行の tagger_version を
+    # 付けてしまうと「分類済み」と見分けが付かず、Pass2 が永久に走らない
+    assert all(c["tagger_version"] == tag.PASS1_VERSION for c in chunks)
+    assert all(c["tagger_version"] != tag.TAGGER_VERSION for c in chunks)
 
 
 def test_ingest_edition_records_provenance(clean_corpus, client):

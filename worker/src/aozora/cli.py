@@ -5,6 +5,8 @@
   uv run python -m src.aozora.cli in-progress         # 作業中8件の記録(本文は取らない)
   uv run python -m src.aozora.cli ingest 000799       # 版を1つ取り込む
   uv run python -m src.aozora.cli ingest-phase-a      # Phase A 13資料をまとめて取り込む
+  uv run python -m src.aozora.cli retag               # Pass2(LLM分類)を未適用チャンクへ
+  uv run python -m src.aozora.cli review-tags         # Pass4 レビュー待ちを見る
   uv run python -m src.aozora.cli report              # コーパスの状態と品質を出す
   uv run python -m src.aozora.cli snapshot --out s.json    # スナップショットを保存
   uv run python -m src.aozora.cli snapshot --compare s.json  # 取り込みの再現を照合
@@ -23,7 +25,10 @@ from collections import Counter
 from pathlib import Path
 
 from .. import db
-from . import gen_creative_cards, ingest, manifest, person_page, snapshot as snapshot_mod
+from . import (
+    gen_creative_cards, ingest, manifest, person_page, retag,
+    snapshot as snapshot_mod,
+)
 
 PERSON_ID = "natsume_soseki"
 YUME_PROFILE_ID = "cp_yume_juya"
@@ -199,6 +204,35 @@ def cmd_embed(_args) -> None:
     print(f"embedding生成: {done}件")
 
 
+def cmd_retag(args) -> None:
+    """Pass2(LLM分類)を未適用チャンクへ適用する。"""
+    result = retag.retag_pending(limit=args.limit)
+    print(f"Pass2 適用: {result['updated']}件 / "
+          f"うち要レビュー {result['needs_review']}件")
+
+
+def cmd_review_tags(_args) -> None:
+    """Pass4 のレビュー待ちを出す(確信度の低い順)。"""
+    queue = retag.review_queue()
+    print(f"レビュー待ち: {len(queue)}件")
+    for q in queue:
+        conf = q["tag_confidence"]
+        print(f"  {q['chunk_id']} conf={conf if conf is not None else '-'} "
+              f"speaker={q['speaker_role']} claim={q['claim_type']}")
+        print(f"      {(q['text'] or '')[:60].replace(chr(10), ' ')}")
+        if q["classification_reason"]:
+            print(f"      理由: {q['classification_reason'][:100]}")
+
+
+def cmd_tag_review(args) -> None:
+    """レビューを終える。--set KEY=VALUE で値を直す。"""
+    corrections = dict(kv.split("=", 1) for kv in (args.set or []))
+    result = retag.resolve_review(
+        args.chunk_id, reviewed_by=args.by, corrections=corrections or None
+    )
+    print(result.get("error") or f"{result['chunk_id']}: {result['status']}")
+
+
 def cmd_report(_args) -> None:
     """コーパスの状態とデータ品質を出す(指示書§14.6)。"""
     c = db.client()
@@ -305,6 +339,16 @@ def main(argv=None) -> int:
     p_ng.add_argument("card_ids", nargs="+")
     p_ng.add_argument("--by", default="cli", help="却下者")
     p_ng.set_defaults(func=cmd_reject)
+    p_retag = sub.add_parser("retag", help="Pass2(LLM分類)を未適用チャンクへ適用する")
+    p_retag.add_argument("--limit", type=int, help="処理するチャンク数の上限")
+    p_retag.set_defaults(func=cmd_retag)
+    sub.add_parser("review-tags", help="Pass4 レビュー待ちを出す").set_defaults(
+        func=cmd_review_tags)
+    p_tr = sub.add_parser("tag-review", help="レビューを終える")
+    p_tr.add_argument("chunk_id")
+    p_tr.add_argument("--by", default="cli")
+    p_tr.add_argument("--set", action="append", help="speaker_role=author_direct の形")
+    p_tr.set_defaults(func=cmd_tag_review)
     sub.add_parser("report", help="コーパスの状態と品質を出す").set_defaults(func=cmd_report)
     p_snap = sub.add_parser("snapshot", help="corpus snapshot を出す/照合する")
     p_snap.add_argument("--out", help="スナップショットを書き出すパス")

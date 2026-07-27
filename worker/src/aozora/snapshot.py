@@ -155,14 +155,17 @@ def _counter(values) -> dict:
 
 
 def _fingerprint(chunks: list[dict]) -> str:
-    """1文書ぶんのチャンクの指紋。chunk_id 順に固定してから hash する。"""
+    """1文書ぶんのチャンクの指紋。chunk_id 順に固定してから hash する。
+
+    ⚠️ **Pass2(LLM分類)の結果は含めない**。speaker_role / claim_type などは
+    LLM が付けるので毎回同じ値になる保証がなく、digest に混ぜると
+    「取り込みを再現できたか」の判定に使えなくなる（同じ取り込みでも不一致になる）。
+    ここで見るのは取り込みの再現性 — どの本文をどう分割したか — に限る。
+    タグの状態は `build_quality_report` と Pass4 レビューキューで見る。
+    """
     if not chunks:
         return ""
-    parts = sorted(
-        f"{ch['chunk_id']}\t{ch['chunk_hash']}\t{ch['speaker_role']}"
-        f"\t{ch['thought_eligibility']}\t{ch['creative_eligibility']}"
-        for ch in chunks
-    )
+    parts = sorted(f"{ch['chunk_id']}\t{ch['chunk_hash']}" for ch in chunks)
     return hashlib.sha256("\n".join(parts).encode()).hexdigest()
 
 
