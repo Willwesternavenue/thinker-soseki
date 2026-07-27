@@ -12,6 +12,7 @@
 """
 
 import hashlib
+from datetime import datetime, timezone
 
 from .. import config, db, llm
 from ..creative import repo
@@ -215,3 +216,57 @@ def generate_for_profile(profile_id: str, *, client=None, call_json=None) -> dic
         "skipped_existing": skipped_existing,
         "skipped_no_evidence": skipped_no_evidence,
     }
+
+
+def _set_review_status(
+    card_id: str, status: str, *, reviewed_by: str, client=None
+) -> dict:
+    c = client or db.client()
+    rows = (
+        c.table("creative_cards")
+        .update({
+            "status": status,
+            "reviewed_by": reviewed_by,
+            "reviewed_at": datetime.now(timezone.utc).isoformat(),
+        })
+        .eq("card_id", card_id)
+        .execute()
+        .data
+    )
+    if not rows:
+        raise ValueError(f"カードが見つかりません(card_id={card_id})")
+    return rows[0]
+
+
+def approve_card(card_id: str, *, reviewed_by: str, client=None) -> dict:
+    """カードを承認する。
+
+    承認は生成へ直結するため、**根拠チャンクが実在するかを必ず確かめる**
+    (指示書§14.5「evidence切れのカードを検出」)。実在しなければ承認しない。
+    """
+    c = client or db.client()
+    card = (
+        c.table("creative_cards").select("*").eq("card_id", card_id)
+        .single().execute().data
+    )
+    evidence = card.get("evidence_chunk_ids") or []
+    if not evidence:
+        raise ValueError(f"根拠チャンクが無いカードは承認できません(card_id={card_id})")
+
+    found = {
+        r["chunk_id"]
+        for r in c.table("source_chunks").select("chunk_id")
+        .in_("chunk_id", evidence).execute().data
+    }
+    missing = sorted(set(evidence) - found)
+    if missing:
+        raise ValueError(
+            f"根拠チャンクが実在しないため承認できません(card_id={card_id}): "
+            + ", ".join(missing)
+        )
+    return _set_review_status(card_id, "approved", reviewed_by=reviewed_by, client=c)
+
+
+def reject_card(card_id: str, *, reviewed_by: str, client=None) -> dict:
+    """カードを却下する。却下したカードは生成にも再生成候補にも入らない。"""
+    return _set_review_status(card_id, "rejected", reviewed_by=reviewed_by, client=client)

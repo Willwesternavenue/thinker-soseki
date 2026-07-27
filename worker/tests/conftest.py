@@ -83,7 +83,9 @@ def clean_corpus(client):
             "queue_id", "00000000-0000-0000-0000-000000000000").execute()
         client.table("aozora_manifest_entries").delete().neq("entry_id", "").execute()
         # コーパス由来の創作カードも消す(C-T6 が evidence_chunk_ids で紐づくため、
-        # 残っていると「既存カードはスキップ」の判定でテストが干渉する)
+        # 残っていると「既存カードはスキップ」の判定でテストが干渉する)。
+        # creative_generations → creative_profiles の順に消す(FKのため)。
+        client.table("creative_generations").delete().neq("profile_id", "").execute()
         client.table("creative_cards").delete().neq("card_id", "").execute()
         client.table("creative_profiles").delete().neq("profile_id", "").execute()
         client.table("sources").delete().neq("edition_id", "").execute()

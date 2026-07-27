@@ -138,12 +138,55 @@ def cmd_gen_cards(_args) -> None:
           f"根拠不足スキップ{result['skipped_no_evidence']}件")
     c = db.client()
     cards = (
-        c.table("creative_cards").select("card_type,title,evidence_type,status")
+        c.table("creative_cards").select("card_id,card_type,title,evidence_type,status")
         .eq("profile_id", YUME_PROFILE_ID).order("card_type").execute().data
     )
     for card in cards:
-        print(f"  [{card['status']:8s}] {card['card_type']:12s} "
+        print(f"  {card['card_id']} [{card['status']:8s}] {card['card_type']:12s} "
               f"{card['evidence_type'][:24]:24s} {card['title']}")
+
+
+def cmd_show_card(args) -> None:
+    """カードの内容と根拠原文を表示する(承認前の確認用)。"""
+    c = db.client()
+    card = (
+        c.table("creative_cards").select("*").eq("card_id", args.card_id)
+        .single().execute().data
+    )
+    print(f"[{card['status']}] {card['card_type']} / {card['evidence_type']}")
+    print(f"  {card['title']}")
+    if card.get("summary"):
+        print(f"  {card['summary']}")
+    for key in ("positive_patterns", "negative_patterns"):
+        for v in card.get(key) or []:
+            print(f"    {'+' if key.startswith('positive') else '-'} {v}")
+    print("  --- 根拠原文 ---")
+    for chunk_id in card.get("evidence_chunk_ids") or []:
+        rows = (
+            c.table("source_chunks").select("chunk_id,chapter_title,text")
+            .eq("chunk_id", chunk_id).execute().data
+        )
+        if not rows:
+            print(f"    [{chunk_id}] ⚠️ 実在しない(このカードは承認できない)")
+            continue
+        r = rows[0]
+        head = f"({r['chapter_title']})" if r.get("chapter_title") else ""
+        print(f"    [{r['chunk_id']}]{head} {r['text'][:90]}")
+
+
+def cmd_approve(args) -> None:
+    for card_id in args.card_ids:
+        try:
+            gen_creative_cards.approve_card(card_id, reviewed_by=args.by)
+            print(f"承認: {card_id}")
+        except ValueError as exc:
+            print(f"承認できず: {card_id}: {exc}")
+
+
+def cmd_reject(args) -> None:
+    for card_id in args.card_ids:
+        gen_creative_cards.reject_card(card_id, reviewed_by=args.by)
+        print(f"却下: {card_id}")
 
 
 def cmd_embed(_args) -> None:
@@ -214,6 +257,17 @@ def main(argv=None) -> int:
         func=cmd_create_profile)
     sub.add_parser("gen-cards", help="創作カード候補を生成する(draft)").set_defaults(
         func=cmd_gen_cards)
+    p_show = sub.add_parser("show-card", help="カードと根拠原文を表示する")
+    p_show.add_argument("card_id")
+    p_show.set_defaults(func=cmd_show_card)
+    p_ok = sub.add_parser("approve", help="カードを承認する(根拠の実在を検証する)")
+    p_ok.add_argument("card_ids", nargs="+")
+    p_ok.add_argument("--by", default="cli", help="承認者")
+    p_ok.set_defaults(func=cmd_approve)
+    p_ng = sub.add_parser("reject", help="カードを却下する")
+    p_ng.add_argument("card_ids", nargs="+")
+    p_ng.add_argument("--by", default="cli", help="却下者")
+    p_ng.set_defaults(func=cmd_reject)
     sub.add_parser("report", help="コーパスの状態を出す").set_defaults(func=cmd_report)
 
     args = parser.parse_args(argv)

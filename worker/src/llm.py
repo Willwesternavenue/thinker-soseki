@@ -7,6 +7,23 @@ from anthropic import Anthropic
 
 from . import config, db
 
+class LLMResponseTruncated(RuntimeError):
+    """応答が max_tokens で打ち切られた。
+
+    切れたJSONは「Unterminated string」という原因の分かりにくいエラーになるため、
+    パースを試みる前にここで明確に落とす。
+    """
+
+
+def ensure_not_truncated(stop_reason: str | None, *, agent_name: str, max_tokens: int) -> None:
+    """打ち切られた応答をそのまま使わない。"""
+    if stop_reason == "max_tokens":
+        raise LLMResponseTruncated(
+            f"応答が max_tokens({max_tokens})で打ち切られました(agent={agent_name})。"
+            "出力が長い処理では max_tokens を上げること。"
+        )
+
+
 _client: Anthropic | None = None
 
 
@@ -44,6 +61,11 @@ def call_json(
             system=system,
             messages=[{"role": "user", "content": prompt}],
         )
+        ensure_not_truncated(
+            getattr(message, "stop_reason", None),
+            agent_name=agent_name,
+            max_tokens=max_tokens,
+        )
         text = "".join(b.text for b in message.content if b.type == "text")
         result = _parse_json(text)
         cost = _estimate_cost(
@@ -73,13 +95,20 @@ def call_json(
 
 
 def _parse_json(text: str) -> dict:
-    """コードフェンス付き・前置き付きのJSON出力も許容してパースする。"""
+    """コードフェンス付き・前置き付きのJSON出力も許容してパースする。
+
+    ⚠️ `strict=False` にしている。長文(小説の本文など)を生成させると、
+    LLMがJSON文字列の中へ生の改行やタブをそのまま出すことがあり、標準の
+    パースでは "Invalid control character" で落ちる。JSONの仕様上は不正だが
+    実運用では頻繁に起きるため許容する。緩めるのは制御文字の扱いだけで、
+    正しいJSONの解釈は変わらない。
+    """
     text = text.strip()
     fence = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
     if fence:
-        return json.loads(fence.group(1))
+        return json.loads(fence.group(1), strict=False)
     start = text.find("{")
     end = text.rfind("}")
     if start >= 0 and end > start:
-        return json.loads(text[start : end + 1])
-    return json.loads(text)
+        return json.loads(text[start : end + 1], strict=False)
+    return json.loads(text, strict=False)

@@ -189,3 +189,30 @@ def test_run_guard_fails_and_lists_reasons_for_regeneration():
     joined = " ".join(result["violations"])
     assert "原文" in joined or "類似" in joined
     assert "誤認" in joined or "未発表" in joined
+
+
+def test_prohibition_judge_receives_card_patterns_not_only_title():
+    """judgeにはカードのタイトルだけでなく、何が違反かを示すパターンも渡す。
+
+    実運用で、タイトルだけを渡した judge が「語り手の気づき」を
+    「仕組みの説明」と誤判定して安全側失敗が続いた。カードは
+    negative_patterns / positive_patterns に境界を持っているので必ず渡す。
+    """
+    llm = FakeLLM({"violations": []})
+    cards = [{
+        "card_id": "cc_1", "card_type": "prohibition",
+        "title": "超自然的現象の仕組みを説明しない",
+        "summary": "夢の中の出来事に因果的な説明を加えない",
+        "positive_patterns": ["語り手の気づきという形で処理し、理屈を語らせない"],
+        "negative_patterns": ["現象の仕組みを地の文で解説する"],
+    }]
+
+    guard.check_prohibitions("本文。", cards, call_json=llm)
+
+    prompt = llm.calls[0]["prompt"]
+    assert "超自然的現象の仕組みを説明しない" in prompt
+    assert "夢の中の出来事に因果的な説明を加えない" in prompt
+    assert "語り手の気づきという形で処理し、理屈を語らせない" in prompt, (
+        "違反にあたらない形(positive_patterns)も渡さないと過検出する"
+    )
+    assert "現象の仕組みを地の文で解説する" in prompt

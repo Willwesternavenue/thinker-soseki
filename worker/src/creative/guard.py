@@ -130,6 +130,19 @@ def check_misattribution(draft: str) -> dict:
     return {"passed": not matched, "matched": matched}
 
 
+def _format_prohibition(card: dict) -> str:
+    """禁止カードを judge へ渡す形にする。境界を明示して過検出を防ぐ。"""
+    lines = [f"- [{card['card_id']}] {card['title']}"]
+    for key, label in (("summary", "  説明"), ("description", "  補足")):
+        if card.get(key):
+            lines.append(f"{label}: {card[key]}")
+    for pattern in card.get("negative_patterns") or []:
+        lines.append(f"  違反にあたる形: {pattern}")
+    for pattern in card.get("positive_patterns") or []:
+        lines.append(f"  違反にあたらない形(この書き方は許容する): {pattern}")
+    return "\n".join(lines)
+
+
 def check_prohibitions(draft: str, cards: list[dict], *, job_id=None, call_json=None) -> dict:
     """承認済み prohibition カードへの違反をLLMで判定する(仕様§8.3)。
 
@@ -140,11 +153,10 @@ def check_prohibitions(draft: str, cards: list[dict], *, job_id=None, call_json=
         return {"passed": True, "violations": [], "checked_card_ids": []}
 
     call = call_json or llm.call_json
-    listed = "\n".join(
-        f"- [{c['card_id']}] {c['title']}"
-        + (f": {c.get('description')}" if c.get("description") else "")
-        for c in prohibitions
-    )
+    # ⚠️ タイトルだけを渡すと judge が過検出する(実運用で「語り手の気づき」を
+    # 「仕組みの説明」と誤判定した)。カードが持つ境界(何が違反で、何は違反でないか)を
+    # 必ず渡す。
+    listed = "\n".join(_format_prohibition(c) for c in prohibitions)
     result = call(
         agent_name="creative_guard_judge",
         model=config.MODEL_CREATIVE_LIGHT,

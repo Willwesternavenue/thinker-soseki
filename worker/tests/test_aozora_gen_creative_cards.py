@@ -196,3 +196,58 @@ def test_requires_active_profile(clean_corpus, client):
 
     with pytest.raises(repo.CreativeInvariantError, match="利用可能な状態ではありません"):
         gen.generate_for_profile("cp_yume", client=client, call_json=FakeLLM())
+
+
+# ── 承認(C-T6 後段。管理画面ができるまでの暫定手段) ──
+
+
+def test_approve_sets_status_and_reviewer(clean_corpus, client):
+    """承認するとstatusがapprovedになり、誰がいつ承認したかが残る。"""
+    profile = _seed_profile(client)
+    _seed_source(client, "SRC_X", corpus_role="creative_grammar", genre="criticism",
+                 chunks=[("本文A。", "support"), ("本文B。", "support")])
+    gen.generate_for_profile(profile, client=client, call_json=FakeLLM({"cards": [{
+        "card_type": "style", "title": "説明より観察を優先する",
+        "evidence_chunk_ids": ["SRC_X_000", "SRC_X_001"],
+    }]}))
+    card_id = client.table("creative_cards").select("card_id").execute().data[0]["card_id"]
+
+    result = gen.approve_card(card_id, reviewed_by="cli:will", client=client)
+
+    assert result["status"] == "approved"
+    card = client.table("creative_cards").select("*").eq(
+        "card_id", card_id).single().execute().data
+    assert card["status"] == "approved"
+    assert card["reviewed_by"] == "cli:will"
+    assert card["reviewed_at"] is not None
+
+
+def test_approve_refuses_card_whose_evidence_is_missing(clean_corpus, client):
+    """根拠チャンクが実在しないカードは承認しない(指示書§14.5 evidence切れの検出)。"""
+    profile = _seed_profile(client)
+    client.table("creative_cards").insert({
+        "card_id": "cc_broken", "profile_id": profile, "card_type": "style",
+        "title": "根拠が消えたカード", "evidence_chunk_ids": ["MISSING_001", "MISSING_002"],
+        "status": "draft",
+    }).execute()
+
+    with pytest.raises(ValueError, match="根拠"):
+        gen.approve_card("cc_broken", reviewed_by="cli:will", client=client)
+
+    card = client.table("creative_cards").select("status").eq(
+        "card_id", "cc_broken").single().execute().data
+    assert card["status"] == "draft", "承認されていないこと"
+
+
+def test_reject_card_keeps_it_out_of_generation(clean_corpus, client):
+    profile = _seed_profile(client)
+    client.table("creative_cards").insert({
+        "card_id": "cc_bad", "profile_id": profile, "card_type": "style",
+        "title": "採用しないカード", "evidence_chunk_ids": [], "status": "draft",
+    }).execute()
+
+    gen.reject_card("cc_bad", reviewed_by="cli:will", client=client)
+
+    card = client.table("creative_cards").select("status").eq(
+        "card_id", "cc_bad").single().execute().data
+    assert card["status"] == "rejected"

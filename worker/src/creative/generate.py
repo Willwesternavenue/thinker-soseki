@@ -178,6 +178,10 @@ def build_outline(ctx: "GenerationContext", *, job_id=None, call_json=None) -> d
             source_excerpt=ctx.source_text,
         ),
         input_ref=f"creative_generation:{job_id}",
+        # 承認済みカードが増えると構成の記述も長くなる。カード13枚で 4096 でも
+        # 打ち切られたため引き上げた(実運用で確認)。切り詰めは llm 側が明示的に
+        # 検出するので、足りなければエラーで分かる
+        max_tokens=8192,
     )
 
 

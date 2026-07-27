@@ -545,6 +545,43 @@ LLM による捏造は0件。例:
 
 ---
 
+### 12.4 通し確認: 承認 →「第十一夜」の生成（2026-07-27）
+
+CLI で承認した13枚のカードを使い、生成パイプラインが最後まで通ることを実データで確認した。
+
+```bash
+uv run python -m src.aozora.cli gen-cards            # 候補(draft)
+uv run python -m src.aozora.cli show-card <card_id>  # 根拠原文を見て確認
+uv run python -m src.aozora.cli approve <card_id>... # 承認(根拠の実在を検証)
+```
+
+結果: `status=succeeded` / `display_title=鏡（AI創作）` / **Guard passed（再生成1回）**。
+
+| 検査 | 結果 |
+|---|---|
+| 原文類似 | passed（最長一致 **7字** / n-gram重複 **0.0**） |
+| 誤認防止 | passed |
+| 禁止事項（承認済み prohibition カード） | passed |
+
+承認済みカードが本文に効いていることを確認できる:
+「こんな夢を見た」で開始 / 異常を疑わず受容（「鏡というのはそういうものらしい」）/
+反復による時間経過（「あと十日」「あと九日」）/ 泣く対象を泣かずに叙述（「涙とは呼ばなかった。
+ただ濡れて見えた」）/ **結末を明示せず途切れさせる**（鏡に何が映ったかは書かない）。
+
+#### 実LLMでのみ表面化した不具合3件（いずれも修正済み）
+
+FakeLLM を使う単体テストでは再現せず、実データ通しで初めて出た。
+
+| 症状 | 原因 | 対処 |
+|---|---|---|
+| `Invalid control character` で draft が失敗 | 長文の本文に含まれる改行を、LLMがJSON文字列へ生のまま出力する | `json.loads(..., strict=False)`。既存の蒸留にも効く |
+| `Unterminated string` で outline が失敗 | 応答が `max_tokens` で切れ、壊れたJSONになっていた | 切り詰めを `stop_reason` で検出し、明確なエラーにする。outline の上限も引き上げ |
+| Guard が通らず安全側失敗が続く | judge にカードの**タイトルしか渡していなかった**ため、「語り手の気づき」を「仕組みの説明」と過検出 | カードの `positive_patterns` / `negative_patterns`（＝境界）を judge へ渡す。判定の原則も明記し `guard_judge` を v2 へ |
+
+3件目は Guard が**正しく安全側に倒れた**うえでの調整であり、違反したまま公開されたわけではない。
+
+---
+
 ---
 
 ## 13. 受入条件（指示書 §15 の20項目）
