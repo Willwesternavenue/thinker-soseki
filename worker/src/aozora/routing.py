@@ -14,6 +14,8 @@
 
 # 論理Index(8種)。物理的なCollectionではなく、絞り込みのプリセット。
 # generation_input=False のものはカード生成・回答の入力にしない(指示書§3.8)。
+from . import characters
+
 INDEXES: dict[str, dict] = {
     "author_thought_core": {
         "corpus_roles": ["core_thought"],
@@ -103,19 +105,9 @@ ROUTES: dict[str, list[dict]] = {
 }
 
 # 既知の登場人物。人物質問の判定に使う。
-# ⚠️ 名前が挙がらない質問を人物質問にしない(誤判定すると作者の思想を主根拠から外す)。
-KNOWN_CHARACTERS = {
-    "代助": "daisuke",        # それから
-    "美禰子": "mineko",       # 三四郎
-    "三四郎": "sanshiro",
-    "宗助": "sosuke",         # 門
-    "健三": "kenzo",          # 道草
-    "津田": "tsuda",          # 明暗
-    "お延": "onobu",          # 明暗
-    "苦沙弥": "kushami",      # 吾輩は猫である
-    "迷亭": "meitei",
-    "寒月": "kangetsu",
-}
+# 語彙の出所は characters.json(単一の出所)。ここは互換のための別名で、
+# チャンク側の character_id と必ず同じIDになる。
+KNOWN_CHARACTERS = characters.name_map()
 
 # 創作依頼の手掛かり
 _CREATIVE_HINTS = ("書け", "書いて", "作れ", "作って", "生成して", "第十一夜", "新作")
@@ -127,11 +119,8 @@ def route_for(query_kind: str) -> list[dict]:
 
 
 def detect_character(query: str) -> str | None:
-    """質問に含まれる既知の登場人物を返す。"""
-    for name, character_id in KNOWN_CHARACTERS.items():
-        if name in query:
-            return character_id
-    return None
+    """質問に含まれる既知の登場人物を返す(辞書に委譲)。"""
+    return characters.detect(query)
 
 
 def detect_kind(query: str) -> str:

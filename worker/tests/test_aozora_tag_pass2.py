@@ -231,6 +231,122 @@ def test_ironic_or_hypothetical_goes_to_review():
     assert tag.needs_review(merged, []) is True
 
 
+# ── character_id(辞書が語彙・Pass2が割当) ──
+
+
+def _dialogue_pass1():
+    return tag.deterministic_chunk_tags(
+        {"text": "「金は要らない」と云った。", "chunk_type": "dialogue"},
+        document_genre="novel",
+    )
+
+
+def test_character_id_comes_from_the_roster():
+    merged = tag.merge_pass2(
+        _dialogue_pass1(),
+        {"character_id": "daisuke", "confidence": 0.9},
+        document_genre="novel",
+        character_ids=frozenset({"daisuke"}),
+    )
+
+    assert merged["character_id"] == "daisuke"
+
+
+def test_character_id_outside_roster_is_dropped_without_review():
+    """一覧に無いIDは捨てる。語彙が揺れると質問側の検出と結合できなくなる。
+
+    レビュー行きにはしない。捨てた時点で誤帰属は起きず、キューを
+    溢れさせない(speaker_role のカテゴリ誤りと同じ扱い)。
+    """
+    merged = tag.merge_pass2(
+        _dialogue_pass1(),
+        {"character_id": "godzilla", "confidence": 0.9},
+        document_genre="novel",
+        character_ids=frozenset({"daisuke"}),
+    )
+
+    assert merged["character_id"] is None
+    assert "godzilla" in merged["classification_reason"]
+    assert tag.needs_review(merged, []) is False
+
+
+def test_character_id_requires_character_speaker():
+    """語り手・作者の文に人物IDを付けない(帰属の取り違えを構造で防ぐ)。"""
+    narration = tag.deterministic_chunk_tags(
+        {"text": "こんな夢を見た。", "chunk_type": "narration"}, document_genre="novel"
+    )
+
+    merged = tag.merge_pass2(
+        narration,
+        {"character_id": "daisuke", "confidence": 0.9},
+        document_genre="novel",
+        character_ids=frozenset({"daisuke"}),
+    )
+
+    assert merged["speaker_role"] == "narrator"
+    assert merged["character_id"] is None
+
+
+def test_character_id_defaults_to_none():
+    merged = tag.merge_pass2(
+        tag.deterministic_chunk_tags(
+            {"text": "本文", "chunk_type": "narration"}, document_genre="lecture"
+        ),
+        {"confidence": 0.9},
+        document_genre="lecture",
+    )
+
+    assert merged["character_id"] is None
+
+
+def test_classify_chunks_passes_roster_to_the_prompt():
+    """作品の人物一覧をプロンプトに入れる(IDと表記の両方)。"""
+    captured = []
+
+    def capture(**kwargs):
+        captured.append(kwargs["prompt"])
+        return {"chunks": []}
+
+    tag.classify_chunks(
+        [{"chunk_id": "A_001", "text": "「よし」", "chunk_type": "dialogue"}],
+        document_genre="novel",
+        corpus_role="narrative_reference",
+        characters=[{"character_id": "daisuke", "names": ["代助"], "work": "それから"}],
+        call_json=capture,
+    )
+
+    assert "daisuke" in captured[0]
+    assert "代助" in captured[0]
+
+
+def test_classify_chunks_accepts_roster_ids(clean_corpus=None, client=None):
+    result = tag.classify_chunks(
+        [{"chunk_id": "A_001", "text": "「よし」", "chunk_type": "dialogue"}],
+        document_genre="novel",
+        corpus_role="narrative_reference",
+        characters=[{"character_id": "daisuke", "names": ["代助"], "work": "それから"}],
+        call_json=_llm({"chunks": [
+            {"chunk_id": "A_001", "character_id": "daisuke", "confidence": 0.9},
+        ]}),
+    )
+
+    assert result["A_001"]["character_id"] == "daisuke"
+
+
+def test_classify_chunks_without_roster_never_assigns_ids():
+    """一覧が無い作品(夢十夜など無名の人物)では常に null。"""
+    result = tag.classify_chunks(
+        [{"chunk_id": "A_001", "text": "「よし」", "chunk_type": "dialogue"}],
+        document_genre="short_story",
+        corpus_role="narrative_reference",
+        call_json=_llm({"chunks": [
+            {"chunk_id": "A_001", "character_id": "daisuke", "confidence": 0.9},
+        ]}),
+    )
+
+    assert result["A_001"]["character_id"] is None
+
+
 # ── バッチ分類 ──
 
 

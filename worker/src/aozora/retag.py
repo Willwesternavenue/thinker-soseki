@@ -16,7 +16,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from .. import db
-from . import tag
+from . import characters, tag
 
 # 人手で直してよい項目。eligibility は Pass1 の安全側判定なので含めない
 CORRECTABLE_FIELDS = frozenset({
@@ -31,7 +31,7 @@ def _c(client):
 def _sources(client) -> dict[str, dict]:
     rows = (
         _c(client).table("sources")
-        .select("source_id, document_genre, corpus_role")
+        .select("source_id, title, document_genre, corpus_role")
         .eq("source_provider", "aozora").execute().data or []
     )
     return {r["source_id"]: r for r in rows}
@@ -55,6 +55,9 @@ def retag_pending(
         .select("chunk_id, source_id, text, chunk_type")
         .in_("source_id", sorted(sources))
         .neq("tagger_version", tag.TAGGER_VERSION)
+        # 人手レビューの結論(reviewed/corrected)は再分類で上書きしない。
+        # LLMの再実行が人の判断を黙って覆すと、レビューという関門の意味が無くなる
+        .not_.in_("tag_review_status", ["reviewed", "corrected"])
         .order("chunk_id")
     )
     if limit:
@@ -71,10 +74,13 @@ def retag_pending(
     for source_id, chunks in by_source.items():
         src = sources[source_id]
         genre = src["document_genre"] or "other"
+        # 作品の人物一覧(語彙)。辞書に載らない作品(夢十夜など)は空 = 常に null
+        roster = characters.roster_for_work(src.get("title") or "")
         tagged = tag.classify_chunks(
             chunks,
             document_genre=genre,
             corpus_role=src["corpus_role"],
+            characters=roster,
             call_json=call_json,
             job_id=job_id,
         )
@@ -87,6 +93,7 @@ def retag_pending(
             reasons = [r for r in (tags.get("classification_reason"), *issues) if r]
             c.table("source_chunks").update({
                 "speaker_role": tags["speaker_role"],
+                "character_id": tags.get("character_id"),
                 "claim_type": tags["claim_type"],
                 "assertion_status": tags["assertion_status"],
                 "thought_eligibility": tags["thought_eligibility"],
@@ -145,12 +152,26 @@ def resolve_review(
     if not chunk:
         return {"error": f"チャンク {chunk_id} が見つかりません"}
 
-    genre = (
-        _sources(c).get(chunk["source_id"], {}).get("document_genre") or "other"
-    )
+    src = _sources(c).get(chunk["source_id"], {})
+    genre = src.get("document_genre") or "other"
     corrections = {
         k: v for k, v in (corrections or {}).items() if k in CORRECTABLE_FIELDS
     }
+
+    # character_id は語彙(その作品の人物一覧)の中からしか付けられない。
+    # 人手であっても一覧の外のIDを許すと、質問側の検出と結合できない値が混ざる
+    if corrections.get("character_id"):
+        roster_ids = {
+            entry["character_id"]
+            for entry in characters.roster_for_work(src.get("title") or "")
+        }
+        if corrections["character_id"] not in roster_ids:
+            return {
+                "error": (
+                    f"{corrections['character_id']} はこの作品の登場人物一覧に"
+                    "ありません。辞書(characters.json)に追加してから修正してください"
+                )
+            }
 
     if (
         genre in tag.FICTION_GENRES

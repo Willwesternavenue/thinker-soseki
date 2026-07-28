@@ -37,6 +37,21 @@ describe("detectCharacter(作中人物の検出)", () => {
     // 誤判定すると作者の思想が主根拠から外れる
     expect(detectCharacter("近代化についてどう考えたか")).toBeNull();
   });
+
+  it("worker 側の人物辞書と一致する(語彙の単一の出所)", async () => {
+    // 質問から検出するID(ここ)とチャンクに付くID(worker の Pass2)が
+    // 別の辞書から出ると、人物での絞り込みが永久に一致しない
+    const { readFileSync } = await import("node:fs");
+    const { resolve } = await import("node:path");
+    const workerDict = JSON.parse(
+      readFileSync(
+        resolve(process.cwd(), "../worker/src/aozora/characters.json"),
+        "utf8"
+      )
+    );
+    const frontendDict = (await import("./characters.json")).default;
+    expect(frontendDict).toEqual(workerDict);
+  });
 });
 
 describe("corpusRouteKind(質問種別 → コーパスの検索ルート)", () => {

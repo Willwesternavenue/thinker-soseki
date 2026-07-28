@@ -19,7 +19,8 @@ from .. import config, llm
 # 付かなくなり、Pass2 が永久に走らないチャンクができる。
 PASS1_VERSION = "aozora_tag_v1_pass1"
 # Pass1+Pass2 まで通した状態。retag が付ける。
-TAGGER_VERSION = "aozora_tag_v2"
+# v3: character_id の割当を追加(作品の人物一覧から選ぶ。C-T6後続)
+TAGGER_VERSION = "aozora_tag_v3"
 
 # confidence がこれ未満なら人手確認へ回す
 REVIEW_CONFIDENCE_THRESHOLD = 0.7
@@ -253,14 +254,15 @@ candidate（主たる根拠になる）/ support（補助）/ excluded（使わ�
 - 地の文に埋め込まれた他者の発言は quotation として拾う
 - 皮肉・仮定・問いかけを主張と取り違えない
 - 迷う場合は confidence を下げる。無理に断定しない
-
+{character_section}
 チャンク:
 {chunks}
 
 出力形式（JSONのみ。全チャンクを必ず含める）:
 {{"chunks": [{{"chunk_id": "...", "speaker_role": "...", "claim_type": "...",
 "assertion_status": "...", "thought_eligibility": "...", "is_quotation": true,
-"is_hypothetical": false, "is_ironic": false, "confidence": 0.0,
+"is_hypothetical": false, "is_ironic": false,
+"character_id": "一覧のID または null", "confidence": 0.0,
 "reason": "判断の根拠を一文で"}}]}}"""
 
 
@@ -268,7 +270,10 @@ def _valid(value, allowed, fallback=None):
     return value if value in allowed else fallback
 
 
-def merge_pass2(pass1: dict, llm_result: dict, *, document_genre: str) -> dict:
+def merge_pass2(
+    pass1: dict, llm_result: dict, *, document_genre: str,
+    character_ids: frozenset = frozenset(),
+) -> dict:
     """Pass1 の決定的タグに Pass2 の分類を重ねる。
 
     ⚠️ Pass2 は**安全側の決定を覆せない**。具体的には:
@@ -332,6 +337,17 @@ def merge_pass2(pass1: dict, llm_result: dict, *, document_genre: str) -> dict:
         if isinstance(llm_result.get(flag), bool):
             merged[flag] = llm_result[flag]
 
+    # character_id: 辞書(作品の人物一覧)が語彙、LLMは割当だけ。
+    # 一覧の外のID・人物発言でないチャンクへの付与は捨てる。捨てた時点で
+    # 誤帰属は起きないので、レビュー行きにはしない(キューを溢れさせない)
+    raw_cid = llm_result.get("character_id")
+    cid = raw_cid if raw_cid in character_ids else None
+    if merged["speaker_role"] != "character":
+        cid = None
+    if raw_cid and cid is None:
+        coerced.append(f"character_id={raw_cid}を破棄(一覧に無い/人物の発言でない)")
+    merged["character_id"] = cid
+
     confidence = llm_result.get("confidence")
     merged["tag_confidence"] = (
         0.0 if invalid or not isinstance(confidence, (int, float)) else float(confidence)
@@ -343,8 +359,25 @@ def merge_pass2(pass1: dict, llm_result: dict, *, document_genre: str) -> dict:
     return merged
 
 
+def _character_section(characters: list[dict] | None) -> str:
+    """作品の人物一覧をプロンプト片にする。一覧が無ければ空(IDの指示もしない)。"""
+    if not characters:
+        return ""
+    lines = "\n".join(
+        f"- {c['character_id']}: {'、'.join(c['names'])}" for c in characters
+    )
+    return (
+        "\n## この作品の登場人物（character_id の一覧）\n"
+        f"{lines}\n\n"
+        "speaker_role が character のチャンクには、発言者を上の一覧から選び\n"
+        "character_id に入れよ。一覧に無い人物・判断できない場合は null。\n"
+        "一覧の外のIDを作らない。\n"
+    )
+
+
 def classify_chunks(
     chunks: list[dict], *, document_genre: str, corpus_role: str | None,
+    characters: list[dict] | None = None,
     call_json=None, job_id: str | None = None,
 ) -> dict[str, dict]:
     """Pass2。チャンクをまとめてLLMに分類させ、chunk_id → タグ を返す。
@@ -353,12 +386,14 @@ def classify_chunks(
     確信度0（= レビュー行き）にする。**分類できなかったものを分類済みにしない**。
     """
     call = call_json or llm.call_json
+    character_ids = frozenset(c["character_id"] for c in characters or [])
     pass1_by_id = {
         ck["chunk_id"]: deterministic_chunk_tags(ck, document_genre=document_genre)
         for ck in chunks
     }
     result = {
-        cid: merge_pass2({**tags}, {}, document_genre=document_genre)
+        cid: merge_pass2({**tags}, {}, document_genre=document_genre,
+                         character_ids=character_ids)
         for cid, tags in pass1_by_id.items()
     }
 
@@ -381,6 +416,7 @@ def classify_chunks(
             "prompt": _PASS2_PROMPT.format(
                 document_genre=document_genre,
                 corpus_role=corpus_role or "(未設定)",
+                character_section=_character_section(characters),
                 chunks=payload,
             ),
             "input_ref": batch[0]["chunk_id"],
@@ -398,7 +434,8 @@ def classify_chunks(
             if cid not in pass1_by_id:
                 continue
             result[cid] = merge_pass2(
-                {**pass1_by_id[cid]}, item, document_genre=document_genre
+                {**pass1_by_id[cid]}, item, document_genre=document_genre,
+                character_ids=character_ids,
             )
 
     return result

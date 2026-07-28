@@ -13,7 +13,8 @@ def _llm(items):
     return call
 
 
-def _seed(client, *, genre="lecture", corpus_role="core_thought", chunks=2):
+def _seed(client, *, genre="lecture", corpus_role="core_thought", chunks=2,
+          title=None, chunk_type=None):
     client.table("personas").upsert(
         {"person_id": "natsume_soseki", "display_name": "X漱石"}
     ).execute()
@@ -24,16 +25,19 @@ def _seed(client, *, genre="lecture", corpus_role="core_thought", chunks=2):
         "edition_id": "ed_T", "canonical_work_id": "cw_T",
         "aozora_work_id": "000000", "orthography": "新字新仮名"}).execute()
     client.table("sources").upsert({
-        "source_id": "SRC_T", "person_id": "natsume_soseki", "title": "テスト作品",
+        "source_id": "SRC_T", "person_id": "natsume_soseki",
+        "title": title or "テスト作品",
         "source_type": "essay", "edition_id": "ed_T", "corpus_role": corpus_role,
         "document_genre": genre, "source_provider": "aozora"}).execute()
     for i in range(chunks):
         pass1 = tag.deterministic_chunk_tags(
-            {"text": f"本文{i}", "chunk_type": "narration"}, document_genre=genre
+            {"text": f"本文{i}", "chunk_type": chunk_type or "narration"},
+            document_genre=genre,
         )
         client.table("source_chunks").upsert({
             "chunk_id": f"SRC_T_{i:03d}", "source_id": "SRC_T",
             "person_id": "natsume_soseki", "text": f"本文{i}",
+            "chunk_type": chunk_type or "narration",
             "chunker_version": "aozora_v1", "chunk_hash": f"h{i}",
             "speaker_role": pass1["speaker_role"],
             "thought_eligibility": pass1["thought_eligibility"],
@@ -202,3 +206,93 @@ def test_correction_cannot_promote_fiction(clean_corpus, client):
 
     assert result["error"]
     assert _chunk(client, "SRC_T_000")["speaker_role"] != "author_direct"
+
+
+# ── character_id(辞書が語彙・Pass2が割当) ──
+
+
+def _seed_novel(client, *, title, chunks=1):
+    _seed(client, genre="novel", corpus_role="narrative_reference",
+          title=title, chunk_type="dialogue", chunks=chunks)
+
+
+def test_assigns_character_id_from_the_work_roster(clean_corpus, client):
+    _seed_novel(client, title="それから")
+
+    retag.retag_pending(client=client, call_json=_llm([
+        {"chunk_id": "SRC_T_000", "character_id": "daisuke", "confidence": 0.9},
+    ]))
+
+    row = _chunk(client, "SRC_T_000")
+    assert row["speaker_role"] == "character"
+    assert row["character_id"] == "daisuke"
+
+
+def test_character_id_from_another_work_is_dropped(clean_corpus, client):
+    """別作品の人物IDは付けない(『三四郎』のチャンクに代助が付く混線を防ぐ)。"""
+    _seed_novel(client, title="三四郎")
+
+    retag.retag_pending(client=client, call_json=_llm([
+        {"chunk_id": "SRC_T_000", "character_id": "daisuke", "confidence": 0.9},
+    ]))
+
+    row = _chunk(client, "SRC_T_000")
+    assert row["character_id"] is None
+    assert "daisuke" in (row["classification_reason"] or "")
+
+
+def test_unnamed_work_gets_no_character_ids(clean_corpus, client):
+    """辞書に載らない作品(夢十夜など)では常に null。"""
+    _seed_novel(client, title="夢十夜")
+
+    retag.retag_pending(client=client, call_json=_llm([
+        {"chunk_id": "SRC_T_000", "character_id": "daisuke", "confidence": 0.9},
+    ]))
+
+    assert _chunk(client, "SRC_T_000")["character_id"] is None
+
+
+def test_correction_validates_character_id_against_roster(clean_corpus, client):
+    """人手の修正でも一覧の外のIDは付けられない(語彙を守る)。"""
+    _seed_novel(client, title="それから")
+    retag.retag_pending(client=client, call_json=_llm([
+        {"chunk_id": "SRC_T_000", "confidence": 0.2},
+    ]))
+
+    bad = retag.resolve_review(
+        "SRC_T_000", reviewed_by="tester",
+        corrections={"character_id": "godzilla"}, client=client,
+    )
+    ok = retag.resolve_review(
+        "SRC_T_000", reviewed_by="tester",
+        corrections={"character_id": "daisuke"}, client=client,
+    )
+
+    assert bad["error"]
+    assert ok.get("error") is None
+    assert _chunk(client, "SRC_T_000")["character_id"] == "daisuke"
+
+
+# ── 人手レビュー済みチャンクを再分類で潰さない ──
+
+
+def test_retag_does_not_overwrite_human_reviewed_chunks(clean_corpus, client):
+    """tagger_version を上げて再分類しても、人が確定したタグは上書きしない。
+
+    レビューの結論(reviewed/corrected)は人の判断。LLMの再実行が
+    黙って覆すと、レビューという関門の意味が無くなる。
+    """
+    _seed(client, chunks=2)
+    client.table("source_chunks").update({
+        "tag_review_status": "corrected", "speaker_role": "quoted_person",
+    }).eq("chunk_id", "SRC_T_000").execute()
+
+    result = retag.retag_pending(client=client, call_json=_llm([
+        {"chunk_id": "SRC_T_000", "speaker_role": "author_direct", "confidence": 0.9},
+        {"chunk_id": "SRC_T_001", "confidence": 0.9},
+    ]))
+
+    assert result["updated"] == 1
+    row = _chunk(client, "SRC_T_000")
+    assert row["speaker_role"] == "quoted_person", "人の修正が残ること"
+    assert row["tag_review_status"] == "corrected"

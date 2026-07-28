@@ -1,0 +1,12 @@
+{
+  "daisuke": {"names": ["代助"], "work": "それから"},
+  "mineko": {"names": ["美禰子"], "work": "三四郎"},
+  "sanshiro": {"names": ["三四郎"], "work": "三四郎"},
+  "sosuke": {"names": ["宗助"], "work": "門"},
+  "kenzo": {"names": ["健三"], "work": "道草"},
+  "tsuda": {"names": ["津田"], "work": "明暗"},
+  "onobu": {"names": ["お延"], "work": "明暗"},
+  "kushami": {"names": ["苦沙弥"], "work": "吾輩は猫である"},
+  "meitei": {"names": ["迷亭"], "work": "吾輩は猫である"},
+  "kangetsu": {"names": ["寒月"], "work": "吾輩は猫である"}
+}

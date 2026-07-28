@@ -10,6 +10,7 @@
  * 並びとフラグを固定しているので、変える場合は両方を同時に変えること。
  */
 
+import charactersJson from "./characters.json";
 import type { QueryKind } from "./types";
 
 /**
@@ -93,24 +94,25 @@ const ROUTES: Record<CorpusRouteKind, RouteStep[]> = {
 
 /**
  * 既知の登場人物。人物質問の判定に使う。
+ *
+ * 語彙の出所は characters.json — worker 側 `worker/src/aozora/characters.json` の
+ * 複製で、テストが同期を検証する。チャンク側の `character_id`(Pass2 が付ける)と
+ * ここで検出するIDが同じ辞書から出ることで、人物での絞り込みが結合できる。
+ *
  * ⚠️ 名前が挙がらない質問を人物質問にしない。誤判定すると作者の思想が主根拠から外れる。
  */
-export const KNOWN_CHARACTERS: Record<string, string> = {
-  代助: "daisuke",
-  美禰子: "mineko",
-  三四郎: "sanshiro",
-  宗助: "sosuke",
-  健三: "kenzo",
-  津田: "tsuda",
-  お延: "onobu",
-  苦沙弥: "kushami",
-  迷亭: "meitei",
-  寒月: "kangetsu",
-};
+type CharacterEntry = { names: string[]; work: string };
+const CHARACTERS = charactersJson as Record<string, CharacterEntry>;
+
+export const KNOWN_CHARACTERS: Record<string, string> = Object.fromEntries(
+  Object.entries(CHARACTERS).flatMap(([id, entry]) =>
+    entry.names.map((name) => [name, id])
+  )
+);
 
 export function detectCharacter(query: string): string | null {
-  for (const [name, id] of Object.entries(KNOWN_CHARACTERS)) {
-    if (query.includes(name)) return id;
+  for (const [id, entry] of Object.entries(CHARACTERS)) {
+    if (entry.names.some((name) => query.includes(name))) return id;
   }
   return null;
 }
