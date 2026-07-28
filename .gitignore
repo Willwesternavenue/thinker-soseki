@@ -34,3 +34,4 @@ data/*.mp3
 # firebase
 .firebase/
 firebase-debug.log
+backups/
