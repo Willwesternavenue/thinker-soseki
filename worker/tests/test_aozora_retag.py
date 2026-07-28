@@ -296,3 +296,34 @@ def test_retag_does_not_overwrite_human_reviewed_chunks(clean_corpus, client):
     row = _chunk(client, "SRC_T_000")
     assert row["speaker_role"] == "quoted_person", "人の修正が残ること"
     assert row["tag_review_status"] == "corrected"
+
+
+def test_processes_more_than_the_postgrest_row_cap(clean_corpus, client):
+    """未適用が1000件を超えても全件処理する。
+
+    PostgREST は1リクエスト最大1000行しか返さない(ローカル既定)。実データで
+    9,669件の retag が **1000件で黙って止まった**。取得をループさせ、
+    処理済み(v3)が絞り込みから抜けることを自然なページングとして使う。
+    """
+    _seed(client, chunks=0)
+    rows = [
+        {
+            "chunk_id": f"SRC_T_{i:04d}", "source_id": "SRC_T",
+            "person_id": "natsume_soseki", "text": f"本文{i}",
+            "chunk_type": "narration",
+            "chunker_version": "aozora_v1", "chunk_hash": f"h{i}",
+            "speaker_role": "author_direct", "thought_eligibility": "candidate",
+            "tagger_version": "aozora_tag_v1",
+        }
+        for i in range(1050)
+    ]
+    client.table("source_chunks").upsert(rows).execute()
+
+    result = retag.retag_pending(client=client, call_json=_llm([]))
+
+    assert result["updated"] == 1050
+    remaining = (
+        client.table("source_chunks").select("chunk_id", count="exact")
+        .neq("tagger_version", tag.TAGGER_VERSION).execute().count
+    )
+    assert remaining == 0

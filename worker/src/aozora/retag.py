@@ -50,22 +50,46 @@ def retag_pending(
     if not sources:
         return {"updated": 0, "needs_review": 0}
 
-    q = (
-        c.table("source_chunks")
-        .select("chunk_id, source_id, text, chunk_type")
-        .in_("source_id", sorted(sources))
-        .neq("tagger_version", tag.TAGGER_VERSION)
-        # 人手レビューの結論(reviewed/corrected)は再分類で上書きしない。
-        # LLMの再実行が人の判断を黙って覆すと、レビューという関門の意味が無くなる
-        .not_.in_("tag_review_status", ["reviewed", "corrected"])
-        .order("chunk_id")
-    )
-    if limit:
-        q = q.limit(limit)
-    pending = q.execute().data or []
-    if not pending:
-        return {"updated": 0, "needs_review": 0}
+    # ⚠️ PostgREST は1リクエスト最大1000行しか返さない(ローカル既定)。1回の取得で
+    # 全件が来る前提にすると、実データ9,669件の retag が**1000件で黙って止まる**
+    # (実測)。処理済み(現行版)は絞り込みから抜けるので、空になるまで取得を繰り返す。
+    updated = review_count = 0
+    while True:
+        q = (
+            c.table("source_chunks")
+            .select("chunk_id, source_id, text, chunk_type")
+            .in_("source_id", sorted(sources))
+            .neq("tagger_version", tag.TAGGER_VERSION)
+            # 人手レビューの結論(reviewed/corrected)は再分類で上書きしない。
+            # LLMの再実行が人の判断を黙って覆すと、レビューという関門の意味が無くなる
+            .not_.in_("tag_review_status", ["reviewed", "corrected"])
+            .order("chunk_id")
+        )
+        if limit:
+            remaining_quota = limit - updated
+            if remaining_quota <= 0:
+                break
+            q = q.limit(remaining_quota)
+        pending = q.execute().data or []
+        if not pending:
+            break
 
+        round_updated, round_review = _retag_round(
+            c, pending, sources, call_json=call_json, job_id=job_id
+        )
+        updated += round_updated
+        review_count += round_review
+        # 1件も進まなければ打ち切る(同じ集合を無限に回さない)
+        if round_updated == 0:
+            break
+
+    return {"updated": updated, "needs_review": review_count}
+
+
+def _retag_round(
+    c, pending: list[dict], sources: dict[str, dict], *, call_json, job_id
+) -> tuple[int, int]:
+    """取得済みの1回ぶん(最大1000件)を分類して書き込む。"""
     by_source: dict[str, list[dict]] = {}
     for ck in pending:
         by_source.setdefault(ck["source_id"], []).append(ck)
@@ -111,7 +135,7 @@ def retag_pending(
             updated += 1
             review_count += 1 if needs else 0
 
-    return {"updated": updated, "needs_review": review_count}
+    return updated, review_count
 
 
 def review_queue(*, client=None, limit: int = 200) -> list[dict]:
