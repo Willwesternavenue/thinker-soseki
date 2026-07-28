@@ -327,3 +327,53 @@ def test_processes_more_than_the_postgrest_row_cap(clean_corpus, client):
         .neq("tagger_version", tag.TAGGER_VERSION).execute().count
     )
     assert remaining == 0
+
+
+def test_force_source_retags_even_current_version(clean_corpus, client):
+    """--source --force は、現行版で分類済みのチャンクも付け直す。
+
+    人物辞書に作品を追加した場合、その作品は既に v3 で分類済みのため
+    通常の retag では対象にならない。全作品の再実行(数時間・数ドル)をせずに
+    その作品だけ付け直せるようにする。
+    """
+    _seed_novel(client, title="こころ")
+    client.table("source_chunks").update({
+        "tagger_version": tag.TAGGER_VERSION,  # 分類済みの状態
+    }).eq("chunk_id", "SRC_T_000").execute()
+
+    # 通常の retag は対象にしない
+    normal = retag.retag_pending(client=client, call_json=_llm([]))
+    assert normal["updated"] == 0
+
+    forced = retag.retag_pending(
+        client=client, source_id="SRC_T", force=True,
+        call_json=_llm([
+            {"chunk_id": "SRC_T_000", "character_id": "k", "confidence": 0.9},
+        ]),
+    )
+
+    assert forced["updated"] == 1
+    assert _chunk(client, "SRC_T_000")["character_id"] == "k"
+
+
+def test_force_still_respects_human_review(clean_corpus, client):
+    """force でも人手レビューの結論(reviewed/corrected)は上書きしない。"""
+    _seed_novel(client, title="こころ")
+    client.table("source_chunks").update({
+        "tagger_version": tag.TAGGER_VERSION,
+        "tag_review_status": "corrected",
+    }).eq("chunk_id", "SRC_T_000").execute()
+
+    forced = retag.retag_pending(
+        client=client, source_id="SRC_T", force=True, call_json=_llm([]),
+    )
+
+    assert forced["updated"] == 0
+
+
+def test_force_requires_a_source(clean_corpus, client):
+    """force は必ず作品単位。全件 force は誤操作の影響が大きすぎる。"""
+    import pytest
+
+    with pytest.raises(ValueError, match="source"):
+        retag.retag_pending(client=client, force=True, call_json=_llm([]))

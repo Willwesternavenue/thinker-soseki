@@ -14,11 +14,15 @@
 ⚠️ frontend の `src/lib/rag/characters.json` は本ファイルの複製。frontend 側の
 テストが同期を検証する（片方だけ変えるとテストが落ちる）。
 
-⚠️ 「先生」のような一般名詞と衝突する呼称は入れない。`detect` は部分一致なので、
-無関係な質問（「先生についてどう思うか」）を人物質問に誤判定してしまう。
+呼称が衝突する場合の扱い:
+- 「先生」のような一般名詞: `detect_names` に複合語(「こころの先生」)だけを載せる。
+  タグ付け(names)には残す — Pass2 は作品スコープの一覧から選ぶので衝突しない
+- 「K」のような1文字のラテン文字: 前後が英数字でないときだけ一致させる
+  (OK / KPI / 4K に反応させない)。実装は `_matches`
 """
 
 import json
+import re
 from pathlib import Path
 
 _PATH = Path(__file__).with_name("characters.json")
@@ -30,13 +34,45 @@ def all_ids() -> list[str]:
     return list(_DATA)
 
 
+def _detect_names(entry: dict) -> list[str]:
+    """検出に使う表記。省略時は names と同じ。
+
+    「先生」のように一般名詞と衝突する呼称は、`detect_names` に複合語
+    (「こころの先生」)だけを載せることで、タグ付けの語彙(names)には残しつつ
+    質問検出からは外せる。
+    """
+    return entry.get("detect_names", entry["names"])
+
+
 def name_map() -> dict[str, str]:
-    """表記 → character_id。ルーティングの検出辞書として使う。"""
+    """検出用の表記 → character_id。ルーティングの検出辞書として使う。"""
     return {
         name: character_id
         for character_id, entry in _DATA.items()
-        for name in entry["names"]
+        for name in _detect_names(entry)
     }
+
+
+# 1文字のラテン文字(K など)の境界。前後が英数字なら英単語の一部とみなす
+# (OK / KPI / 4K に反応させない)。全角も同じ扱い。
+_BOUNDARY = r"[A-Za-z0-9Ａ-Ｚａ-ｚ０-９]"
+
+
+def _matches(name: str, query: str) -> bool:
+    if len(name) == 1 and re.fullmatch(r"[A-Za-zＡ-Ｚａ-ｚ]", name):
+        variants = "".join(sorted({name, _to_fullwidth(name), _to_halfwidth(name)}))
+        return re.search(
+            rf"(?<!{_BOUNDARY})[{re.escape(variants)}](?!{_BOUNDARY})", query
+        ) is not None
+    return name in query
+
+
+def _to_fullwidth(ch: str) -> str:
+    return chr(ord(ch) + 0xFEE0) if "A" <= ch <= "z" else ch
+
+
+def _to_halfwidth(ch: str) -> str:
+    return chr(ord(ch) - 0xFEE0) if "Ａ" <= ch <= "ｚ" else ch
 
 
 def roster_for_work(canonical_title: str) -> list[dict]:
@@ -60,6 +96,6 @@ def detect(query: str) -> str | None:
     作者の思想が主根拠から外れる。
     """
     for character_id, entry in _DATA.items():
-        if any(name in query for name in entry["names"]):
+        if any(_matches(name, query) for name in _detect_names(entry)):
             return character_id
     return None

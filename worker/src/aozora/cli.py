@@ -282,7 +282,9 @@ def cmd_embed(_args) -> None:
 
 def cmd_retag(args) -> None:
     """Pass2(LLM分類)を未適用チャンクへ適用する。"""
-    result = retag.retag_pending(limit=args.limit)
+    result = retag.retag_pending(
+        limit=args.limit, source_id=args.source, force=args.force
+    )
     print(f"Pass2 適用: {result['updated']}件 / "
           f"うち要レビュー {result['needs_review']}件")
 
@@ -433,6 +435,9 @@ def main(argv=None) -> int:
     p_ar.set_defaults(func=cmd_approve_rule)
     p_retag = sub.add_parser("retag", help="Pass2(LLM分類)を未適用チャンクへ適用する")
     p_retag.add_argument("--limit", type=int, help="処理するチャンク数の上限")
+    p_retag.add_argument("--source", help="この source_id だけを対象にする")
+    p_retag.add_argument("--force", action="store_true",
+                         help="分類済みでも付け直す(--source 必須。辞書更新後の再実行用)")
     p_retag.set_defaults(func=cmd_retag)
     sub.add_parser("review-tags", help="Pass4 レビュー待ちを出す").set_defaults(
         func=cmd_review_tags)

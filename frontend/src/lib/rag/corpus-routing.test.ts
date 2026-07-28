@@ -38,6 +38,20 @@ describe("detectCharacter(作中人物の検出)", () => {
     expect(detectCharacter("近代化についてどう考えたか")).toBeNull();
   });
 
+  it("K は前後が英数字でないときだけ一致する", () => {
+    expect(detectCharacter("Kとは誰ですか")).toBe("k");
+    expect(detectCharacter("Ｋの自殺について")).toBe("k");
+    expect(detectCharacter("OKですか")).toBeNull();
+    expect(detectCharacter("KPIとは")).toBeNull();
+    expect(detectCharacter("4Kテレビ")).toBeNull();
+  });
+
+  it("「先生」単独では検出しない(複合語のみ)", () => {
+    // 「漱石先生はどう考える？」は頻出の言い回しで、人物ルートに入れてはいけない
+    expect(detectCharacter("漱石先生はどう考えますか")).toBeNull();
+    expect(detectCharacter("こころの先生はなぜ死んだのか")).toBe("sensei_kokoro");
+  });
+
   it("worker 側の人物辞書と一致する(語彙の単一の出所)", async () => {
     // 質問から検出するID(ここ)とチャンクに付くID(worker の Pass2)が
     // 別の辞書から出ると、人物での絞り込みが永久に一致しない

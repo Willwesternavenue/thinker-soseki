@@ -101,18 +101,36 @@ const ROUTES: Record<CorpusRouteKind, RouteStep[]> = {
  *
  * ⚠️ 名前が挙がらない質問を人物質問にしない。誤判定すると作者の思想が主根拠から外れる。
  */
-type CharacterEntry = { names: string[]; work: string };
+type CharacterEntry = { names: string[]; detect_names?: string[]; work: string };
 const CHARACTERS = charactersJson as Record<string, CharacterEntry>;
+
+// 検出に使う表記。「先生」のような一般名詞は detect_names に複合語だけを載せて
+// 質問検出から外す(タグ付けの語彙 names とは別の関心事。worker 側と同じ規則)
+const detectNames = (entry: CharacterEntry): string[] =>
+  entry.detect_names ?? entry.names;
+
+// 1文字のラテン文字(K)の境界。前後が英数字なら英単語の一部(OK / KPI / 4K)
+const BOUNDARY = "[A-Za-z0-9Ａ-Ｚａ-ｚ０-９]";
+
+function matchesName(name: string, query: string): boolean {
+  if (name.length === 1 && /[A-Za-zＡ-Ｚａ-ｚ]/.test(name)) {
+    const code = name.charCodeAt(0);
+    const half = code >= 0xff21 ? String.fromCharCode(code - 0xfee0) : name;
+    const full = code < 0xff00 ? String.fromCharCode(code + 0xfee0) : name;
+    return new RegExp(`(?<!${BOUNDARY})[${half}${full}](?!${BOUNDARY})`).test(query);
+  }
+  return query.includes(name);
+}
 
 export const KNOWN_CHARACTERS: Record<string, string> = Object.fromEntries(
   Object.entries(CHARACTERS).flatMap(([id, entry]) =>
-    entry.names.map((name) => [name, id])
+    detectNames(entry).map((name) => [name, id])
   )
 );
 
 export function detectCharacter(query: string): string | null {
   for (const [id, entry] of Object.entries(CHARACTERS)) {
-    if (entry.names.some((name) => query.includes(name))) return id;
+    if (detectNames(entry).some((name) => matchesName(name, query))) return id;
   }
   return null;
 }

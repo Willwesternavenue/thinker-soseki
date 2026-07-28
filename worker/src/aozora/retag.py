@@ -38,15 +38,25 @@ def _sources(client) -> dict[str, dict]:
 
 
 def retag_pending(
-    *, client=None, call_json=None, limit: int | None = None, job_id: str | None = None
+    *, client=None, call_json=None, limit: int | None = None,
+    job_id: str | None = None, source_id: str | None = None, force: bool = False,
 ) -> dict:
     """Pass2 が未適用のチャンクを分類する。
 
     対象は `tagger_version` が現行版でないもの。文書ごとにまとめて分類する
     （文書種別と役割が分類の前提になるため、混ぜて投げない）。
+
+    `force=True` は現行版で分類済みのチャンクも付け直す。人物辞書に作品を
+    追加した場合に、その作品だけ再実行するためのもの。誤操作の影響が大きいため
+    **必ず `source_id` とセット**(全件 force は許さない)。
     """
+    if force and not source_id:
+        raise ValueError("force には source_id の指定が必要です(全件forceは許さない)")
+
     c = _c(client)
     sources = _sources(c)
+    if source_id is not None:
+        sources = {k: v for k, v in sources.items() if k == source_id}
     if not sources:
         return {"updated": 0, "needs_review": 0}
 
@@ -54,17 +64,40 @@ def retag_pending(
     # 全件が来る前提にすると、実データ9,669件の retag が**1000件で黙って止まる**
     # (実測)。処理済み(現行版)は絞り込みから抜けるので、空になるまで取得を繰り返す。
     updated = review_count = 0
+    if force:
+        # 処理済みが絞り込みから抜けないため、自然なページングが効かない。
+        # paged.fetch_all で全件を先に集めて1回で処理する
+        from . import paged
+
+        pending = paged.fetch_all(
+            lambda: c.table("source_chunks")
+            .select("chunk_id, source_id, text, chunk_type")
+            .in_("source_id", sorted(sources))
+            .not_.in_("tag_review_status", ["reviewed", "corrected"])
+            .order("chunk_id")
+        )
+        if limit:
+            pending = pending[:limit]
+        if not pending:
+            return {"updated": 0, "needs_review": 0}
+        updated, review_count = _retag_round(
+            c, pending, sources, call_json=call_json, job_id=job_id
+        )
+        return {"updated": updated, "needs_review": review_count}
+
     while True:
         q = (
             c.table("source_chunks")
             .select("chunk_id, source_id, text, chunk_type")
             .in_("source_id", sorted(sources))
-            .neq("tagger_version", tag.TAGGER_VERSION)
             # 人手レビューの結論(reviewed/corrected)は再分類で上書きしない。
-            # LLMの再実行が人の判断を黙って覆すと、レビューという関門の意味が無くなる
+            # force でも同じ — LLMの再実行が人の判断を黙って覆すと、
+            # レビューという関門の意味が無くなる
             .not_.in_("tag_review_status", ["reviewed", "corrected"])
             .order("chunk_id")
         )
+        if not force:
+            q = q.neq("tagger_version", tag.TAGGER_VERSION)
         if limit:
             remaining_quota = limit - updated
             if remaining_quota <= 0:

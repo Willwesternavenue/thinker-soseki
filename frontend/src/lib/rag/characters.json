@@ -1,12 +1,103 @@
 {
-  "daisuke": {"names": ["代助"], "work": "それから"},
-  "mineko": {"names": ["美禰子"], "work": "三四郎"},
-  "sanshiro": {"names": ["三四郎"], "work": "三四郎"},
-  "sosuke": {"names": ["宗助"], "work": "門"},
-  "kenzo": {"names": ["健三"], "work": "道草"},
-  "tsuda": {"names": ["津田"], "work": "明暗"},
-  "onobu": {"names": ["お延"], "work": "明暗"},
-  "kushami": {"names": ["苦沙弥"], "work": "吾輩は猫である"},
-  "meitei": {"names": ["迷亭"], "work": "吾輩は猫である"},
-  "kangetsu": {"names": ["寒月"], "work": "吾輩は猫である"}
+  "daisuke": {
+    "names": [
+      "代助"
+    ],
+    "work": "それから"
+  },
+  "mineko": {
+    "names": [
+      "美禰子"
+    ],
+    "work": "三四郎"
+  },
+  "sanshiro": {
+    "names": [
+      "三四郎"
+    ],
+    "work": "三四郎"
+  },
+  "sosuke": {
+    "names": [
+      "宗助"
+    ],
+    "work": "門"
+  },
+  "kenzo": {
+    "names": [
+      "健三"
+    ],
+    "work": "道草"
+  },
+  "tsuda": {
+    "names": [
+      "津田"
+    ],
+    "work": "明暗"
+  },
+  "onobu": {
+    "names": [
+      "お延"
+    ],
+    "work": "明暗"
+  },
+  "kushami": {
+    "names": [
+      "苦沙弥"
+    ],
+    "work": "吾輩は猫である"
+  },
+  "meitei": {
+    "names": [
+      "迷亭"
+    ],
+    "work": "吾輩は猫である"
+  },
+  "kangetsu": {
+    "names": [
+      "寒月"
+    ],
+    "work": "吾輩は猫である"
+  },
+  "sensei_kokoro": {
+    "names": [
+      "先生"
+    ],
+    "detect_names": [
+      "こころの先生",
+      "『こころ』の先生"
+    ],
+    "work": "こころ"
+  },
+  "k": {
+    "names": [
+      "K",
+      "Ｋ"
+    ],
+    "work": "こころ"
+  },
+  "ichiro": {
+    "names": [
+      "一郎"
+    ],
+    "work": "行人"
+  },
+  "jiro": {
+    "names": [
+      "二郎"
+    ],
+    "work": "行人"
+  },
+  "onao": {
+    "names": [
+      "お直"
+    ],
+    "work": "行人"
+  },
+  "nami": {
+    "names": [
+      "那美"
+    ],
+    "work": "草枕"
+  }
 }
