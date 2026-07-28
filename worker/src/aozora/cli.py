@@ -30,7 +30,7 @@ from .. import db
 from ..steps import gen_questions
 from . import (
     gen_creative_cards, gen_rules, gen_thought_cards, ingest, manifest,
-    person_page, retag, snapshot as snapshot_mod,
+    paged, person_page, retag, snapshot as snapshot_mod,
 )
 
 PERSON_ID = "natsume_soseki"
@@ -312,15 +312,16 @@ def cmd_tag_review(args) -> None:
 def cmd_report(_args) -> None:
     """コーパスの状態とデータ品質を出す(指示書§14.6)。"""
     c = db.client()
-    srcs = (
-        c.table("sources")
+    # 全件取得はページング必須(PostgRESTの1000行上限。paged.py 参照)
+    srcs = paged.fetch_all(
+        lambda: c.table("sources")
         .select("source_id,title,corpus_role,document_genre")
-        .eq("source_provider", "aozora").execute().data
+        .eq("source_provider", "aozora").order("source_id")
     )
-    chunks = (
-        c.table("source_chunks")
+    chunks = paged.fetch_all(
+        lambda: c.table("source_chunks")
         .select("source_id,speaker_role,thought_eligibility,tag_review_status")
-        .eq("chunker_version", "aozora_v1").execute().data
+        .eq("chunker_version", "aozora_v1").order("chunk_id")
     )
     print(f"文書: {len(srcs)}件 / チャンク: {len(chunks)}件")
     print(f"corpus_role: {dict(Counter(s['corpus_role'] for s in srcs))}")

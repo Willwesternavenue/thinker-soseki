@@ -15,7 +15,7 @@ thought_eligibility≠excluded のチャンクだけを LLM に渡す。ここ�
 import hashlib
 
 from .. import config, db, llm
-from . import routing
+from . import paged, routing
 
 PERSON_ID = "natsume_soseki"
 
@@ -99,17 +99,15 @@ def fetch_index_chunks(person_id: str = PERSON_ID, *, client=None) -> list[dict]
         return []
     by_source = {s["source_id"]: s for s in sources}
 
-    chunks = (
-        c.table("source_chunks")
+    # 全件取得はページング必須(PostgRESTの1000行上限。paged.py 参照)
+    chunks = paged.fetch_all(
+        lambda: c.table("source_chunks")
         .select("chunk_id, source_id, chapter_title, text, speaker_role,"
                 " thought_eligibility")
         .in_("source_id", sorted(by_source))
         .in_("speaker_role", idx["speaker_roles"])
         .neq("thought_eligibility", "excluded")
         .order("chunk_id")
-        .execute()
-        .data
-        or []
     )
     return [{**ch, "_source": by_source[ch["source_id"]]} for ch in chunks]
 

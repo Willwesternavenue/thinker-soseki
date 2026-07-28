@@ -278,3 +278,21 @@ def test_approve_refuses_evidence_outside_thought_index(clean_corpus, client):
 
     with pytest.raises(ValueError, match="作者"):
         gen_thought_cards.approve_card(card_id, reviewed_by="tester", client=client)
+
+
+def test_fetch_index_reads_past_the_postgrest_row_cap(clean_corpus, client):
+    """思想Indexが1000件を超えても全件を読む(PostgRESTの行上限対策)。"""
+    _seed(client, chunks=0)
+    rows = [
+        {
+            "chunk_id": f"SRC_L_{i:04d}", "source_id": "SRC_L",
+            "person_id": "natsume_soseki", "text": f"本文{i}",
+            "chunker_version": "aozora_v1", "chunk_hash": f"hL{i}",
+            "speaker_role": "author_direct", "thought_eligibility": "candidate",
+            "tagger_version": tag.TAGGER_VERSION,
+        }
+        for i in range(1050)
+    ]
+    client.table("source_chunks").upsert(rows).execute()
+
+    assert len(gen_thought_cards.fetch_index_chunks(client=client)) == 1050

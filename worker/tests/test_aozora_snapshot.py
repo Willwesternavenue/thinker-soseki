@@ -177,10 +177,10 @@ def test_detects_garbled_text(clean_corpus, client):
 
 
 def test_detects_duplicate_chunks(clean_corpus, client):
-    """同一 chunk_hash の重複を検出する。"""
+    """同一 chunk_hash の重複を検出する(取り込みミスの検出)。"""
     _seed_source(client, "SRC_A", chunks=(
-        ("_001", "author_direct", "同じ本文。"),
-        ("_002", "author_direct", "同じ本文。"),
+        ("_001", "author_direct", "同じ長さの十分にある本文が二度取り込まれてしまった場合を再現する。"),
+        ("_002", "author_direct", "同じ長さの十分にある本文が二度取り込まれてしまった場合を再現する。"),
     ))
     client.table("source_chunks").update({"chunk_hash": "hSRC_A_001"}).eq(
         "chunk_id", "SRC_A_002"
@@ -189,6 +189,26 @@ def test_detects_duplicate_chunks(clean_corpus, client):
     check = _check(snapshot.build_quality_report(client=client), "duplicate_ratio")
 
     assert check["passed"] is False
+
+
+def test_short_repeated_lines_are_not_duplicates(clean_corpus, client):
+    """短い台詞の繰り返しを重複として数えない。
+
+    小説では「何ですって」のような短文が正当に繰り返される(Phase C 実測:
+    重複33件はすべて短い台詞と章番号)。取り込みミスの検出という目的に対して
+    誤検出になるため、短いチャンクは対象外にする。
+    """
+    _seed_source(client, "SRC_A", chunks=(
+        ("_001", "character", "「何ですって」"),
+        ("_002", "character", "「何ですって」"),
+    ))
+    client.table("source_chunks").update({"chunk_hash": "hSRC_A_001"}).eq(
+        "chunk_id", "SRC_A_002"
+    ).execute()
+
+    check = _check(snapshot.build_quality_report(client=client), "duplicate_ratio")
+
+    assert check["passed"] is True
 
 
 def test_detects_unclassified_speaker_role(clean_corpus, client):
@@ -355,3 +375,39 @@ def test_empty_corpus_does_not_divide_by_zero(clean_corpus, client):
 
     assert _check(report, "garbling_ratio")["value"] == 0
     assert report["passed"] is True
+
+
+def test_snapshot_counts_more_than_the_postgrest_row_cap(clean_corpus, client):
+    """チャンクが1000件を超えても snapshot と品質レポートが全件を見る。
+
+    PostgREST は1リクエスト最大1000行しか返さない。Phase C(10,152チャンク)で
+    snapshot の counts が 1000 になり、**品質レポートも先頭1000件しか
+    検査していなかった**(実測)。取得をページングさせる。
+    """
+    _seed_source(client, "SRC_BIG", chunks=())
+    rows = [
+        {
+            "chunk_id": f"SRC_BIG_{i:04d}", "source_id": "SRC_BIG",
+            "person_id": "natsume_soseki", "text": f"本文{i}",
+            "chunker_version": "aozora_v1", "chunk_hash": f"hb{i}",
+            "speaker_role": "author_direct", "thought_eligibility": "candidate",
+            "embedding": [0.1] * 1536,
+        }
+        for i in range(1050)
+    ]
+    client.table("source_chunks").upsert(rows).execute()
+
+    snap = snapshot.build_snapshot(client=client)
+    report = snapshot.build_quality_report(client=client)
+
+    assert snap["counts"]["chunks"] == 1050
+    assert next(
+        s for s in snap["sources"] if s["source_id"] == "SRC_BIG"
+    )["chunk_count"] == 1050
+    # 品質レポートも全件を見ている(1000件で切れていたら分母が合わない)
+    garbling = next(c for c in report["checks"] if c["name"] == "garbling_ratio")
+    assert garbling["value"] == 0.0
+    embedded = next(
+        c for c in report["checks"] if c["name"] == "chunks_without_embedding"
+    )
+    assert embedded["passed"] is True

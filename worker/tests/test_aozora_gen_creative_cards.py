@@ -251,3 +251,40 @@ def test_reject_card_keeps_it_out_of_generation(clean_corpus, client):
     card = client.table("creative_cards").select("status").eq(
         "card_id", "cc_bad").single().execute().data
     assert card["status"] == "rejected"
+
+
+def test_fetch_usable_reads_past_the_postgrest_row_cap(clean_corpus, client):
+    """創作の参照チャンクが1000件を超えても全件を読む(PostgRESTの行上限対策)。
+
+    Phase C で narrative_reference は約9,700件になった。上限に当たると
+    カード候補が先頭1000件の範囲からしか出ない。
+    """
+    client.table("personas").upsert(
+        {"person_id": "natsume_soseki", "display_name": "X"}).execute()
+    client.table("canonical_works").upsert({
+        "canonical_work_id": "cw_B", "person_id": "natsume_soseki",
+        "canonical_title": "B"}).execute()
+    client.table("work_editions").upsert({
+        "edition_id": "ed_B", "canonical_work_id": "cw_B",
+        "aozora_work_id": "000000", "orthography": "新字新仮名"}).execute()
+    client.table("sources").upsert({
+        "source_id": "SRC_B", "person_id": "natsume_soseki", "title": "B",
+        "source_type": "book", "edition_id": "ed_B",
+        "corpus_role": "narrative_reference", "document_genre": "novel",
+        "source_provider": "aozora"}).execute()
+    rows = [
+        {
+            "chunk_id": f"SRC_B_{i:04d}", "source_id": "SRC_B",
+            "person_id": "natsume_soseki", "text": f"本文{i}",
+            "chunker_version": "aozora_v1", "chunk_hash": f"hB{i}",
+            "speaker_role": "narrator", "thought_eligibility": "excluded",
+            "creative_eligibility": "candidate",
+        }
+        for i in range(1050)
+    ]
+    client.table("source_chunks").upsert(rows).execute()
+
+    grouped = gen._fetch_usable_chunks(
+        "natsume_soseki", client=client)
+
+    assert len(grouped["narrative_reference"]) == 1050

@@ -2,14 +2,17 @@
 
 取り込みを再現できたかを照合するための基準スナップショット。
 
-`phase_a.json` は Phase A 13資料（講演9 / 創作論3 / 夢十夜1 = 483チャンク）を
-空のDBから取り込んだ結果。作成手順とその実測は
-[docs/CORPUS_T1_SPEC.md §12.1・§12.2](../../docs/CORPUS_T1_SPEC.md) を参照。
+| 基準 | 対象 | 状態 |
+|---|---|---|
+| `phase_c.json` | Phase A 13資料 + Phase C 小説9作品（22文書 / 10,152チャンク） | **現行** |
+| `phase_a.json` | Phase A 13資料のみ（483チャンク） | 歴史的基準。Phase A のみの再構築でしか一致しない |
+
+作成手順と実測は [docs/CORPUS_T1_SPEC.md §12.1・§12.2・§12.6](../../docs/CORPUS_T1_SPEC.md) を参照。
 
 ## 照合
 
 ```bash
-uv run python -m src.aozora.cli snapshot --compare snapshots/phase_a.json
+uv run python -m src.aozora.cli snapshot --compare snapshots/phase_c.json
 ```
 
 digest が一致すれば、取り込みが基準どおりに再現できている。
@@ -27,7 +30,7 @@ digest が一致すれば、取り込みが基準どおりに再現できてい�
 スナップショットを更新して合わせる場面ではない。
 
 ```bash
-uv run python -m src.aozora.cli snapshot --out snapshots/phase_a.json
+uv run python -m src.aozora.cli snapshot --out snapshots/phase_c.json
 ```
 
 ## 含めていないもの

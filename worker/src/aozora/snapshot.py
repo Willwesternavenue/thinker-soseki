@@ -16,6 +16,7 @@ import json
 from collections import Counter
 
 from .. import db
+from . import paged
 
 PERSON_ID = "natsume_soseki"
 PROVIDER = "aozora"
@@ -48,10 +49,25 @@ def _c(client):
 
 
 def _fetch(client, table, columns, **filters):
-    q = _c(client).table(table).select(columns)
-    for key, value in filters.items():
-        q = q.eq(key, value)
-    return q.execute().data or []
+    """全行を取得する(ページング必須。paged.py 参照)。"""
+    def build():
+        q = _c(client).table(table).select(columns)
+        for key, value in filters.items():
+            q = q.eq(key, value)
+        return q.order(_ORDER_KEYS.get(table, "created_at"))
+
+    return paged.fetch_all(build)
+
+
+# ページングの順序キー。順序が安定しないと、ページ境界で行が重複・欠落する
+_ORDER_KEYS = {
+    "canonical_works": "canonical_work_id",
+    "work_editions": "edition_id",
+    "sources": "source_id",
+    "source_chunks": "chunk_id",
+    "creative_cards": "card_id",
+    "canonical_work_review_queue": "queue_id",
+}
 
 
 # ── snapshot ──
@@ -262,10 +278,21 @@ def _is_garbled(text: str | None) -> bool:
     return bool(text) and any(m in text for m in GARBLING_MARKERS)
 
 
+# これ未満の本文は重複検査の対象外。小説では「何ですって」のような短い台詞が
+# 正当に繰り返される(Phase C 実測: 重複33件はすべて短い台詞と章番号)。
+# この検査の目的は取り込みミス(同じ段落の二重投入)の検出であって、
+# 本文の反復表現の検出ではない。
+DUPLICATE_MIN_CHARS = 30
+
+
 def _duplicates(chunks: list[dict]) -> list[dict]:
-    """同じ chunk_hash を持つチャンク(1件目も含めて重複扱い)。"""
-    counted = Counter(ch["chunk_hash"] for ch in chunks if ch["chunk_hash"])
-    return [ch for ch in chunks if counted[ch["chunk_hash"]] > 1]
+    """同じ chunk_hash を持つ十分な長さのチャンク(1件目も含めて重複扱い)。"""
+    long_enough = [
+        ch for ch in chunks
+        if ch["chunk_hash"] and len(ch.get("text") or "") >= DUPLICATE_MIN_CHARS
+    ]
+    counted = Counter(ch["chunk_hash"] for ch in long_enough)
+    return [ch for ch in long_enough if counted[ch["chunk_hash"]] > 1]
 
 
 def _fiction_in_core(sources: list[dict], chunks: list[dict]) -> list[str]:

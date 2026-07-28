@@ -16,6 +16,7 @@ from datetime import datetime, timezone
 
 from .. import config, db, llm
 from ..creative import repo
+from . import paged
 
 # これ未満の根拠しかないカードは作らない(既存 gen_cards.py と同じ規律)
 MIN_EVIDENCE_CHUNKS = 2
@@ -90,14 +91,13 @@ def _fetch_usable_chunks(person_id: str, *, client) -> dict[str, list[dict]]:
         return {}
 
     by_source = {s["source_id"]: s for s in sources}
-    chunks = (
-        client.table("source_chunks")
+    # 全件取得はページング必須(PostgRESTの1000行上限。paged.py 参照)
+    chunks = paged.fetch_all(
+        lambda: client.table("source_chunks")
         .select("chunk_id, source_id, chapter_title, text, creative_eligibility")
         .in_("source_id", list(by_source))
         .neq("creative_eligibility", "excluded")
         .order("chunk_id")
-        .execute()
-        .data
     )
 
     grouped: dict[str, list[dict]] = {}
