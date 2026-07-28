@@ -84,11 +84,74 @@ export default async function RulesPage({
     reviewsByVersion.set(r.rule_version_id, list);
   }
 
-  // 証拠・例の件数
+  // 証拠(由来の思想カード・原典チャンク)。承認は原文と突き合わせてから
+  // 押せるように、件数だけでなく本文まで出す(創作カード承認画面と同じ規律)
   const { data: evidenceRows } = await supabase
     .from("judgment_rule_evidence")
-    .select("rule_id")
+    .select("rule_id, card_id, chunk_id, note")
     .in("rule_id", ruleIds);
+
+  const evidenceChunkIds = [
+    ...new Set((evidenceRows ?? []).map((e) => e.chunk_id).filter(Boolean)),
+  ] as string[];
+  const { data: evidenceChunks } = evidenceChunkIds.length
+    ? await supabase
+        .from("source_chunks")
+        .select("chunk_id, source_id, chapter_title, char_start, char_end, text")
+        .in("chunk_id", evidenceChunkIds)
+    : { data: [] };
+  const chunkById = new Map((evidenceChunks ?? []).map((c) => [c.chunk_id as string, c]));
+
+  const evidenceSourceIds = [
+    ...new Set((evidenceChunks ?? []).map((c) => c.source_id as string)),
+  ];
+  const { data: evidenceSources } = evidenceSourceIds.length
+    ? await supabase
+        .from("sources")
+        .select("source_id, title")
+        .in("source_id", evidenceSourceIds)
+    : { data: [] };
+  const sourceTitleById = new Map(
+    (evidenceSources ?? []).map((s) => [s.source_id as string, s.title as string])
+  );
+
+  const evidenceCardIds = [
+    ...new Set((evidenceRows ?? []).map((e) => e.card_id).filter(Boolean)),
+  ] as string[];
+  const { data: evidenceCards } = evidenceCardIds.length
+    ? await supabase
+        .from("thought_cards")
+        .select("card_id, thought_id, title, core_claim, status")
+        .in("card_id", evidenceCardIds)
+    : { data: [] };
+  const thoughtCardById = new Map(
+    (evidenceCards ?? []).map((c) => [c.card_id as string, c])
+  );
+
+  // bridge_rule の対応先(創作カード)。承認済みかも見せる(片側 draft の橋は架からない)
+  const bridgeTargetIds = [
+    ...new Set(
+      [...latest.values()]
+        .map((v) => (v.content as RuleContent).target_creative_card_id)
+        .filter((x): x is string => typeof x === "string")
+    ),
+  ];
+  const { data: bridgeTargets } = bridgeTargetIds.length
+    ? await supabase
+        .from("creative_cards")
+        .select("card_id, title, status")
+        .in("card_id", bridgeTargetIds)
+    : { data: [] };
+  const creativeCardById = new Map(
+    (bridgeTargets ?? []).map((c) => [c.card_id as string, c])
+  );
+
+  const evidenceByRule = new Map<string, NonNullable<typeof evidenceRows>>();
+  for (const e of evidenceRows ?? []) {
+    const list = evidenceByRule.get(e.rule_id) ?? [];
+    list.push(e);
+    evidenceByRule.set(e.rule_id, list);
+  }
   const { data: exampleRows } = await supabase
     .from("judgment_rule_examples")
     .select("rule_id")
@@ -194,6 +257,17 @@ export default async function RulesPage({
                 <ContentSection label="必要な区別" items={content.required_distinctions as string[]} />
                 <ContentSection label="例外" items={content.exceptions as string[]} />
                 <ContentSection label="禁止推論" items={content.forbidden_inferences as string[]} emphasis />
+                <RuleEvidence
+                  evidence={evidenceByRule.get(rule.rule_id) ?? []}
+                  chunkById={chunkById}
+                  sourceTitleById={sourceTitleById}
+                  thoughtCardById={thoughtCardById}
+                  targetCreativeCard={
+                    typeof content.target_creative_card_id === "string"
+                      ? creativeCardById.get(content.target_creative_card_id)
+                      : undefined
+                  }
+                />
                 <ContentSection label="本人への確認質問" items={content.author_questions as string[]} emphasis />
                 {Array.isArray(content.conflicts) && content.conflicts.length > 0 && (
                   <div>
@@ -248,6 +322,124 @@ export default async function RulesPage({
         })}
         {!filtered.length && <p className="text-sm text-stone-500">該当する規則がありません</p>}
       </div>
+    </div>
+  );
+}
+
+type EvidenceRow = {
+  rule_id: string;
+  card_id: string | null;
+  chunk_id: string | null;
+  note: string | null;
+};
+type EvidenceChunk = {
+  chunk_id: string;
+  source_id: string;
+  chapter_title: string | null;
+  char_start: number | null;
+  char_end: number | null;
+  text: string;
+};
+type EvidenceThoughtCard = {
+  card_id: string;
+  thought_id: string;
+  title: string;
+  core_claim: string | null;
+  status: string;
+};
+type EvidenceCreativeCard = { card_id: string; title: string; status: string };
+
+/**
+ * 規則の根拠(由来の思想カード + 原典本文)。
+ *
+ * 承認は原文と突き合わせてから押せるようにする(指示書§9 Pass4。
+ * 創作カード承認画面と同じ規律)。原典の位置は 作品名・章・文字位置 で示す
+ * (青空文庫にページは無いため。本文を出すので全文検索でも探せる)。
+ */
+function RuleEvidence({
+  evidence,
+  chunkById,
+  sourceTitleById,
+  thoughtCardById,
+  targetCreativeCard,
+}: {
+  evidence: EvidenceRow[];
+  chunkById: Map<string, EvidenceChunk>;
+  sourceTitleById: Map<string, string>;
+  thoughtCardById: Map<string, EvidenceThoughtCard>;
+  targetCreativeCard?: EvidenceCreativeCard;
+}) {
+  const cardRefs = [
+    ...new Map(
+      evidence
+        .filter((e) => e.card_id)
+        .map((e) => [e.card_id as string, thoughtCardById.get(e.card_id as string)])
+    ).values(),
+  ].filter((c): c is EvidenceThoughtCard => !!c);
+  const chunkRefs = evidence
+    .filter((e) => e.chunk_id)
+    .map((e) => ({ id: e.chunk_id as string, chunk: chunkById.get(e.chunk_id as string) }));
+
+  if (!cardRefs.length && !chunkRefs.length && !targetCreativeCard) return null;
+
+  return (
+    <div className="space-y-2">
+      <h4 className="text-xs font-semibold text-stone-500">
+        根拠(この規則がどこから来たか)
+      </h4>
+
+      {cardRefs.map((card) => (
+        <div key={card.card_id} className="rounded border border-stone-200 bg-stone-50 p-2 text-xs">
+          <span className="mr-2 rounded bg-stone-200 px-1.5 py-0.5">
+            由来の思想カード{card.status !== "approved" ? `(${card.status})` : ""}
+          </span>
+          <Link href="/admin/cards" className="font-medium text-blue-700 underline">
+            {card.title}
+          </Link>
+          {card.core_claim && <p className="mt-1 text-stone-600">{card.core_claim}</p>}
+        </div>
+      ))}
+
+      {targetCreativeCard && (
+        <div className="rounded border border-stone-200 bg-stone-50 p-2 text-xs">
+          <span className="mr-2 rounded bg-stone-200 px-1.5 py-0.5">
+            対応先の創作カード
+            {targetCreativeCard.status !== "approved"
+              ? `(${targetCreativeCard.status} ← 承認されるまで橋は架かりません)`
+              : ""}
+          </span>
+          <Link
+            href={`/admin/creative-cards/${targetCreativeCard.card_id}`}
+            className="font-medium text-blue-700 underline"
+          >
+            {targetCreativeCard.title}
+          </Link>
+        </div>
+      )}
+
+      {chunkRefs.map(({ id, chunk }) =>
+        chunk ? (
+          <div key={id} className="rounded border border-stone-200 p-2 text-xs">
+            <div className="mb-1 flex flex-wrap items-center gap-2 text-stone-500">
+              <span className="font-medium text-stone-700">
+                {sourceTitleById.get(chunk.source_id) ?? chunk.source_id}
+              </span>
+              {chunk.chapter_title && <span>（{chunk.chapter_title}）</span>}
+              {chunk.char_start != null && chunk.char_end != null && (
+                <span>
+                  {chunk.char_start.toLocaleString()}〜{chunk.char_end.toLocaleString()}字
+                </span>
+              )}
+              <code className="text-stone-400">{id}</code>
+            </div>
+            <p className="whitespace-pre-wrap leading-relaxed">{chunk.text}</p>
+          </div>
+        ) : (
+          <div key={id} className="rounded border border-red-300 bg-red-50 p-2 text-xs text-red-800">
+            <code>{id}</code> は実在しません（原典が取り込み直された可能性）
+          </div>
+        )
+      )}
     </div>
   );
 }
