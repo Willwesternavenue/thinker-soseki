@@ -38,6 +38,7 @@ CHECK_NAMES = (
     "editions_without_parser_version",
     "chunks_without_embedding",
     "cards_with_missing_evidence",
+    "known_novel_misclassified",
     "open_review_queue",
 )
 
@@ -244,6 +245,9 @@ def build_quality_report(person_id: str = PERSON_ID, *, client=None) -> dict:
         _count_check("cards_with_missing_evidence",
                      "根拠チャンクが実在しない承認済み創作カード",
                      _cards_with_missing_evidence(client)),
+        _count_check("known_novel_misclassified",
+                     "思想系の役割になっている既知の小説",
+                     _known_novels_misclassified(sources)),
         _count_check("open_review_queue", "未解決の作品同定キュー",
                      _open_review_queue(client, person_id)),
     ]
@@ -301,6 +305,22 @@ def _cards_with_missing_evidence(client) -> list[str]:
         for c in cards
         if not set(c["evidence_chunk_ids"] or []) <= found
     )
+
+
+def _known_novels_misclassified(sources: list[dict]) -> list[str]:
+    """既知の小説が思想系の corpus_role に入っていないか(表題起点の検査)。
+
+    実データで三四郎の NDC が空 → genre=other → supporting_thought に落ちた。
+    genre 起点の fiction_in_core_thought はこの形の混入を見えない。
+    """
+    from . import tag
+
+    thought_roles = {"core_thought", "supporting_thought"}
+    return [
+        s["source_id"]
+        for s in sources
+        if s["title"] in tag._KNOWN_NOVELS and s["corpus_role"] in thought_roles
+    ]
 
 
 def _open_review_queue(client, person_id: str) -> list[str]:

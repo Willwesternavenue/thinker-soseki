@@ -50,6 +50,15 @@ _KNOWN_LECTURES = frozenset({
 # 短編として扱う作品(長編小説と区別する)
 _KNOWN_SHORT_STORIES = frozenset({"夢十夜", "永日小品", "琴のそら音", "一夜", "薤露行"})
 
+# 既知の長編小説。⚠️ NDCは欠落しうる(実データで三四郎の NDC が空 → genre=other →
+# supporting_thought に落ち、小説本文210チャンクが author_direct/candidate になった)。
+# 表題で確定させ、NDC任せにしない。人物辞書(characters.json)に載る作品は
+# 必ずここに含めること(テストが検証する)。
+_KNOWN_NOVELS = frozenset({
+    "吾輩は猫である", "坊っちゃん", "草枕", "虞美人草", "三四郎", "それから",
+    "門", "彼岸過迄", "行人", "こころ", "道草", "明暗", "二百十日", "野分", "坑夫",
+})
+
 # NDC の大分類 → genre の既定値
 _NDC_DEFAULT = {
     "913": "novel",
@@ -100,6 +109,8 @@ def infer_document_genre(*, title: str, ndc: str | None = None) -> str:
         return "lecture"
     if title in _KNOWN_SHORT_STORIES:
         return "short_story"
+    if title in _KNOWN_NOVELS:
+        return "novel"
     for hint, genre in _TITLE_HINTS:
         if hint in title:
             return genre

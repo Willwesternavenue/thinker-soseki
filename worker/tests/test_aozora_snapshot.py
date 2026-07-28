@@ -210,6 +210,35 @@ def test_detects_fiction_mixed_into_core_thought(clean_corpus, client):
     assert check["value"] == 1
 
 
+def test_detects_known_novel_misclassified_as_thought(clean_corpus, client):
+    """既知の小説が思想系の corpus_role に入っていたら検出する。
+
+    実データで三四郎の NDC が空 → genre=other → supporting_thought に落ち、
+    小説本文が author_direct/candidate になった。genre 起点の混入検査
+    (fiction_in_core_thought)はこの取りこぼしを見えないため、表題起点でも見る。
+    """
+    _seed_source(client, "SRC_M", corpus_role="supporting_thought", genre="other")
+    client.table("sources").update({"title": "三四郎"}).eq(
+        "source_id", "SRC_M").execute()
+
+    check = _check(snapshot.build_quality_report(client=client), "known_novel_misclassified")
+
+    assert check["passed"] is False
+    assert "SRC_M" in check["detail"]
+
+
+def test_known_novel_in_narrative_reference_is_fine(clean_corpus, client):
+    _seed_source(client, "SRC_M", corpus_role="narrative_reference", genre="novel",
+                 chunks=(("_001", "narrator", "三四郎は上京した。"),),
+                 thought_eligibility="excluded")
+    client.table("sources").update({"title": "三四郎"}).eq(
+        "source_id", "SRC_M").execute()
+
+    assert _check(
+        snapshot.build_quality_report(client=client), "known_novel_misclassified"
+    )["passed"] is True
+
+
 def test_detects_missing_source_url(clean_corpus, client):
     _seed_source(client, "SRC_A", source_url=None)
 

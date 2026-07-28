@@ -237,3 +237,31 @@ def test_paragraph_with_incidental_long_quote_is_left_to_llm():
         {"chunk_type": "body", "text": text}, document_genre="lecture"
     )
     assert result["is_quotation"] is False
+
+
+# ── 既知の長編小説(NDC欠落への防御) ──
+
+
+def test_known_novel_with_missing_ndc_is_still_a_novel():
+    """NDCが空でも既知の小説は novel と判定する。
+
+    実データで三四郎の NDC が空で genre=other → supporting_thought に落ち、
+    **小説本文210チャンクが author_direct/candidate になった**(Phase C 実測)。
+    NDCは欠落しうるので、既知の長編は表題で確定させる。
+    """
+    assert tag.infer_document_genre(title="三四郎", ndc=None) == "novel"
+    assert tag.infer_document_genre(title="三四郎", ndc="") == "novel"
+
+
+def test_all_dictionary_works_have_a_fiction_genre():
+    """人物辞書に載る作品は必ず小説として判定される。
+
+    辞書に人物を足す = その作品の発言を character として扱う前提を置くこと。
+    genre 判定が小説でないと、その前提ごと崩れる(author_direct になる)。
+    """
+    from src.aozora import characters
+
+    works = {entry["work"] for entry in characters._DATA.values()}
+    for work in works:
+        genre = tag.infer_document_genre(title=work, ndc=None)
+        assert genre in tag.FICTION_GENRES, f"{work} が {genre} になっている"
