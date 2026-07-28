@@ -10,6 +10,7 @@ import {
   resolveFallbackCard,
   type MergedCards,
 } from "./cards";
+import { fetchBridges } from "./bridges";
 import { buildAnswerContext } from "./context";
 import {
   buildRetrievalRoute,
@@ -150,12 +151,17 @@ export async function answerQuestion(
   const characterId = detectCharacter(retrievalQuery);
   const { corpusRoles } = retrievalFiltersFor(routeKind);
 
-  const [unscoped, routed, linked] = await Promise.all([
+  const [unscoped, routed, linked, bridges] = await Promise.all([
     retrieveUnscopedEvidence(db, PERSON_ID, retrievalQuery),
     retrieveRoutedEvidence(db, PERSON_ID, retrievalQuery, corpusRoles),
     thoughtIds.length > 0
       ? fetchLinkedEvidence(db, PERSON_ID, thoughtIds)
       : Promise.resolve([] as EvidenceChunk[]),
+    // 創作依頼における思想の唯一の経路(仕様§6)。承認済みの橋だけが
+    // 「書き方の対応」として入る。橋が無ければ従来どおり何も入らない
+    routeKind === "creative"
+      ? fetchBridges(db, PERSON_ID)
+      : Promise.resolve([]),
   ]);
   // linked(承認リンクの代表原典)を最優先し、関連度検索を足す。
   // 重複はchunk_idで排除、スコア順に多様性制御(source/role偏り防止、3〜8件)。
@@ -199,6 +205,7 @@ export async function answerQuestion(
     misunderstandingSignal: route.misunderstandingSignal,
     judgmentRules: l3InjectedRules,
     abstentionReason,
+    bridges,
   });
 
   // 11. 回答生成(Sonnet)
@@ -221,15 +228,19 @@ export async function answerQuestion(
     answer
   );
 
-  const retrievalRoute = buildRetrievalRoute({
-    kind: routeKind,
-    characterId,
-    evidence: evidence.map((c) => ({
-      chunk_id: c.chunk_id,
-      corpus_role: c.corpus_role ?? null,
-      speaker_role: c.speaker_role ?? null,
-    })),
-  });
+  const retrievalRoute = {
+    ...buildRetrievalRoute({
+      kind: routeKind,
+      characterId,
+      evidence: evidence.map((c) => ({
+        chunk_id: c.chunk_id,
+        corpus_role: c.corpus_role ?? null,
+        speaker_role: c.speaker_role ?? null,
+      })),
+    }),
+    // 発火した橋を trace に残す(思想が創作へ入った経路の監査。受入#14)
+    bridge_rules: bridges.map((b) => ({ rule_id: b.rule_id, title: b.title })),
+  };
   const trace: AnswerTrace = {
     query_kind: classification.queryKind,
     routing_method: route.routingMethod,

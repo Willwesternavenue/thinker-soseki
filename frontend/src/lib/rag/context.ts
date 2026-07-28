@@ -1,4 +1,5 @@
 import "server-only";
+import { renderBridgeSection, type BridgeForPrompt } from "./bridges";
 import type { MergedCards } from "./cards";
 import { attributionFor } from "./corpus-routing";
 import type { EvidenceChunk, Persona } from "./types";
@@ -52,6 +53,8 @@ export function buildAnswerContext(options: {
   judgmentRules?: JudgmentRuleForPrompt[];
   /** 直接の原典が無い場合の留保理由(受入#14)。 */
   abstentionReason?: string | null;
+  /** 創作依頼のときだけ。承認済み Bridge Rule(思想→書き方の対応)。 */
+  bridges?: BridgeForPrompt[];
 }): AnswerContext {
   const {
     persona,
@@ -64,6 +67,7 @@ export function buildAnswerContext(options: {
     misunderstandingSignal,
     judgmentRules,
     abstentionReason,
+    bridges,
   } = options;
 
   const maxQuoteLength = persona.quote_policy?.max_quote_length ?? 100;
@@ -130,6 +134,12 @@ export function buildAnswerContext(options: {
       `## 【判断規則】(承認済みの判断文法。この相談で該当。回答の推論の骨格として使う。本人の発言ではない・引用禁止)\n` +
         ruleTexts.join("\n\n")
     );
+  }
+
+  // 創作依頼における思想の唯一の経路(仕様§6)。橋が無ければ節ごと出ない
+  const bridgeSection = renderBridgeSection(bridges ?? []);
+  if (bridgeSection) {
+    parts.push(bridgeSection);
   }
 
   if (misunderstandingSignal) {
