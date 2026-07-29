@@ -49,6 +49,14 @@ abstention(留保) / temporal_override(時代による上書き)
 - 1つの規則に1つの操作
 - `source_thought_id` は必ず上のカードの thought_id から選ぶ
 - カードに書かれていない判断を足さない
+- `required_distinctions` には**混同されやすい二項を具体的に**「A / B」の形で書く。
+  `criterion` や `action.between` の言い換えを書かない — それは区別を1つも足さない。
+  「関係する場合と関係しない場合を条件によって区別する」のような、
+  中身が criterion と同じ抽象文は不可。
+  可なら「倫理的分子が作中に存在すること / それが徳義的に解釈されること」のように、
+  取り違えると結論が変わる二項を名指しする
+- `forbidden_inferences` は**両方向**を書く。原文が退けている立場だけでなく、
+  行き過ぎた逆方向も禁じる（一方向だけだと使うたびに片側へ寄る）
 
 ## 出力形式(JSONのみ)
 {{
@@ -59,8 +67,8 @@ abstention(留保) / temporal_override(時代による上書き)
       "rule_type": "上記のいずれか",
       "action": {{"between": ["A", "B"], "criterion": "区別の基準"}},
       "derived_claims": ["この規則から導ける主張"],
-      "required_distinctions": ["必ず区別すべきもの"],
-      "forbidden_inferences": ["導いてはいけない結論"],
+      "required_distinctions": ["混同されやすい二項を「A / B」で具体的に(criterionの言い換え不可)"],
+      "forbidden_inferences": ["導いてはいけない結論(両方向。行き過ぎた逆も禁じる)"],
       "source_thought_id": "…"
     }}
   ]

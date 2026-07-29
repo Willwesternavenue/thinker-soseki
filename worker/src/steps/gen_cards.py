@@ -27,7 +27,7 @@ PROMPT_TEMPLATE = """思想ID「{thought_id}」の思想カードを作成する
 
 ## 出力形式(JSONのみ)
 {{
-  "title": "カードタイトル(短い日本語)",
+  "title": "概念ラベル(短い名詞句。命題文にしない。命題は core_claim へ)",
   "importance": "core|important|normal",
   "core_claim": "中核命題(この思想の本質を1〜3文で)",
   "distinctions": [{{"not": "よくある誤解", "but": "正しい理解"}}],

@@ -52,8 +52,9 @@ def _seed(
 
 _ONE_CARD = {"cards": [{
     "thought_id": "naihatsu_kaika",
-    "title": "開化は内発的でなければならない",
-    "core_claim": "外から与えられた開化は本人のものにならない",
+    # title は概念ラベル・命題は core_claim（プロンプトの役割分担に合わせた例）
+    "title": "内発的開化",
+    "core_claim": "開化は内発的でなければならず、外から与えられた開化は本人のものにならない",
     "distinctions": [{"not": "外発的な模倣", "but": "内発的な展開"}],
     "answer_policy": ["外圧で始まった変化を成熟と混同しない"],
     "prohibitions": ["外来の様式を採り入れた事実だけで近代化を評価しない"],
