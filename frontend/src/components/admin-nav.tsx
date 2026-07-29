@@ -37,7 +37,8 @@ const NAV: NavEntry[] = [
       { href: "/admin/creative-profiles", label: "創作プロファイル" },
       { href: "/admin/creative-cards", label: "創作カード" },
       { href: "/admin/creative-generations", label: "生成ジョブ" },
-      { href: "/creative", label: "創作画面" },
+      // ナビ付きの管理者向け。/creative（会員向け）はナビが無く戻れなくなる
+      { href: "/admin/creative", label: "創作画面" },
     ],
   },
   { label: "評価", href: "/admin/evaluations" },
