@@ -8,6 +8,7 @@ import json
 from dataclasses import dataclass, field
 
 from .. import config, llm
+from . import bridges as bridges_mod
 from . import guard, prompts, repo
 
 # v0.1 で本文生成へ投入する章の上限。夢十夜は10篇の小コーパスなので、
@@ -27,6 +28,10 @@ class GenerationContext:
     injected_source_ids: list[str] = field(default_factory=list)
     injected_chunk_ids: list[str] = field(default_factory=list)
     selected_chapters: list[str] = field(default_factory=list)
+    # 承認済み Bridge Rule。思想が創作へ入る唯一の経路(仕様§6)。
+    # rules モードが off なら空のまま
+    bridges: list[dict] = field(default_factory=list)
+    rules_mode: str = bridges_mod.DEFAULT_RULES_MODE
 
 
 def normalize_brief(
@@ -175,6 +180,13 @@ def build_outline(ctx: "GenerationContext", *, job_id=None, call_json=None) -> d
             emotional_target=ctx.brief.get("emotional_target") or "(指定なし)",
             constraints=_format_constraints(ctx.brief),
             cards=_format_cards(ctx.cards),
+            # assist のときだけ橋をプロンプトへ入れる。shadow は trace にのみ残す
+            # (仕様§6: 思想が創作へ入る経路は承認済みの橋だけ)
+            bridges=(
+                bridges_mod.render_bridge_section(ctx.bridges)
+                if ctx.rules_mode == "assist"
+                else ""
+            ),
             source_excerpt=ctx.source_text,
         ),
         input_ref=f"creative_generation:{job_id}",
@@ -245,6 +257,15 @@ def prepare_generation(job: dict, *, client=None, call_json=None) -> GenerationC
     repo.set_generation_step(job_id, "cards", client=client)
     cards = repo.require_approved_cards(job["profile_id"], client=client)
 
+    # 承認済み Bridge Rule。off なら読まない。進捗ステップは足していない —
+    # LLM を呼ばない即時のDB読みで、独立した段にすると進捗表示が行き来する
+    mode = bridges_mod.rules_mode(profile)
+    bridges = (
+        bridges_mod.fetch_bridges(profile["person_id"], client=client)
+        if mode != "off"
+        else []
+    )
+
     repo.set_generation_step(job_id, "brief", client=client)
     brief = normalize_brief(job["brief_raw"], job_id=job_id, call_json=call_json)
     repo.save_brief_normalized(job_id, brief, client=client)
@@ -263,6 +284,8 @@ def prepare_generation(job: dict, *, client=None, call_json=None) -> GenerationC
         injected_source_ids=sources["source_ids"],
         injected_chunk_ids=sources["chunk_ids"],
         selected_chapters=sources["chapters"],
+        bridges=bridges,
+        rules_mode=mode,
     )
 
 
@@ -350,6 +373,7 @@ def process_generation(job: dict, *, client=None, call_json=None) -> None:
             prompt_versions=dict(prompts.PROMPT_VERSIONS),
             guard_results=guard_results,
             regeneration_count=regeneration_count,
+            **_rule_trace_fields(ctx),
             client=client,
         )
     except repo.CreativeInvariantError as exc:
@@ -362,6 +386,25 @@ def process_generation(job: dict, *, client=None, call_json=None) -> None:
     except Exception as exc:  # noqa: BLE001 - 監査記録を残してから失敗させる
         _finish_failed(job, repo.ERROR_LLM, str(exc), ctx, reached_outline_draft,
                        client=client)
+
+
+def _rule_trace_fields(ctx) -> dict:
+    """trace に残す規則の記録(仕様§14 の発火規則欄)。
+
+    `fired_rule_ids` は**実際に出力へ影響した橋**だけにする。shadow は
+    プロンプトへ入れていないので発火扱いにせず `rule_decisions` に留める
+    （監査で「使われた」と読み違えないため）。
+    """
+    if ctx is None:
+        return {}
+    rule_ids = [b["rule_id"] for b in ctx.bridges]
+    decisions: dict = {"mode": ctx.rules_mode}
+    if ctx.rules_mode == "shadow":
+        decisions["would_fire"] = rule_ids
+    return {
+        "fired_rule_ids": rule_ids if ctx.rules_mode == "assist" else [],
+        "rule_decisions": decisions,
+    }
 
 
 def _model_ids(ctx, reached_outline_draft: bool, *, guarded: bool = False) -> dict:
@@ -394,5 +437,6 @@ def _finish_failed(
         prompt_versions=dict(prompts.PROMPT_VERSIONS),
         guard_results=guard_results or {},
         regeneration_count=regeneration_count,
+        **_rule_trace_fields(ctx),
         client=client,
     )
