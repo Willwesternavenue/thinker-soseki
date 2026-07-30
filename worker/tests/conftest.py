@@ -25,8 +25,34 @@ from src.creative import repo
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
+# ── 開発DBを消さないための安全装置 ──
+#
+# clean_corpus は実DBのコーパス層を全消しする。接続先は SUPABASE_URL から来るので、
+# 秘匿キーを source した状態で pytest を叩くと**開発DBがそのまま対象になる**。
+# 2026-07-30 の作業ではこれで4回消し、そのたびに199MBの退避から復元した。
+#
+# 対策は2段。
+#   1. 専用の接続情報(SUPABASE_TEST_URL / SUPABASE_TEST_SECRET)があればそちらを使う
+#   2. 無ければ、消す前に「本物のコーパスではないか」を確認して止める
+#
+# 2の判定は行数で行う。テスト用スタックは空か、テストが作った数十行しかない。
+# 本物は source_chunks が1万行を超える(2026-07-30 時点で 10,152)。
+WIPE_SAFETY_MAX_CHUNKS = 500
+ALLOW_WIPE_ENV = "SOSEKI_ALLOW_DESTRUCTIVE_TESTS"
+
+
+def _test_connection() -> tuple[str, str] | None:
+    """テスト専用スタックの接続情報。設定されていれば最優先で使う。"""
+    url = os.environ.get("SUPABASE_TEST_URL")
+    key = os.environ.get("SUPABASE_TEST_SECRET")
+    return (url, key) if url and key else None
+
+
 def _local_connection() -> tuple[str, str] | None:
     """ローカルスタックの (API URL, secret key)。取得できなければ None。"""
+    dedicated = _test_connection()
+    if dedicated:
+        return dedicated
     url, key = os.environ.get("SUPABASE_URL"), os.environ.get("SUPABASE_LOCAL_SECRET")
     if url and key:
         return url, key
@@ -68,6 +94,37 @@ def client():
     return c
 
 
+def _assert_safe_to_wipe(client) -> None:
+    """本物のコーパスを消しにいっていないかを確かめる。
+
+    ⚠️ この確認を外す前に、必ず退避を取ること（引き継ぎの退避手順を参照）。
+    テスト専用スタックを使うのが本筋で、`SOSEKI_ALLOW_DESTRUCTIVE_TESTS=1` は
+    退避済みだと分かっている場合の逃げ道。
+    """
+    if os.environ.get(ALLOW_WIPE_ENV) == "1":
+        return
+    if _test_connection():
+        return  # 専用スタックを明示的に指している
+    try:
+        rows = (
+            client.table("source_chunks")
+            .select("chunk_id")
+            .limit(WIPE_SAFETY_MAX_CHUNKS + 1)
+            .execute()
+            .data
+            or []
+        )
+    except Exception:  # noqa: BLE001 - 数えられないなら安全側で止めない
+        return
+    if len(rows) > WIPE_SAFETY_MAX_CHUNKS:
+        pytest.skip(
+            f"接続先に source_chunks が{WIPE_SAFETY_MAX_CHUNKS}行以上あり、"
+            "本物のコーパスに見えるため破壊的テストを行いません。"
+            "テスト専用スタックを SUPABASE_TEST_URL / SUPABASE_TEST_SECRET で"
+            f"指すか、退避を取った上で {ALLOW_WIPE_ENV}=1 を設定してください。"
+        )
+
+
 @pytest.fixture
 def clean_corpus(client):
     """コーパス層のテーブルを前後で空にする。
@@ -76,6 +133,8 @@ def clean_corpus(client):
     profile フィクスチャの後片付けではカバーできない。取り込みは冪等なので
     テスト間で残骸が残ると件数の検証が崩れる。
     """
+    _assert_safe_to_wipe(client)
+
     def _wipe():
         # FKの順に消す。sources は work_editions を参照し、
         # source_chunks は sources の cascade で一緒に消える。
