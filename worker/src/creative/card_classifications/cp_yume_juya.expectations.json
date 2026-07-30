@@ -1,0 +1,172 @@
+{
+  "note": "judge 実行前に固定した期待値。所有者の予想 + 段1候補",
+  "expectations": {
+    "反復する事象を数えさせて時間の異常な長さを体感させる": [
+      "第一夜",
+      "generalization",
+      "除外"
+    ],
+    "子供に大人以上の知識と対等な口調を与える": [
+      "第三夜",
+      "generalization",
+      "除外"
+    ],
+    "結末を外的な事件でなく認識の急変で締める": [
+      "第三夜",
+      "paraphrase",
+      "除外"
+    ],
+    "「こんな夢を見た」という定型句で語りを開始する": [
+      "—",
+      "(装置判定)",
+      "brief免除で残留"
+    ],
+    "語り手は名を持たない一人称「自分」に固定する": [
+      "—",
+      "unrelated",
+      "残留"
+    ],
+    "説明を与えずに宙吊りのまま終える": [
+      "—",
+      "unrelated",
+      "残留"
+    ],
+    "黒・赤・白の色彩を生死や時間の合図として使う": [
+      "第一夜",
+      "generalization寄り",
+      "割れてよい(実害小)"
+    ]
+  },
+  "stage1_candidates": [
+    {
+      "card_id": "cc_0c78d86eb956",
+      "card_type": "character",
+      "title": "子供に大人以上の知識と対等な口調を与える",
+      "candidates": [
+        {
+          "chapter": "第三夜",
+          "name": "盲目の子供=全知の告発者"
+        }
+      ]
+    },
+    {
+      "card_id": "cc_c35804d22d92",
+      "card_type": "ending",
+      "title": "説明を与えずに宙吊りのまま終える",
+      "candidates": [
+        {
+          "chapter": "第二夜",
+          "name": "時計の音による悟りの期限設定"
+        },
+        {
+          "chapter": "第四夜",
+          "name": "果たされない約束のままの失踪"
+        }
+      ]
+    },
+    {
+      "card_id": "cc_96aa644f14b1",
+      "card_type": "motif",
+      "title": "呪文のような反復句を場面の推進力にする",
+      "candidates": [
+        {
+          "chapter": "第四夜",
+          "name": "果たされない約束のままの失踪"
+        }
+      ]
+    },
+    {
+      "card_id": "cc_422e7b52a70f",
+      "card_type": "motif",
+      "title": "黒・赤・白の色彩を生死や時間の合図として使う",
+      "candidates": [
+        {
+          "chapter": "第一夜",
+          "name": "偽の計数と真の徴による百年成就の反転"
+        }
+      ]
+    },
+    {
+      "card_id": "cc_131d371c583c",
+      "card_type": "narrative",
+      "title": "「こんな夢を見た」という定型句で語りを開始する",
+      "candidates": [
+        {
+          "chapter": "第二夜",
+          "name": "時計の音による悟りの期限設定"
+        },
+        {
+          "chapter": "第三夜",
+          "name": "盲目の子供=全知の告発者"
+        },
+        {
+          "chapter": "第五夜",
+          "name": "鶏鳴という自然現象による生死の期限設定"
+        }
+      ]
+    },
+    {
+      "card_id": "cc_7a34cf2396d8",
+      "card_type": "narrative",
+      "title": "反復する事象を数えさせて時間の異常な長さを体感させる",
+      "candidates": [
+        {
+          "chapter": "第一夜",
+          "name": "偽の計数と真の徴による百年成就の反転"
+        }
+      ]
+    },
+    {
+      "card_id": "cc_5ff417684f17",
+      "card_type": "narrative",
+      "title": "心理的衝撃を身体感覚の変化として描く",
+      "candidates": [
+        {
+          "chapter": "第三夜",
+          "name": "盲目の子供=全知の告発者"
+        }
+      ]
+    },
+    {
+      "card_id": "cc_4f1f864fa884",
+      "card_type": "narrative",
+      "title": "結末を外的な事件でなく認識の急変で締める",
+      "candidates": [
+        {
+          "chapter": "第一夜",
+          "name": "偽の計数と真の徴による百年成就の反転"
+        },
+        {
+          "chapter": "第三夜",
+          "name": "盲目の子供=全知の告発者"
+        }
+      ]
+    },
+    {
+      "card_id": "cc_e6cfbf451afd",
+      "card_type": "perspective",
+      "title": "語り手は名を持たない一人称「自分」に固定する",
+      "candidates": [
+        {
+          "chapter": "第六夜",
+          "name": "時代錯誤の生存(運慶が明治に生きている)"
+        },
+        {
+          "chapter": "第七夜",
+          "name": "行き先の分からない船"
+        }
+      ]
+    },
+    {
+      "card_id": "cc_db7054ff0ad6",
+      "card_type": "prohibition",
+      "title": "夢の中の超自然的な出来事に合理的説明を加えない",
+      "candidates": [
+        {
+          "chapter": "第三夜",
+          "name": "盲目の子供=全知の告発者"
+        }
+      ]
+    }
+  ]
+}

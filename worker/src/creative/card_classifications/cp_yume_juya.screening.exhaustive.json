@@ -1,0 +1,792 @@
+{
+  "meta": {
+    "profile_id": "cp_yume_juya",
+    "work_title": "夢十夜",
+    "classification_version": "v1",
+    "prompt_version": "v1",
+    "model_id": "claude-sonnet-5",
+    "catalog_version": "v2",
+    "cards": 16,
+    "candidates": 16,
+    "device_bound": 11,
+    "polarity_exempt": 4
+  },
+  "cards": [
+    {
+      "card_id": "cc_0c78d86eb956",
+      "card_type": "character",
+      "title": "子供に大人以上の知識と対等な口調を与える",
+      "verdict": "device_bound",
+      "reason": "子供に大人以上の知識と対等な口調を与えるという指示は、『夢十夜』の続編文脈では、無力に見える者が実は全知で支配者であるという逆転構造を具体化する最も自然な方法であり、盲目の子供=全知の告発者という装置の本質的な非対称性を新しい形で再現する。",
+      "named_images": [],
+      "origin_chapters": [
+        "第三夜"
+      ],
+      "candidates": [
+        "false_count_true_sign",
+        "deadline_by_clock_strike",
+        "blind_child_as_omniscient_accuser",
+        "unresolved_vanishing_promise",
+        "deadline_by_natural_signal",
+        "anachronistic_survival",
+        "destination_unknown_voyage",
+        "mirror_selective_reflection",
+        "retroactive_futility_reveal",
+        "endless_pig_repetition"
+      ],
+      "judgments": [
+        {
+          "device_id": "blind_child_as_omniscient_accuser",
+          "chapter_title": "第三夜",
+          "device_name": "盲目の子供=全知の告発者",
+          "verdict": "generalization",
+          "reason": "子供に大人以上の知識と対等な口調を与えるという指示は、『夢十夜』の続編文脈では、無力に見える者が実は全知で支配者であるという逆転構造を具体化する最も自然な方法であり、盲目の子供=全知の告発者という装置の本質的な非対称性を新しい形で再現する。"
+        },
+        {
+          "device_id": "anachronistic_survival",
+          "chapter_title": "第六夜",
+          "device_name": "時代錯誤の生存(運慶が明治に生きている)",
+          "verdict": "generalization",
+          "reason": "子供に大人以上の知識と対等な口調を与える指示は、『夢十夜』の文脈では『一人だけ時間軸がずれた存在が自然に現れる』という中心装置の抽象化であり、知識と口調のズレという形で時代錯誤の違和感を再現する最も確からしい具体化である。"
+        }
+      ],
+      "polarity": {
+        "polarity": "requires_content",
+        "reason": "子供に対等な口調や語り手の知らない事実を先に言い当てさせる台詞・描写が本文に新たに生成される"
+      }
+    },
+    {
+      "card_id": "cc_131d371c583c",
+      "card_type": "narrative",
+      "title": "「こんな夢を見た」という定型句で語りを開始する",
+      "verdict": "device_bound",
+      "reason": "導入句『こんな夢を見た』で夢であることを宣言してから『現実描写と同じ筆致で進める』という指示は、夢の内容を説明なく異常な前提として提示する『夢十夜』の手法を一般化したものであり、その文脈での最も自然な具体化は運慶のような時代錯誤の人物や事象を導入句後に無説明で配置することである。",
+      "named_images": [],
+      "origin_chapters": [
+        "第一夜",
+        "第二夜",
+        "第三夜",
+        "第五夜"
+      ],
+      "candidates": [
+        "false_count_true_sign",
+        "deadline_by_clock_strike",
+        "blind_child_as_omniscient_accuser",
+        "unresolved_vanishing_promise",
+        "deadline_by_natural_signal",
+        "anachronistic_survival",
+        "destination_unknown_voyage",
+        "mirror_selective_reflection",
+        "retroactive_futility_reveal",
+        "endless_pig_repetition"
+      ],
+      "judgments": [
+        {
+          "device_id": "anachronistic_survival",
+          "chapter_title": "第六夜",
+          "device_name": "時代錯誤の生存(運慶が明治に生きている)",
+          "verdict": "generalization",
+          "reason": "導入句『こんな夢を見た』で夢であることを宣言してから『現実描写と同じ筆致で進める』という指示は、夢の内容を説明なく異常な前提として提示する『夢十夜』の手法を一般化したものであり、その文脈での最も自然な具体化は運慶のような時代錯誤の人物や事象を導入句後に無説明で配置することである。"
+        }
+      ],
+      "polarity": {
+        "polarity": "requires_content",
+        "reason": "各話冒頭に「こんな夢を見た。」という定型導入句と、それに続く情景描写が新たに書き加えられる"
+      }
+    },
+    {
+      "card_id": "cc_19b273b49c7c",
+      "card_type": "criticism",
+      "title": "批評は判定可能な条項を明示してから採点すべき",
+      "verdict": "device_bound",
+      "reason": "評価軸を明示してから論じるという指示は一般的な批評作法だが、『夢十夜』の続編という文脈では、「あらかじめ立てた条項に従う→その条項では測定不可能な事態が生じる→事後的に別の基準で成就を認識する」という、この装置の構造そのものへと最も自然に具体化される。",
+      "named_images": [],
+      "origin_chapters": [],
+      "candidates": [
+        "false_count_true_sign",
+        "deadline_by_clock_strike",
+        "blind_child_as_omniscient_accuser",
+        "unresolved_vanishing_promise",
+        "deadline_by_natural_signal",
+        "anachronistic_survival",
+        "destination_unknown_voyage",
+        "mirror_selective_reflection",
+        "retroactive_futility_reveal",
+        "endless_pig_repetition"
+      ],
+      "judgments": [
+        {
+          "device_id": "false_count_true_sign",
+          "chapter_title": "第一夜",
+          "device_name": "偽の計数と真の徴による百年成就の反転",
+          "verdict": "generalization",
+          "reason": "評価軸を明示してから論じるという指示は一般的な批評作法だが、『夢十夜』の続編という文脈では、「あらかじめ立てた条項に従う→その条項では測定不可能な事態が生じる→事後的に別の基準で成就を認識する」という、この装置の構造そのものへと最も自然に具体化される。"
+        },
+        {
+          "device_id": "blind_child_as_omniscient_accuser",
+          "chapter_title": "第三夜",
+          "device_name": "盲目の子供=全知の告発者",
+          "verdict": "generalization",
+          "reason": "批評の『判定可能な条項の明示』という抽象的指示は、『夢十夜』続編の文脈では『評価者が自分の認識の限界を自覚しながら真実を告発する』という行為へ最も自然に具体化され、これは盲目の子供が自らの無力さにもかかわらず全知的な判定を下す逆転構造と同じ論理を再現する。"
+        },
+        {
+          "device_id": "unresolved_vanishing_promise",
+          "chapter_title": "第四夜",
+          "device_name": "果たされない約束のままの失踪",
+          "verdict": "generalization",
+          "reason": "批評の条項を明示してから採点すべきという指示は、『夢十夜』の続編という文脈では、読者に期待を立てておきながらそれを明示的に満たさない構造（批評軸の提示と回収放棄）として最も自然に具体化され、結果として「果たされない約束」の装置を再現する。"
+        },
+        {
+          "device_id": "retroactive_futility_reveal",
+          "chapter_title": "第九夜",
+          "device_name": "祈願が既に無意味だったことの事後開示",
+          "verdict": "generalization",
+          "reason": "評価軸の明示と資格の自覚という指示は抽象的だが、『夢十夜』の続編という文脈では、語り手が事前に提示した前提・条件が最後に反転・無効化される構造（祈願の継続→父はすでに殺されていた）として最も自然に具体化される。"
+        }
+      ],
+      "polarity": {
+        "polarity": "requires_content",
+        "reason": "評価軸を明示する記述と、その軸に沿った具体的な論述・判断が本文に加わる。"
+      }
+    },
+    {
+      "card_id": "cc_422e7b52a70f",
+      "card_type": "motif",
+      "title": "黒・赤・白の色彩を生死や時間の合図として使う",
+      "verdict": "device_bound",
+      "reason": "色彩の象徴的機能（黒=死、赤=時間経過、白=生命）という抽象的指示は、『夢十夜』第一夜の具体的装置（赤い日の計数→象徴的徴による成就）の一般化であり、この文脈で最も自然な具体化がその装置そのものに収束する。",
+      "named_images": [],
+      "origin_chapters": [
+        "第一夜"
+      ],
+      "candidates": [
+        "false_count_true_sign",
+        "deadline_by_clock_strike",
+        "blind_child_as_omniscient_accuser",
+        "unresolved_vanishing_promise",
+        "deadline_by_natural_signal",
+        "anachronistic_survival",
+        "destination_unknown_voyage",
+        "mirror_selective_reflection",
+        "retroactive_futility_reveal",
+        "endless_pig_repetition"
+      ],
+      "judgments": [
+        {
+          "device_id": "false_count_true_sign",
+          "chapter_title": "第一夜",
+          "device_name": "偽の計数と真の徴による百年成就の反転",
+          "verdict": "generalization",
+          "reason": "色彩の象徴的機能（黒=死、赤=時間経過、白=生命）という抽象的指示は、『夢十夜』第一夜の具体的装置（赤い日の計数→象徴的徴による成就）の一般化であり、この文脈で最も自然な具体化がその装置そのものに収束する。"
+        },
+        {
+          "device_id": "blind_child_as_omniscient_accuser",
+          "chapter_title": "第三夜",
+          "device_name": "盲目の子供=全知の告発者",
+          "verdict": "generalization",
+          "reason": "色彩による象徴的表現という一般的手法は、『夢十夜』続編の文脈では、盲目の子供（視覚を持たぬ者が真実を見通す）という装置を支える視覚と非視覚の反転構造を具体化する最も自然な方法となり、黒・赤・白の色配置が弱者の全知性を暗示する表現体系として収束する。"
+        },
+        {
+          "device_id": "unresolved_vanishing_promise",
+          "chapter_title": "第四夜",
+          "device_name": "果たされない約束のままの失踪",
+          "verdict": "generalization",
+          "reason": "色彩による象徴化という抽象的な指示は、『夢十夜』の続編文脈では「反復されながらも回収されない視覚的シグナル（黒→赤→白の循環が約束を暗示し続けるが、最終的に解決を拒否する）」として具体化され、結果として『果たされない約束のままの失踪』という中心装置の主要成分（伏線の反復と意図的な宙吊り）を再現する。"
+        },
+        {
+          "device_id": "deadline_by_natural_signal",
+          "chapter_title": "第五夜",
+          "device_name": "鶏鳴という自然現象による生死の期限設定",
+          "verdict": "generalization",
+          "reason": "黒・赤・白の色彩を生死や時間の合図として使う指示は、『夢十夜』の続編文脈では、鶏鳴のような自然現象（ここでは色という視覚的な自然の変化）が生死や時間経過の絶対的境界となる構造へ最も確からしく具体化する。"
+        },
+        {
+          "device_id": "anachronistic_survival",
+          "chapter_title": "第六夜",
+          "device_name": "時代錯誤の生存(運慶が明治に生きている)",
+          "verdict": "generalization",
+          "reason": "色彩による生死・時間の象徴化は『夢十夜』の超時間的世界観と親和性が高く、続編文脈では時間軸の異常を知覚させる具体的な視覚装置として最も自然に収束するが、運慶の時代錯誤という特定の人物設定までは必然化しない。"
+        },
+        {
+          "device_id": "retroactive_futility_reveal",
+          "chapter_title": "第九夜",
+          "device_name": "祈願が既に無意味だったことの事後開示",
+          "verdict": "generalization",
+          "reason": "色彩の象徴的機能（黒=死、赤=時間経過、白=生命）に従うと、意味が後から反転する構造へ自然に収束する。たとえば黒い瞳に映った希望の情景が、実は既に死んだ者の幻だったと事後開示される型に具体化しやすく、これは第九夜の『祈願の遡及的無効化』と同じ効果メカニズムである。"
+        }
+      ],
+      "polarity": {
+        "polarity": "requires_content",
+        "reason": "黒い瞳・赤い太陽・白い花などの色彩描写が生死や時間経過を象徴する具体的な描写として本文に追加される"
+      }
+    },
+    {
+      "card_id": "cc_4f1f864fa884",
+      "card_type": "narrative",
+      "title": "結末を外的な事件でなく認識の急変で締める",
+      "verdict": "device_bound",
+      "reason": "認識の急変による終結という指示は、『夢十夜』第一夜の「数える行為の無効化と象徴的徴による事後的な気づき」という構造の抽象化であり、この文脈で具体化すれば必然的に計数と非計量的な成就の反転装置へと収束する。",
+      "named_images": [],
+      "origin_chapters": [
+        "第一夜",
+        "第三夜"
+      ],
+      "candidates": [
+        "false_count_true_sign",
+        "deadline_by_clock_strike",
+        "blind_child_as_omniscient_accuser",
+        "unresolved_vanishing_promise",
+        "deadline_by_natural_signal",
+        "anachronistic_survival",
+        "destination_unknown_voyage",
+        "mirror_selective_reflection",
+        "retroactive_futility_reveal",
+        "endless_pig_repetition"
+      ],
+      "judgments": [
+        {
+          "device_id": "false_count_true_sign",
+          "chapter_title": "第一夜",
+          "device_name": "偽の計数と真の徴による百年成就の反転",
+          "verdict": "generalization",
+          "reason": "認識の急変による終結という指示は、『夢十夜』第一夜の「数える行為の無効化と象徴的徴による事後的な気づき」という構造の抽象化であり、この文脈で具体化すれば必然的に計数と非計量的な成就の反転装置へと収束する。"
+        },
+        {
+          "device_id": "deadline_by_clock_strike",
+          "chapter_title": "第二夜",
+          "device_name": "時計の音による悟りの期限設定",
+          "verdict": "generalization",
+          "reason": "「認識の急変で締める」という指示は抽象的だが、『夢十夜』第二夜の文脈では、時計の音というカウントダウンの中で内面が膠着したまま音が鳴る=期限切れで強制的に「気づき」または「諦観」に達する構造として最も自然に具体化され、その装置の本質（外的強制による認識転換）を再現する。"
+        },
+        {
+          "device_id": "blind_child_as_omniscient_accuser",
+          "chapter_title": "第三夜",
+          "device_name": "盲目の子供=全知の告発者",
+          "verdict": "generalization",
+          "reason": "認識の急変による結末という抽象的指示は、『夢十夜』の文脈では最も確からしい具体化として「隠された真実（過去の犯罪など）に気づく瞬間」へ収束し、これは盲目の子供による暴露構造の本質的な機能（無力な者が実は全真相を握る逆転）を継承する。"
+        },
+        {
+          "device_id": "unresolved_vanishing_promise",
+          "chapter_title": "第四夜",
+          "device_name": "果たされない約束のままの失踪",
+          "verdict": "paraphrase",
+          "reason": "「認識の急変で締める」という指示は、それまで隠れていた真実への気づきを最終行に配置する構造であり、これは『夢十夜』第四夜の「回収されるはずの伏線が意図的に宙吊りのまま閉じる」という『解決を拒否する結末』の装置そのものを言い換えたものである。"
+        },
+        {
+          "device_id": "deadline_by_natural_signal",
+          "chapter_title": "第五夜",
+          "device_name": "鶏鳴という自然現象による生死の期限設定",
+          "verdict": "generalization",
+          "reason": "認識の急変という抽象的な指示は、『夢十夜』の文脈では、隠れていた事実が「気がつく瞬間」に明らかになることで、それまでの出来事（および読み手の解釈）の意味が反転的に決定される構造を導くが、これは鶏鳴が生死の運命を一瞬で切り替える装置と同型の『自然現象または外的事象による絶対的な転換点』として具体化する可能性が最も高い。"
+        },
+        {
+          "device_id": "anachronistic_survival",
+          "chapter_title": "第六夜",
+          "device_name": "時代錯誤の生存(運慶が明治に生きている)",
+          "verdict": "generalization",
+          "reason": "認識の急変による締めくくりという抽象的指示は、『夢十夜』の文脈では「隠れていた時間軸のズレに気づく瞬間」として最も自然に具体化され、運慶の時代錯誤という中心装置そのものの意味の転換を通じて実装される。"
+        },
+        {
+          "device_id": "retroactive_futility_reveal",
+          "chapter_title": "第九夜",
+          "device_name": "祈願が既に無意味だったことの事後開示",
+          "verdict": "generalization",
+          "reason": "認識の急変で締めるという指示は抽象的だが、『夢十夜』の文脈では「それまでの行為・祈願の意味が最後に反転的に明かされる」という第九夜の装置が最も自然な具体化となり、同型の「実は無駄だった」落ちを再現する危険性が高い。"
+        }
+      ],
+      "polarity": {
+        "polarity": "requires_content",
+        "reason": "語り手の認識が急変する気づきの一文が最終行に新たに生成される"
+      }
+    },
+    {
+      "card_id": "cc_554f09d7657b",
+      "card_type": "perspective",
+      "title": "写生文家の視点は大人が小児を見る態度",
+      "verdict": "device_bound",
+      "reason": "「大人が小児を見る態度」という観察距離の指示は、『夢十夜』第三夜の文脈では必然的に「無力に見える背負われた盲目の子が実は全知の支配者である」という逆転構造の発見へ収束する。なぜなら、その距離を保ちながら盲目の子を観察すれば、その矛盾する二つの性質（従属と全知）が自ずと浮き彫りになるからである。",
+      "named_images": [],
+      "origin_chapters": [],
+      "candidates": [
+        "false_count_true_sign",
+        "deadline_by_clock_strike",
+        "blind_child_as_omniscient_accuser",
+        "unresolved_vanishing_promise",
+        "deadline_by_natural_signal",
+        "anachronistic_survival",
+        "destination_unknown_voyage",
+        "mirror_selective_reflection",
+        "retroactive_futility_reveal",
+        "endless_pig_repetition"
+      ],
+      "judgments": [
+        {
+          "device_id": "blind_child_as_omniscient_accuser",
+          "chapter_title": "第三夜",
+          "device_name": "盲目の子供=全知の告発者",
+          "verdict": "generalization",
+          "reason": "「大人が小児を見る態度」という観察距離の指示は、『夢十夜』第三夜の文脈では必然的に「無力に見える背負われた盲目の子が実は全知の支配者である」という逆転構造の発見へ収束する。なぜなら、その距離を保ちながら盲目の子を観察すれば、その矛盾する二つの性質（従属と全知）が自ずと浮き彫りになるからである。"
+        },
+        {
+          "device_id": "unresolved_vanishing_promise",
+          "chapter_title": "第四夜",
+          "device_name": "果たされない約束のままの失踪",
+          "verdict": "generalization",
+          "reason": "「一段引いた観察視点」という指示は抽象的だが、『夢十夜』の続編という文脈では、語り手が対象との心理的距離を保ちながら進行させることで、約束や期待と現実のズレ、そして説明を拒否する叙述へ自然に収束する。"
+        },
+        {
+          "device_id": "endless_pig_repetition",
+          "chapter_title": "第十夜",
+          "device_name": "無限に押し寄せる豚を打ち続ける反復",
+          "verdict": "generalization",
+          "reason": "大人が小児を観察する一段引いた視点という指示は、『夢十夜』の文脈では、自己の反復的疲弊をも他者的に客観視する態度として具体化し、無限反復による破滅という中心装置を自然と再現する。"
+        }
+      ],
+      "polarity": {
+        "polarity": "requires_content",
+        "reason": "大人が小児を見るような一段引いた観察の視点による描写が本文に生成される"
+      }
+    },
+    {
+      "card_id": "cc_5ff417684f17",
+      "card_type": "narrative",
+      "title": "心理的衝撃を身体感覚の変化として描く",
+      "verdict": "device_bound",
+      "reason": "身体感覚の変化で心理変化を示唆する指示は、約束の未回収・失踪という『解決を拒否する結末』に至るまでの過程として、説明的な内面描写を避けながら登場人物の状態変化を提示する文体を自然に産出し、その結果として『言及されない何か』が進行する構造へと収束する。",
+      "named_images": [],
+      "origin_chapters": [
+        "第二夜",
+        "第三夜"
+      ],
+      "candidates": [
+        "false_count_true_sign",
+        "deadline_by_clock_strike",
+        "blind_child_as_omniscient_accuser",
+        "unresolved_vanishing_promise",
+        "deadline_by_natural_signal",
+        "anachronistic_survival",
+        "destination_unknown_voyage",
+        "mirror_selective_reflection",
+        "retroactive_futility_reveal",
+        "endless_pig_repetition"
+      ],
+      "judgments": [
+        {
+          "device_id": "unresolved_vanishing_promise",
+          "chapter_title": "第四夜",
+          "device_name": "果たされない約束のままの失踪",
+          "verdict": "generalization",
+          "reason": "身体感覚の変化で心理変化を示唆する指示は、約束の未回収・失踪という『解決を拒否する結末』に至るまでの過程として、説明的な内面描写を避けながら登場人物の状態変化を提示する文体を自然に産出し、その結果として『言及されない何か』が進行する構造へと収束する。"
+        },
+        {
+          "device_id": "anachronistic_survival",
+          "chapter_title": "第六夜",
+          "device_name": "時代錯誤の生存(運慶が明治に生きている)",
+          "verdict": "generalization",
+          "reason": "心理的衝撃を身体感覚で示すという指示は、『夢十夜』の文脈では『異常な状況に置かれた人物が、その異常を説明的に認識するのではなく、身体の変化だけで受け取る』という形に具体化し、時代錯誤という異常状況を内面化しない呈示手法として機能するため、中心装置の主要成分（異常の説明なき前提化）と収束する。"
+        },
+        {
+          "device_id": "endless_pig_repetition",
+          "chapter_title": "第十夜",
+          "device_name": "無限に押し寄せる豚を打ち続ける反復",
+          "verdict": "generalization",
+          "reason": "心理的衝撃を身体感覚の変化で示すという指示は、『夢十夜』の文脈では反復動作による肉体の疲弊・破壊（重さ、痛み、動かせなくなる身体）として最も自然に具体化し、無限反復の装置の一成分（精神的恐怖を身体的現象に転換する機構）を再現する可能性が高い"
+        }
+      ],
+      "polarity": {
+        "polarity": "requires_content",
+        "reason": "心理変化を示す身体感覚(重さ・痛みなど)の描写が本文に新たに生成される"
+      }
+    },
+    {
+      "card_id": "cc_6136a734f510",
+      "card_type": "criticism",
+      "title": "専門外の尺度で他領域の作品を裁くことを戒める",
+      "verdict": "portable",
+      "reason": "",
+      "named_images": [],
+      "origin_chapters": [],
+      "candidates": [
+        "false_count_true_sign",
+        "deadline_by_clock_strike",
+        "blind_child_as_omniscient_accuser",
+        "unresolved_vanishing_promise",
+        "deadline_by_natural_signal",
+        "anachronistic_survival",
+        "destination_unknown_voyage",
+        "mirror_selective_reflection",
+        "retroactive_futility_reveal",
+        "endless_pig_repetition"
+      ],
+      "judgments": [
+        {
+          "device_id": "false_count_true_sign",
+          "chapter_title": "第一夜",
+          "device_name": "偽の計数と真の徴による百年成就の反転",
+          "verdict": "unrelated",
+          "reason": "カードの指示は判断者の能力範囲の認識と謙虚さを求めるメタ的な態度論であり、『夢十夜』第一夜の中心装置である『計数と象徴による約束成就の反転』という物語的仕掛けとは、内容的・構造的に無関係である。"
+        }
+      ],
+      "polarity": {
+        "polarity": "requires_content",
+        "reason": "専門外への判断保留や、専門外の価値を認めた上での評価という具体的な態度・言明が本文に書き加えられる"
+      }
+    },
+    {
+      "card_id": "cc_7a34cf2396d8",
+      "card_type": "narrative",
+      "title": "反復する事象を数えさせて時間の異常な長さを体感させる",
+      "verdict": "device_bound",
+      "reason": "指示は『夢十夜』第一夜の中心装置（計数による約束→数えが無効化される→象徴的徴による事後的成就）をそのまま言語化したものであり、続編でこの指示に従えば必然的にこの同じ構造を再演することになる。",
+      "named_images": [],
+      "origin_chapters": [
+        "第一夜"
+      ],
+      "candidates": [
+        "false_count_true_sign",
+        "deadline_by_clock_strike",
+        "blind_child_as_omniscient_accuser",
+        "unresolved_vanishing_promise",
+        "deadline_by_natural_signal",
+        "anachronistic_survival",
+        "destination_unknown_voyage",
+        "mirror_selective_reflection",
+        "retroactive_futility_reveal",
+        "endless_pig_repetition"
+      ],
+      "judgments": [
+        {
+          "device_id": "false_count_true_sign",
+          "chapter_title": "第一夜",
+          "device_name": "偽の計数と真の徴による百年成就の反転",
+          "verdict": "paraphrase",
+          "reason": "指示は『夢十夜』第一夜の中心装置（計数による約束→数えが無効化される→象徴的徴による事後的成就）をそのまま言語化したものであり、続編でこの指示に従えば必然的にこの同じ構造を再演することになる。"
+        },
+        {
+          "device_id": "deadline_by_clock_strike",
+          "chapter_title": "第二夜",
+          "device_name": "時計の音による悟りの期限設定",
+          "verdict": "generalization",
+          "reason": "反復的な数え上げ行為による時間の異常な延伸という指示は、『夢十夜』の文脈では、外的なカウント（時計の音）に追い詰められる心理状態を内化・反復させる形で具体化され、期限への緊張構造を別の様態で再現する。"
+        },
+        {
+          "device_id": "unresolved_vanishing_promise",
+          "chapter_title": "第四夜",
+          "device_name": "果たされない約束のままの失踪",
+          "verdict": "generalization",
+          "reason": "反復と破綻を通じて時間の異常を体感させるという指示は、『夢十夜』第四夜の『約束の繰り返しによる期待値の蓄積→その期待を一切回収せぬまま終了』という構造の一般化であり、同じ『予期された解決が永遠に来ない』という装置に自然に収束する。"
+        },
+        {
+          "device_id": "deadline_by_natural_signal",
+          "chapter_title": "第五夜",
+          "device_name": "鶏鳴という自然現象による生死の期限設定",
+          "verdict": "generalization",
+          "reason": "反復的な数え行為による時間の異常延伸という指示は、『夢十夜』の文脈では自然と『鶏鳴』のような自然現象による時間切断の装置へ収束する。なぜなら数え続ける行為と自然現象による期限設定は、いずれも『自然のサイン＝運命の切断点』という同じ根底構造を具現化するため。"
+        },
+        {
+          "device_id": "retroactive_futility_reveal",
+          "chapter_title": "第九夜",
+          "device_name": "祈願が既に無意味だったことの事後開示",
+          "verdict": "generalization",
+          "reason": "反復行為の数え上げと破綻という指示は、『夢十夜』第九夜の『無意味だったことの事後開示』という装置の一成分（反復される祈願行為）を一般化したもので、この文脈では結局『実は最初から無駄だった』という落ちに最も自然に収束するため。"
+        },
+        {
+          "device_id": "endless_pig_repetition",
+          "chapter_title": "第十夜",
+          "device_name": "無限に押し寄せる豚を打ち続ける反復",
+          "verdict": "generalization",
+          "reason": "反復する事象を数え続ける行為という指示は、『夢十夜』の続編という文脈で、終わりなき単純動作の繰り返しという中心装置へ最も自然に収束し、数えきれなくなることで無限反復の恐怖が具現化される。"
+        }
+      ],
+      "polarity": {
+        "polarity": "requires_content",
+        "reason": "反復する事象を数える行為とその破綻、期限とのずれを描写する文章が本文に新たに生成される。"
+      }
+    },
+    {
+      "card_id": "cc_7f85bc831d3a",
+      "card_type": "style",
+      "title": "対象と共に感情を爆発させない距離のある描写",
+      "verdict": "portable",
+      "reason": "",
+      "named_images": [],
+      "origin_chapters": [],
+      "candidates": [
+        "false_count_true_sign",
+        "deadline_by_clock_strike",
+        "blind_child_as_omniscient_accuser",
+        "unresolved_vanishing_promise",
+        "deadline_by_natural_signal",
+        "anachronistic_survival",
+        "destination_unknown_voyage",
+        "mirror_selective_reflection",
+        "retroactive_futility_reveal",
+        "endless_pig_repetition"
+      ],
+      "judgments": [],
+      "polarity": {
+        "polarity": "forbids_content",
+        "reason": "対象の感情描写は残すが筆者の感情表出や読者反応への配慮を書き加えないため、本文に新たな要素は増えない"
+      },
+      "exempt_rule": "否定形・欠如形の指示は装置(正の内容)を運べないため装置判定の対象外。prohibition 側の検査系統で見る"
+    },
+    {
+      "card_id": "cc_89594b088c0a",
+      "card_type": "criticism",
+      "title": "一つの美点の欠如で他の美点を否定しない",
+      "verdict": "portable",
+      "reason": "",
+      "named_images": [],
+      "origin_chapters": [],
+      "candidates": [
+        "false_count_true_sign",
+        "deadline_by_clock_strike",
+        "blind_child_as_omniscient_accuser",
+        "unresolved_vanishing_promise",
+        "deadline_by_natural_signal",
+        "anachronistic_survival",
+        "destination_unknown_voyage",
+        "mirror_selective_reflection",
+        "retroactive_futility_reveal",
+        "endless_pig_repetition"
+      ],
+      "judgments": [],
+      "polarity": {
+        "polarity": "forbids_content",
+        "reason": "一点の欠如を理由に作品全体を否定する評価を書かせず、他の美点への言及を欠かさないことを求めるものであり、新たな像や出来事は増えない。"
+      },
+      "exempt_rule": "否定形・欠如形の指示は装置(正の内容)を運べないため装置判定の対象外。prohibition 側の検査系統で見る"
+    },
+    {
+      "card_id": "cc_96aa644f14b1",
+      "card_type": "motif",
+      "title": "呪文のような反復句を場面の推進力にする",
+      "verdict": "device_bound",
+      "reason": "反復句による時間推進という一般的な装置指示は、『夢十夜』の文脈では必然的に「数える/繰り返す行為が無効化され、最後に象徴的徴によって真実が反転する」という第一夜の核心構造へ具体化する。",
+      "named_images": [],
+      "origin_chapters": [
+        "第四夜"
+      ],
+      "candidates": [
+        "false_count_true_sign",
+        "deadline_by_clock_strike",
+        "blind_child_as_omniscient_accuser",
+        "unresolved_vanishing_promise",
+        "deadline_by_natural_signal",
+        "anachronistic_survival",
+        "destination_unknown_voyage",
+        "mirror_selective_reflection",
+        "retroactive_futility_reveal",
+        "endless_pig_repetition"
+      ],
+      "judgments": [
+        {
+          "device_id": "false_count_true_sign",
+          "chapter_title": "第一夜",
+          "device_name": "偽の計数と真の徴による百年成就の反転",
+          "verdict": "generalization",
+          "reason": "反復句による時間推進という一般的な装置指示は、『夢十夜』の文脈では必然的に「数える/繰り返す行為が無効化され、最後に象徴的徴によって真実が反転する」という第一夜の核心構造へ具体化する。"
+        },
+        {
+          "device_id": "deadline_by_clock_strike",
+          "chapter_title": "第二夜",
+          "device_name": "時計の音による悟りの期限設定",
+          "verdict": "generalization",
+          "reason": "反復句による場面推進の指示は、『夢十夜』第二夜における『時計の音による期限カウント→内的膠着の強制終了』という緊張構造を、音響的リズムを媒介にして再現する最も自然な具体化となる。すなわち、繰り返される言葉が時計の音と同じく『経過の外的強制』として機能し、宿命的な終焉へ向かう焦燥感を生成する。"
+        },
+        {
+          "device_id": "blind_child_as_omniscient_accuser",
+          "chapter_title": "第三夜",
+          "device_name": "盲目の子供=全知の告発者",
+          "verdict": "generalization",
+          "reason": "反復句を時間進行・事態推進の装置とする指示は、『夢十夜』の文脈では盲目の子の「繰り返される指示=記憶の強制と真相暴露」という構造に最も自然に収束し、弱者視点からの全知的暴露という核装置の一般化を促す。"
+        },
+        {
+          "device_id": "unresolved_vanishing_promise",
+          "chapter_title": "第四夜",
+          "device_name": "果たされない約束のままの失踪",
+          "verdict": "generalization",
+          "reason": "反復句による場面推進の指示は、原作の『蛇になる』の反復的な煽りを一般化した書き方であり、『夢十夜』の文脈でこれに従うと、その反復がやがて虚無的な断絶（約束の未回収）へ導く構造が最も自然な具体化になる。"
+        },
+        {
+          "device_id": "deadline_by_natural_signal",
+          "chapter_title": "第五夜",
+          "device_name": "鶏鳴という自然現象による生死の期限設定",
+          "verdict": "generalization",
+          "reason": "反復句による時間進行の表現は、『夢十夜』の文脈では自然と「鶏鳴まで」という自然現象による絶対的な期限への収束を招き、繰り返される台詞そのものが不可避の運命の到達を表す装置となる。"
+        },
+        {
+          "device_id": "anachronistic_survival",
+          "chapter_title": "第六夜",
+          "device_name": "時代錯誤の生存(運慶が明治に生きている)",
+          "verdict": "generalization",
+          "reason": "反復句による場面推進の指示は、『夢十夜』の続編文脈では、時間軸のズレを繰り返し告知する装置（「運慶が、運慶が」「鎌倉が、鎌倉が」のような呼応）として自動的に収束し、時代錯誤の異常を陳腐化させずに層化する可能性が高い。"
+        },
+        {
+          "device_id": "endless_pig_repetition",
+          "chapter_title": "第十夜",
+          "device_name": "無限に押し寄せる豚を打ち続ける反復",
+          "verdict": "generalization",
+          "reason": "反復句による場面推進という抽象的指示は、『夢十夜』の文脈では必然的に『同じ動作・同じ言葉の際限ない繰り返しが時間経過と疲弊を表現する』という具体化に収束し、無限増殖する豚の打ち続けという中心装置の本質的構造をなぞる。"
+        }
+      ],
+      "polarity": {
+        "polarity": "requires_content",
+        "reason": "同型反復の台詞が新たに書かれ、それが状況変化を告げる文として本文に加わる"
+      }
+    },
+    {
+      "card_id": "cc_9a6878f120d8",
+      "card_type": "prohibition",
+      "title": "単一の趣味で全ジャンルの作品を裁くことの禁止",
+      "verdict": "device_bound",
+      "reason": "「作品ごとに立場を変えて精神を汲み取る」という指示は、『夢十夜』の続編という文脈では、視点の多重性と権力の反転を通じた真相暴露という装置へ最も自然に具体化され、弱者が複数の視角から真実を支配する構造を再現する可能性が高い。",
+      "named_images": [],
+      "origin_chapters": [],
+      "candidates": [
+        "false_count_true_sign",
+        "deadline_by_clock_strike",
+        "blind_child_as_omniscient_accuser",
+        "unresolved_vanishing_promise",
+        "deadline_by_natural_signal",
+        "anachronistic_survival",
+        "destination_unknown_voyage",
+        "mirror_selective_reflection",
+        "retroactive_futility_reveal",
+        "endless_pig_repetition"
+      ],
+      "judgments": [
+        {
+          "device_id": "blind_child_as_omniscient_accuser",
+          "chapter_title": "第三夜",
+          "device_name": "盲目の子供=全知の告発者",
+          "verdict": "generalization",
+          "reason": "「作品ごとに立場を変えて精神を汲み取る」という指示は、『夢十夜』の続編という文脈では、視点の多重性と権力の反転を通じた真相暴露という装置へ最も自然に具体化され、弱者が複数の視角から真実を支配する構造を再現する可能性が高い。"
+        },
+        {
+          "device_id": "unresolved_vanishing_promise",
+          "chapter_title": "第四夜",
+          "device_name": "果たされない約束のままの失踪",
+          "verdict": "generalization",
+          "reason": "『夢十夜』の続編において、単一の評価軸を禁止する指示に従えば、各章で異なる『約束と不履行』の型を作品種ごとに変化させることになり、第四夜の『解決を拒否する結末』という装置が、より多層的で一貫性のない終わり方の一般形として繰り返される可能性が高い。"
+        },
+        {
+          "device_id": "anachronistic_survival",
+          "chapter_title": "第六夜",
+          "device_name": "時代錯誤の生存(運慶が明治に生きている)",
+          "verdict": "generalization",
+          "reason": "複数の作品的立場を用意して文脈に応じて適用するという指示は、『夢十夜』の続編では『各夜ごとに異なる時間軸・因果律・論理体系を用意し、それを説明なく提示する』という方法へ収束し、運慶のような『一人だけ異なる装置を搭載した人物』を各話で繰り返し生成させることになる。"
+        },
+        {
+          "device_id": "mirror_selective_reflection",
+          "chapter_title": "第八夜",
+          "device_name": "鏡が選んで映す／映さないという異常",
+          "verdict": "generalization",
+          "reason": "単一の趣味で全作品を裁くな という指示は、『夢十夜』の文脈では「鏡が全てを同じ基準で映す べき装置であるのに恣意的に選別する」という中心装置の一般化であり、続編で異なる作品群に対して異なる評価軸を適用しようとする努力は、結果として『鏡が対象を恣意的に選別する』という異常性の原理を再現する可能性が高い。"
+        }
+      ],
+      "polarity": {
+        "polarity": "requires_content",
+        "reason": "作品ごとに異なる評価基準や立場を使い分ける具体的な採点・鑑賞の記述が本文に生成される"
+      }
+    },
+    {
+      "card_id": "cc_c35804d22d92",
+      "card_type": "ending",
+      "title": "説明を与えずに宙吊りのまま終える",
+      "verdict": "portable",
+      "reason": "",
+      "named_images": [],
+      "origin_chapters": [
+        "第二夜",
+        "第四夜"
+      ],
+      "candidates": [
+        "false_count_true_sign",
+        "deadline_by_clock_strike",
+        "blind_child_as_omniscient_accuser",
+        "unresolved_vanishing_promise",
+        "deadline_by_natural_signal",
+        "anachronistic_survival",
+        "destination_unknown_voyage",
+        "mirror_selective_reflection",
+        "retroactive_futility_reveal",
+        "endless_pig_repetition"
+      ],
+      "judgments": [],
+      "polarity": {
+        "polarity": "forbids_content",
+        "reason": "真相や結末の説明を書かず、未解決の動作や情景のまま終えることを求めており、説明的内容が本文に加わらない。"
+      },
+      "exempt_rule": "否定形・欠如形の指示は装置(正の内容)を運べないため装置判定の対象外。prohibition 側の検査系統で見る"
+    },
+    {
+      "card_id": "cc_db7054ff0ad6",
+      "card_type": "prohibition",
+      "title": "夢の中の超自然的な出来事に合理的説明を加えない",
+      "verdict": "portable",
+      "reason": "",
+      "named_images": [],
+      "origin_chapters": [
+        "第一夜",
+        "第三夜"
+      ],
+      "candidates": [
+        "false_count_true_sign",
+        "deadline_by_clock_strike",
+        "blind_child_as_omniscient_accuser",
+        "unresolved_vanishing_promise",
+        "deadline_by_natural_signal",
+        "anachronistic_survival",
+        "destination_unknown_voyage",
+        "mirror_selective_reflection",
+        "retroactive_futility_reveal",
+        "endless_pig_repetition"
+      ],
+      "judgments": [],
+      "polarity": {
+        "polarity": "forbids_content",
+        "reason": "超自然的な出来事に理由や仕組みの説明を加えないため、説明的な文が本文に増えない"
+      },
+      "exempt_rule": "否定形・欠如形の指示は装置(正の内容)を運べないため装置判定の対象外。prohibition 側の検査系統で見る"
+    },
+    {
+      "card_id": "cc_e6cfbf451afd",
+      "card_type": "perspective",
+      "title": "語り手は名を持たない一人称「自分」に固定する",
+      "verdict": "device_bound",
+      "reason": "「自分」という名を持たない語り手が知覚と反応だけで存在するという指示は、『夢十夜』の文脈では必然的に『同一の動作を繰り返す無個性な主体』という具体化に収束し、第十夜の豚打ち反復の本質である『主体性の剥奪と反復による疲弊』という装置を再現することになる。",
+      "named_images": [],
+      "origin_chapters": [
+        "第一夜",
+        "第六夜",
+        "第七夜"
+      ],
+      "candidates": [
+        "false_count_true_sign",
+        "deadline_by_clock_strike",
+        "blind_child_as_omniscient_accuser",
+        "unresolved_vanishing_promise",
+        "deadline_by_natural_signal",
+        "anachronistic_survival",
+        "destination_unknown_voyage",
+        "mirror_selective_reflection",
+        "retroactive_futility_reveal",
+        "endless_pig_repetition"
+      ],
+      "judgments": [
+        {
+          "device_id": "endless_pig_repetition",
+          "chapter_title": "第十夜",
+          "device_name": "無限に押し寄せる豚を打ち続ける反復",
+          "verdict": "generalization",
+          "reason": "「自分」という名を持たない語り手が知覚と反応だけで存在するという指示は、『夢十夜』の文脈では必然的に『同一の動作を繰り返す無個性な主体』という具体化に収束し、第十夜の豚打ち反復の本質である『主体性の剥奪と反復による疲弊』という装置を再現することになる。"
+        }
+      ],
+      "polarity": {
+        "polarity": "requires_content",
+        "reason": "語り手を「自分」と表記し、知覚と短い判断の文が本文に生成される"
+      }
+    }
+  ]
+}

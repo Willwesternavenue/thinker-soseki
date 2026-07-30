@@ -1,0 +1,150 @@
+{
+  "meta": {
+    "profile_id": "cp_yume_juya",
+    "classification_version": "v1",
+    "prompt_version": "v1",
+    "model_id": "claude-sonnet-5",
+    "cards": 16,
+    "device_bound": 2
+  },
+  "cards": [
+    {
+      "card_id": "cc_0c78d86eb956",
+      "card_type": "character",
+      "title": "子供に大人以上の知識と対等な口調を与える",
+      "verdict": "portable",
+      "reason": "別の作家の続編でも「幼い子供に対等以上の知識と口調を持たせて不気味さを出す」という関係設計は、特定の登場人物や事件を借用せずに適用できる",
+      "named_images": []
+    },
+    {
+      "card_id": "cc_131d371c583c",
+      "card_type": "narrative",
+      "title": "「こんな夢を見た」という定型句で語りを開始する",
+      "verdict": "portable",
+      "reason": "別の作家の続編でも、冒頭に同一の定型句を置いて夢だと宣言する構えとして機能し、元作品特有の像を借用することにはならない",
+      "named_images": []
+    },
+    {
+      "card_id": "cc_19b273b49c7c",
+      "card_type": "criticism",
+      "title": "批評は判定可能な条項を明示してから採点すべき",
+      "verdict": "portable",
+      "reason": "評価軸の明示と資格の自覚という批評姿勢はどの作家の続編評でも適用でき、特定作品の像を借用することはない",
+      "named_images": []
+    },
+    {
+      "card_id": "cc_422e7b52a70f",
+      "card_type": "motif",
+      "title": "黒・赤・白の色彩を生死や時間の合図として使う",
+      "verdict": "device_bound",
+      "reason": "別の作家の続編に入れても、黒い瞳・赤い太陽・白い百合という元作品固有の象徴的道具立てをそのまま模倣することになり、借用感が生じる",
+      "named_images": [
+        "黒い瞳",
+        "赤い太陽",
+        "白い百合・白い花",
+        "白い肌"
+      ]
+    },
+    {
+      "card_id": "cc_4f1f864fa884",
+      "card_type": "narrative",
+      "title": "結末を外的な事件でなく認識の急変で締める",
+      "verdict": "portable",
+      "reason": "別の作家の続編でも、結末を認識の転換で締めるという構えは特定の像を借用せずに適用できる",
+      "named_images": []
+    },
+    {
+      "card_id": "cc_554f09d7657b",
+      "card_type": "perspective",
+      "title": "写生文家の視点は大人が小児を見る態度",
+      "verdict": "portable",
+      "reason": "別の作家の続編に入れても、対象と距離を置き大人が小児を見るように観察する視点の構えとして機能し、特定の像の借用にはならない",
+      "named_images": []
+    },
+    {
+      "card_id": "cc_5ff417684f17",
+      "card_type": "narrative",
+      "title": "心理的衝撃を身体感覚の変化として描く",
+      "verdict": "portable",
+      "reason": "特定の人物や事物を名指しせず、心理変化を身体感覚で示すという書き方の構えのみを述べているため、別の作家の続編にもそのまま適用できる",
+      "named_images": []
+    },
+    {
+      "card_id": "cc_6136a734f510",
+      "card_type": "criticism",
+      "title": "専門外の尺度で他領域の作品を裁くことを戒める",
+      "verdict": "portable",
+      "reason": "別の作家の続編に入れても、専門外の判断を保留し得意分野内で評価するという態度の指針として機能し、特定の像の借用は生じない",
+      "named_images": []
+    },
+    {
+      "card_id": "cc_7a34cf2396d8",
+      "card_type": "narrative",
+      "title": "反復する事象を数えさせて時間の異常な長さを体感させる",
+      "verdict": "portable",
+      "reason": "別の作家の続編に入れても、反復する事象を数えさせ数えきれなくなることで時間の異常さを描くという手法として機能し、特定の作品の像を借用することにはならない。",
+      "named_images": [
+        "太陽の出没（例示として挙げられているのみ）"
+      ]
+    },
+    {
+      "card_id": "cc_7f85bc831d3a",
+      "card_type": "style",
+      "title": "対象と共に感情を爆発させない距離のある描写",
+      "verdict": "portable",
+      "reason": "別の作家の続編に入れても、対象の感情と筆者の距離感という書き方の構えとして機能し、特定の作品の像を借用することにはならない",
+      "named_images": []
+    },
+    {
+      "card_id": "cc_89594b088c0a",
+      "card_type": "criticism",
+      "title": "一つの美点の欠如で他の美点を否定しない",
+      "verdict": "portable",
+      "reason": "三統一や写実といった具体例は説明のための引用であり、別の作家の続編に適用しても『一部の欠点で全体を否定せず他の美点を評価する』という批評的構えとして機能する",
+      "named_images": []
+    },
+    {
+      "card_id": "cc_96aa644f14b1",
+      "card_type": "motif",
+      "title": "呪文のような反復句を場面の推進力にする",
+      "verdict": "portable",
+      "reason": "別の作家の続編でも、同型反復句で場面や時間の進行を告げるという手法自体は特定の像を借用せずに適用できる。",
+      "named_images": []
+    },
+    {
+      "card_id": "cc_9a6878f120d8",
+      "card_type": "prohibition",
+      "title": "単一の趣味で全ジャンルの作品を裁くことの禁止",
+      "verdict": "portable",
+      "reason": "別の作家の続編でも、単一の基準で全作品を評価せず作品ごとに立場を変えて評するという批評姿勢として適用でき、特定の像の借用を伴わない",
+      "named_images": []
+    },
+    {
+      "card_id": "cc_c35804d22d92",
+      "card_type": "ending",
+      "title": "説明を与えずに宙吊りのまま終える",
+      "verdict": "portable",
+      "reason": "別の作家の続編に入れても、真相を明かさず動作の途中で終える締め方という構えとして機能し、特定の像の借用は生じない",
+      "named_images": []
+    },
+    {
+      "card_id": "cc_db7054ff0ad6",
+      "card_type": "prohibition",
+      "title": "夢の中の超自然的な出来事に合理的説明を加えない",
+      "verdict": "device_bound",
+      "reason": "「貝で墓を掘る」「盲目の子供が全てを知る」という特定の作品の具体的な超自然的出来事がそのまま踏襲すべき像として指示に含まれており、別作家の続編に投入すると元作品からの借用になってしまう。",
+      "named_images": [
+        "貝で墓を掘る",
+        "盲目の子供が全てを知っている"
+      ]
+    },
+    {
+      "card_id": "cc_e6cfbf451afd",
+      "card_type": "perspective",
+      "title": "語り手は名を持たない一人称「自分」に固定する",
+      "verdict": "portable",
+      "reason": "別の作家の続編でも、語り手を「自分」と固定し内面を短い判断のみで示す一人称スタイルとしてそのまま適用できる。",
+      "named_images": []
+    }
+  ]
+}
