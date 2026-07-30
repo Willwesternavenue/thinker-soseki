@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 
 from .. import config, llm
 from . import bridges as bridges_mod
-from . import guard, prompts, repo
+from . import card_devices, device_catalog, guard, prompts, repo
 
 # v0.1 で本文生成へ投入する章の上限。夢十夜は10篇の小コーパスなので、
 # 関連する一夜の全文を入れる方が semantic search より単純で強い(仕様§6.2 Step4)
@@ -32,6 +32,10 @@ class GenerationContext:
     # rules モードが off なら空のまま
     bridges: list[dict] = field(default_factory=list)
     rules_mode: str = bridges_mod.DEFAULT_RULES_MODE
+    # 装置カード除外の結果（タスク条件付きの制御。既定は未適用）
+    device_exclusion: dict = field(default_factory=lambda: {"applied": False})
+    # outline 段の装置検査の結果（多層防御の最終段）
+    device_check: dict = field(default_factory=lambda: {"passed": None})
 
 
 def normalize_brief(
@@ -167,9 +171,21 @@ def _format_constraints(brief: dict) -> str:
     return "、".join(brief.get("constraints") or []) or "(なし)"
 
 
-def build_outline(ctx: "GenerationContext", *, job_id=None, call_json=None) -> dict:
-    """Step5: 全文の前に内部outlineを作る(高性能モデル。仕様§6.2 Step6)。"""
+def build_outline(
+    ctx: "GenerationContext", *, job_id=None, call_json=None, avoid=None
+) -> dict:
+    """Step5: 全文の前に内部outlineを作る(高性能モデル。仕様§6.2 Step6)。
+
+    avoid は装置検査で捕まった再現の指摘。作り直しのときだけ渡す。
+    """
     call = call_json or llm.call_json
+    avoid_note = ""
+    if avoid:
+        avoid_note = (
+            "\n\n## 前回の構成で原作をなぞってしまった点(必ず避ける)\n"
+            + "\n".join(f"- {a}" for a in avoid)
+            + "\n原作のどの一夜とも異なる、十一夜目にしかない前提を立てること。"
+        )
     return call(
         agent_name="creative_outline",
         model=config.MODEL_CREATIVE_MAIN,
@@ -188,7 +204,7 @@ def build_outline(ctx: "GenerationContext", *, job_id=None, call_json=None) -> d
                 else ""
             ),
             source_excerpt=ctx.source_text,
-        ),
+        ) + avoid_note,
         input_ref=f"creative_generation:{job_id}",
         # 承認済みカードが増えると構成の記述も長くなる。カード13枚で 4096 でも
         # 打ち切られたため引き上げた(実運用で確認)。切り詰めは llm 側が明示的に
@@ -241,6 +257,46 @@ def build_draft(
     return result["text"]
 
 
+def device_exclusion_enabled(profile: dict) -> bool:
+    """装置カードの除外を効かせるか。
+
+    ⚠️ これは**誤りの修正ではなく、タスク条件付きの制御**である。
+    装置カード（第一夜の計数、第三夜の全知の子供）は『夢十夜』の**続編**では
+    汚染源だが、「夢十夜風の別作品を書く」という依頼では素材になりうる。
+    続編・パスティーシュ系のプロファイルで on、自由創作では off。
+
+    既定は off（明示的に有効化したプロファイルだけが効く）。
+    """
+    settings = profile.get("default_generation_settings") or {}
+    return (settings.get("device_exclusion") or "off") == "on"
+
+
+def apply_device_exclusion(
+    cards: list[dict], profile: dict, brief: dict, *, call_json=None
+) -> tuple[list[dict], dict]:
+    """続編生成で装置カードを落とす。判定は screening JSON（カード本体は不変）。
+
+    brief の constraints が明示要求しているカードは除外を免除する
+    （続編は非対称な借用: 枠の装置は継承し、内側の装置は禁じる）。
+    """
+    screening = card_devices.load_classification_for_generation(profile["profile_id"])
+    if not screening:
+        return cards, {"applied": False, "reason": "screening が無い"}
+
+    resolved = card_devices.resolve_exclusions(
+        screening,
+        brief_constraints=brief.get("constraints") or [],
+        call_json=call_json,
+    )
+    excluded = set(resolved["excluded_card_ids"])
+    kept = [c for c in cards if c["card_id"] not in excluded]
+    return kept, {
+        "applied": True,
+        "excluded_card_ids": sorted(excluded),
+        "exempted_card_ids": [r["card_id"] for r in resolved["exempted"]],
+    }
+
+
 def prepare_generation(job: dict, *, client=None, call_json=None) -> GenerationContext:
     """Step1〜4: brief正規化 → profile検証 → 承認済みカード → 原典投入。
 
@@ -270,6 +326,13 @@ def prepare_generation(job: dict, *, client=None, call_json=None) -> GenerationC
     brief = normalize_brief(job["brief_raw"], job_id=job_id, call_json=call_json)
     repo.save_brief_normalized(job_id, brief, client=client)
 
+    # 装置カードの除外は brief の constraints を見るので brief 正規化の後
+    device_exclusion = {"applied": False}
+    if device_exclusion_enabled(profile):
+        cards, device_exclusion = apply_device_exclusion(
+            cards, profile, brief, call_json=call_json
+        )
+
     repo.set_generation_step(job_id, "sources", client=client)
     sources = build_source_context(
         profile, brief, job_id=job_id, client=client, call_json=call_json
@@ -286,7 +349,63 @@ def prepare_generation(job: dict, *, client=None, call_json=None) -> GenerationC
         selected_chapters=sources["chapters"],
         bridges=bridges,
         rules_mode=mode,
+        device_exclusion=device_exclusion,
     )
+
+
+# outline を作り直す上限。装置が消えなければ安全側で失敗させる
+MAX_OUTLINE_REGENERATIONS = 2
+
+
+class DeviceReproductionError(RuntimeError):
+    """作り直しても原作の装置が消えなかった。安全側で失敗させる。"""
+
+    def __init__(self, message: str, matches: list[dict]):
+        super().__init__(message)
+        self.matches = matches
+
+
+def enforce_device_free_outline(
+    ctx: "GenerationContext", outline: dict, *, job_id=None, call_json=None
+) -> dict:
+    """outline に原作の装置が出ていれば、理由を渡して作り直す。
+
+    装置除外が off のプロファイル（自由創作）では検査しない — 装置は素材で
+    あって汚染源ではないため（`device_exclusion_enabled` の位置づけと同じ）。
+    """
+    if not device_exclusion_enabled(ctx.profile):
+        return outline
+    catalog = device_catalog.load_catalog(_scope_source_id(ctx.profile))
+    if not catalog:
+        return outline
+
+    for attempt in range(MAX_OUTLINE_REGENERATIONS + 1):
+        matches = device_catalog.detect_devices(
+            device_catalog.outline_text(outline), catalog, call_json=call_json
+        )
+        verdict = device_catalog.verdict_for_matches(matches)
+        ctx.device_check = {
+            "attempts": attempt + 1,
+            "passed": verdict["passed"],
+            "reasons": verdict["reasons"],
+        }
+        if verdict["passed"]:
+            return outline
+        if attempt >= MAX_OUTLINE_REGENERATIONS:
+            raise DeviceReproductionError(
+                "作り直しても原作の装置が残った: " + " / ".join(verdict["reasons"]),
+                matches,
+            )
+        outline = build_outline(
+            ctx, job_id=job_id, call_json=call_json,
+            avoid=verdict["reasons"],
+        )
+    return outline
+
+
+def _scope_source_id(profile: dict) -> str:
+    ids = (profile.get("source_scope") or {}).get("source_ids") or []
+    return ids[0] if ids else ""
 
 
 class GuardExhaustedError(RuntimeError):
@@ -316,6 +435,11 @@ def process_generation(job: dict, *, client=None, call_json=None) -> None:
 
         repo.set_generation_step(job_id, "outline", client=client)
         outline = build_outline(ctx, job_id=job_id, call_json=call_json)
+        # 多層防御の最終段: どの経路から入っても装置は草稿に現れる。
+        # カード選別（注入前）を通り抜けたものをここで捕まえ、outline を作り直す
+        outline = enforce_device_free_outline(
+            ctx, outline, job_id=job_id, call_json=call_json
+        )
 
         repo.set_generation_step(job_id, "draft", client=client)
         draft = build_draft(ctx, outline, job_id=job_id, call_json=call_json)
@@ -371,13 +495,16 @@ def process_generation(job: dict, *, client=None, call_json=None) -> None:
             injected_chunk_ids=ctx.injected_chunk_ids,
             model_ids=_model_ids(ctx, reached_outline_draft, guarded=True),
             prompt_versions=dict(prompts.PROMPT_VERSIONS),
-            guard_results=guard_results,
+            guard_results={**guard_results, "device_check": ctx.device_check},
             regeneration_count=regeneration_count,
             **_rule_trace_fields(ctx),
             client=client,
         )
     except repo.CreativeInvariantError as exc:
         _finish_failed(job, repo.ERROR_INVARIANT, str(exc), ctx, reached_outline_draft,
+                       client=client)
+    except DeviceReproductionError as exc:
+        _finish_failed(job, repo.ERROR_GUARD, str(exc), ctx, reached_outline_draft,
                        client=client)
     except GuardExhaustedError as exc:
         _finish_failed(job, repo.ERROR_GUARD, str(exc), ctx, reached_outline_draft,
@@ -435,7 +562,8 @@ def _finish_failed(
         injected_chunk_ids=ctx.injected_chunk_ids if ctx else [],
         model_ids=_model_ids(ctx, reached_outline_draft, guarded=bool(guard_results)),
         prompt_versions=dict(prompts.PROMPT_VERSIONS),
-        guard_results=guard_results or {},
+        guard_results={**(guard_results or {}),
+                       "device_check": ctx.device_check if ctx else {}},
         regeneration_count=regeneration_count,
         **_rule_trace_fields(ctx),
         client=client,

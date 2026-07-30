@@ -27,6 +27,7 @@ from collections import Counter
 from pathlib import Path
 
 from .. import db
+from ..creative import card_devices, device_catalog
 from ..steps import gen_questions
 from . import (
     gen_creative_cards, gen_rules, gen_thought_cards, ingest, manifest,
@@ -156,6 +157,31 @@ def cmd_gen_cards(_args) -> None:
     for card in cards:
         print(f"  {card['card_id']} [{card['status']:8s}] {card['card_type']:12s} "
               f"{card['evidence_type'][:24]:24s} {card['title']}")
+
+
+def cmd_gen_device_catalog(args) -> None:
+    """原作の章ごとの装置カタログを作る(続編生成の防具)。人手承認の対象ではない。"""
+    catalog = device_catalog.generate_catalog(args.source_id, work_title=args.title)
+    path = device_catalog.save_catalog(catalog)
+    meta = catalog["meta"]
+    print(f"装置カタログ: {meta['chapters']}章 / {meta['devices']}件 → {path}")
+    for chapter in catalog["chapters"]:
+        for d in chapter["devices"]:
+            mark = "★中心" if d["role"] == device_catalog.ROLE_CENTRAL else "  付随"
+            print(f"  {chapter['chapter_title']} {mark} {d['name']}"
+                  f"  ({','.join(d['evidence_chunk_ids'])})")
+
+
+def cmd_classify_cards(args) -> None:
+    """承認済みカードを移植テストで装置/作風に判定する。カード本体は書き換えない。"""
+    result = card_devices.classify_profile_cards(args.profile_id)
+    path = card_devices.save_classification(result)
+    meta = result["meta"]
+    print(f"移植テスト: {meta['cards']}枚中 装置{meta['device_bound']}枚 → {path}")
+    for row in result["cards"]:
+        mark = "装置" if row["verdict"] == card_devices.DEVICE_BOUND else "作風"
+        print(f"  [{mark}] {row['card_type']:12s} {row['title']}")
+        print(f"         {row['reason']}")
 
 
 def cmd_gen_thought_cards(_args) -> None:
@@ -407,6 +433,15 @@ def main(argv=None) -> int:
         func=cmd_create_profile)
     sub.add_parser("gen-cards", help="創作カード候補を生成する(draft)").set_defaults(
         func=cmd_gen_cards)
+    p_dc = sub.add_parser("gen-device-catalog",
+                          help="原作の章ごとの装置カタログを作る(続編生成の防具)")
+    p_dc.add_argument("--source-id", default="AOZORA_000799")
+    p_dc.add_argument("--title", default="夢十夜")
+    p_dc.set_defaults(func=cmd_gen_device_catalog)
+    p_cc = sub.add_parser("classify-cards",
+                          help="カードを移植テストで装置/作風に判定する")
+    p_cc.add_argument("--profile-id", default=YUME_PROFILE_ID)
+    p_cc.set_defaults(func=cmd_classify_cards)
     p_show = sub.add_parser("show-card", help="カードと根拠原文を表示する")
     p_show.add_argument("card_id")
     p_show.set_defaults(func=cmd_show_card)
