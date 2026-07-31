@@ -262,7 +262,7 @@ def test_detect_compares_all_devices_in_one_call():
     """装置ごとの独立二値判定にしない（試行回数で偽陽性が膨らむ）。"""
     llm = _FakeLLM({"reproduced": []})
 
-    dc.detect_devices("こんな夢を見た。", _DETECT_CATALOG, call_json=llm)
+    dc.detect_devices("こんな夢を見た。", _DETECT_CATALOG, call_json=llm, repeats=1)
 
     assert len(llm.calls) == 1, "全装置を一度に見せる"
     assert "d_kei" in llm.calls[0]["prompt"] and "d_ko" in llm.calls[0]["prompt"]
@@ -312,3 +312,25 @@ def test_detect_drops_unknown_device_id():
     ]})
 
     assert dc.detect_devices("こんな夢を見た。", _DETECT_CATALOG, call_json=llm) == []
+
+
+def test_detect_unions_independent_repeats():
+    """見逃しは作り直しでは埋まらない（作り直しは発火時しか起きない）。
+
+    同一入力に独立にk回走らせ、検出の和集合を取ることで初めて見逃し率が下がる。
+    """
+    llm = _FakeLLM(
+        {"reproduced": [{"device_id": "d_kei", "quote": "赤い日を数えた", "reason": "…"}]},
+        {"reproduced": []},                                  # 2回目は見逃す
+        {"reproduced": [{"device_id": "d_ko", "quote": "言い当てた", "reason": "…"}]},
+    )
+
+    got = dc.detect_devices("赤い日を数えた。言い当てた。", _DETECT_CATALOG,
+                            call_json=llm, repeats=3)
+
+    assert len(llm.calls) == 3
+    assert {d["device_id"] for d in got} == {"d_kei", "d_ko"}, "和集合を取る"
+
+
+def test_detect_repeats_default_is_three():
+    assert dc.DETECT_REPEATS == 3

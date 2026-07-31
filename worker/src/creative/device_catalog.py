@@ -296,8 +296,8 @@ DETECT_PROMPT = """## 検査対象（続編の草稿・構成案）
   （例: 装置が「赤い日の出没を数えて数えきれなくなる」で、草稿が
    「流れる灯籠を数えて数えきれなくなる」なら、対象が違っても再現）
 - 主題や雰囲気が似ているだけ、同じ語が出てくるだけでは再現ではない
-- 短い掌編が多くの章の中心装置を同時に再現することは稀である。
-  迷うものは挙げない
+- **主要成分が現れている装置はすべて挙げよ。件数を絞らない。**
+  裏付けの無い検出は機械側で破棄されるので、挙げること自体の代償は小さい
 
 ## 出力形式(JSONのみ)
 {{
@@ -315,7 +315,21 @@ def _normalized(text: str) -> str:
     return "".join((text or "").split())
 
 
-def detect_devices(draft: str, catalog: dict, *, call_json=None, model=None) -> list[dict]:
+# 同一入力に対する検査の反復回数。判定には確率的な揺れがあり、実測で実在する
+# 装置の単発発火率は 8/10 だった。
+#
+# ⚠️ 作り直しの回数では見逃しを埋められない。作り直しは**検出が発火したときだけ**
+# 起きるので、初回で見逃した outline はそのまま draft へ抜ける。実効見逃し率は
+# 単発の見逃し率そのもの(0.2)であって 0.2³ ではない。埋めるには同一 outline に
+# 対して独立に k 回走らせ、検出の**和集合**を取る必要がある(k=3 で 0.8%)。
+# 和集合で偽陽性も増えるが、偽陽性の代償は作り直し1回・偽陰性の代償は違反作品の
+# 出荷、という非対称性から運転点としては正当化される。
+DETECT_REPEATS = 3
+
+
+def detect_devices(
+    draft: str, catalog: dict, *, call_json=None, model=None, repeats: int = DETECT_REPEATS
+) -> list[dict]:
     """草稿・構成案に現れている装置を検出する（多層防御の最終段）。
 
     カード選別は**注入前**の検査で、漏れの経路（カードの意外な具体化・brief の
@@ -337,7 +351,28 @@ def detect_devices(draft: str, catalog: dict, *, call_json=None, model=None) -> 
 
     根拠引用は必須。judge の幻覚を機械側で落とすため、引用が検査対象に実在する
     かを照合し、実在しない検出は破棄する。
+
+    ⚠️ **精度は機械検証に持たせ、judge は再現率へ寄せる。** 件数の抑制で精度を
+    買ってはならない。「稀である。迷うものは挙げない」と書いた版では判定の事前
+    確率が歪み、実在する装置(第一夜の計数)が 3本中1本でしか発火しなかった。
+
+    運転点はコストの非対称性で決まる。この検査の
+      偽陽性の代償 = outline 作り直し1回（約 $0.07）
+      偽陰性の代償 = 違反作品の出荷
+    ガードとしては再現率側へ倒すのが正しい。精度を守る機構（引用の機械検証）は
+    別に持っているので、judge には「迷ったら挙げるな」ではなく「主要成分が現れて
+    いるものは全て挙げよ、根拠を引用せよ」と指示する。検出系 judge を設計する
+    ときは、まずこの非対称性から運転点を決めること。
     """
+    found: dict[str, dict] = {}
+    for _ in range(max(1, repeats)):
+        for hit in _detect_once(draft, catalog, call_json=call_json, model=model):
+            found.setdefault(hit["device_id"], hit)
+    return list(found.values())
+
+
+def _detect_once(draft: str, catalog: dict, *, call_json=None, model=None) -> list[dict]:
+    """1回ぶんの検査。全装置を同時に見せて該当を列挙させる。"""
     call = call_json or llm.call_json
     centrals = central_devices(catalog)
     if not centrals:
