@@ -46,6 +46,7 @@ def compose_bridges(
     versions: list[dict],
     thought_cards: list[dict],
     creative_cards: list[dict],
+    excluded_card_ids: set | None = None,
 ) -> list[dict]:
     """橋を組み立てる(純粋関数。DB取得は `fetch_bridges`)。
 
@@ -55,8 +56,16 @@ def compose_bridges(
     thought_by_id = {
         t["thought_id"]: t for t in thought_cards if t.get("status") == "approved"
     }
+    # ⚠️ 続編モードで除外した創作カードを対応先に持つ橋は架けない。
+    # 橋は対応先カードの題と要約をそのままプロンプトへ運ぶので、カード取得側で
+    # 除外しても橋が同じ内容を再注入してしまう（実測: 除外した計数カードの要約
+    # 「太陽の出没を何度も数えさせ、数えきれなくなる」が br_76de88e279c6 経由で
+    # outline に入り、装置が復活していた）
+    excluded = set(excluded_card_ids or ())
     creative_by_id = {
-        c["card_id"]: c for c in creative_cards if c.get("status") == "approved"
+        c["card_id"]: c
+        for c in creative_cards
+        if c.get("status") == "approved" and c["card_id"] not in excluded
     }
 
     # 規則ごとに最新の承認版を採る
@@ -101,7 +110,7 @@ def compose_bridges(
     return composed
 
 
-def fetch_bridges(person_id: str, *, client=None) -> list[dict]:
+def fetch_bridges(person_id: str, *, client=None, excluded_card_ids=None) -> list[dict]:
     """承認済みの Bridge Rule を読み出して組み立てる。"""
     c = client or repo.db.client()
 
@@ -162,6 +171,7 @@ def fetch_bridges(person_id: str, *, client=None) -> list[dict]:
         versions=versions,
         thought_cards=thought_cards,
         creative_cards=creative_cards,
+        excluded_card_ids=excluded_card_ids,
     )
 
 

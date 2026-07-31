@@ -171,6 +171,32 @@ def _format_constraints(brief: dict) -> str:
     return "、".join(brief.get("constraints") or []) or "(なし)"
 
 
+def assert_exclusions_hold(ctx: "GenerationContext") -> None:
+    """プロンプト組み立ての最終段で、除外が**全経路**に効いているかを確かめる。
+
+    ⚠️ 除外はカード取得の一箇所でしか効いておらず、プロンプトへ合流する他の経路
+    (bridge / 原典注入 / 今後の前提3案) は独立にコンテンツを運べる。実測で
+    bridge がこの穴を通した — 除外した計数カードの要約「太陽の出没を何度も
+    数えさせ、数えきれなくなる」が br_76de88e279c6 経由で outline に入っていた。
+
+    個別の経路を塞ぐだけでは次の経路が増えたときに同じ穴が開くので、合流点で
+    まとめて止める。**プロンプトへ材料を運ぶ経路を増やしたら、ここに追加する。**
+    """
+    excluded = set((ctx.device_exclusion or {}).get("excluded_card_ids") or [])
+    if not excluded:
+        return
+    leaked = [c["card_id"] for c in ctx.cards if c.get("card_id") in excluded]
+    leaked += [
+        b["technique_card_id"] for b in ctx.bridges
+        if b.get("technique_card_id") in excluded
+    ]
+    if leaked:
+        raise repo.CreativeInvariantError(
+            "除外した創作カードがプロンプトへ合流しています"
+            f"（経路の塞ぎ漏れ）: {sorted(set(leaked))}"
+        )
+
+
 def build_outline(
     ctx: "GenerationContext", *, job_id=None, call_json=None, avoid=None
 ) -> dict:
@@ -178,6 +204,7 @@ def build_outline(
 
     avoid は装置検査で捕まった再現の指摘。作り直しのときだけ渡す。
     """
+    assert_exclusions_hold(ctx)
     call = call_json or llm.call_json
     avoid_note = ""
     if avoid:
@@ -316,11 +343,6 @@ def prepare_generation(job: dict, *, client=None, call_json=None) -> GenerationC
     # 承認済み Bridge Rule。off なら読まない。進捗ステップは足していない —
     # LLM を呼ばない即時のDB読みで、独立した段にすると進捗表示が行き来する
     mode = bridges_mod.rules_mode(profile)
-    bridges = (
-        bridges_mod.fetch_bridges(profile["person_id"], client=client)
-        if mode != "off"
-        else []
-    )
 
     repo.set_generation_step(job_id, "brief", client=client)
     brief = normalize_brief(job["brief_raw"], job_id=job_id, call_json=call_json)
@@ -332,6 +354,16 @@ def prepare_generation(job: dict, *, client=None, call_json=None) -> GenerationC
         cards, device_exclusion = apply_device_exclusion(
             cards, profile, brief, call_json=call_json
         )
+
+    # 橋は除外の結果を渡してから読む（対応先が除外カードの橋は架けない）
+    bridges = (
+        bridges_mod.fetch_bridges(
+            profile["person_id"], client=client,
+            excluded_card_ids=set(device_exclusion.get("excluded_card_ids") or []),
+        )
+        if mode != "off"
+        else []
+    )
 
     repo.set_generation_step(job_id, "sources", client=client)
     sources = build_source_context(
@@ -388,6 +420,9 @@ def enforce_device_free_outline(
             "attempts": attempt + 1,
             "passed": verdict["passed"],
             "reasons": verdict["reasons"],
+            # 却下された outline も残す。作品ではなく内部表現なので「違反した本文を
+            # 保存しない」規律の対象外で、judge の較正には対象そのものが要る
+            "outlines": (ctx.device_check.get("outlines") or []) + [outline],
         }
         if verdict["passed"]:
             return outline

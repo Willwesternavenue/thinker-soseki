@@ -147,3 +147,60 @@ def test_prepare_does_not_read_bridges_when_off(clean_corpus, client, profile):
 
     assert ctx.bridges == []
     assert bridges.rules_mode({"default_generation_settings": {"rules": "off"}}) == "off"
+
+
+# ── 除外は全経路で効かせる（合流点での強制） ──
+
+
+def _bridge_args(*, technique_card_id="cc_test01", status="approved"):
+    return dict(
+        rules=[{"rule_id": "br_76de88e279c6", "lifecycle": "active",
+                "title": "因果連鎖に支配された時間感覚の体感化"}],
+        versions=[{"rule_id": "br_76de88e279c6", "version": 1, "status": "approved",
+                   "content": {"source_thought_id": "th_1",
+                               "target_creative_card_id": technique_card_id}}],
+        thought_cards=[{"thought_id": "th_1", "title": "因果連鎖",
+                        "core_claim": "…", "status": "approved"}],
+        creative_cards=[{"card_id": technique_card_id, "card_type": "narrative",
+                         "title": "反復する事象を数えさせて時間の異常な長さを体感させる",
+                         "summary": "太陽の出没を何度も数えさせ、数えきれなくなる",
+                         "status": status}],
+    )
+
+
+def test_bridge_to_an_excluded_card_is_not_composed():
+    """実測の回帰: 除外した計数カードが br_76de88e279c6 経由で復活していた。
+
+    橋は対応先カードの題と要約をそのままプロンプトへ運ぶので、カード取得側で
+    除外しても橋が同じ内容を再注入する。
+    """
+    composed = bridges.compose_bridges(
+        **_bridge_args(), excluded_card_ids={"cc_test01"}
+    )
+
+    assert composed == []
+
+
+def test_bridge_survives_when_the_card_is_not_excluded():
+    composed = bridges.compose_bridges(**_bridge_args(), excluded_card_ids=set())
+
+    assert [b["rule_id"] for b in composed] == ["br_76de88e279c6"]
+
+
+def test_assembly_asserts_no_excluded_card_leaks_through_any_path():
+    """合流点での強制。経路が増えても、ここで止まる。"""
+    ctx = _ctx(rules_mode="assist", bridge_list=[
+        {**_BRIDGE, "technique_card_id": "cc_excluded"}
+    ])
+    ctx.device_exclusion = {"applied": True, "excluded_card_ids": ["cc_excluded"]}
+
+    import pytest
+    with pytest.raises(generate.repo.CreativeInvariantError, match="合流"):
+        generate.assert_exclusions_hold(ctx)
+
+
+def test_assembly_passes_when_exclusions_hold():
+    ctx = _ctx(rules_mode="assist", bridge_list=[_BRIDGE])
+    ctx.device_exclusion = {"applied": True, "excluded_card_ids": ["cc_other"]}
+
+    generate.assert_exclusions_hold(ctx)  # 例外が出なければよい
