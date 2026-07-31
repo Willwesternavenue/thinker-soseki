@@ -93,6 +93,88 @@ RECONVERGENCE_SYSTEM = """あなたは創作指示が原作のどの装置へ収
 指示の抽象度ではなく、**その指示に従った結果どの像に落ちるか**だけを見る。
 JSONのみを出力する。"""
 
+# 段2は**1枚につき1回**の強制選択にする。装置ごとに独立した二値判定をかけると
+# 偽陽性が試行回数で膨らむ（実測: 16枚×10装置の総当たりで 11/16 が除外され、
+# 夢十夜由来ですらない批評カードまで第一夜の計数に収束すると判定された）。
+#
+# ⚠️ 検出層（device_catalog.detect_devices）の同時比較とは形が違う。カードは
+# 単一のアトラクタへ収束するのでここは**単一選択**が正しいが、テキストは複数の
+# 装置を同時に含みうるので向こうは複数可の列挙にする。同じ「同時比較」でも
+# 出力の基数が違うことを取り違えると、どちらかが偽陰性側へ壊れる。
+CHOICE_SYSTEM = """あなたは創作指示が原作のどの装置へ収束するかを判定する編集者である。
+指示の抽象度ではなく、**その指示に従った結果どの像に落ちるか**だけを見る。
+収束先が無ければ none を選ぶ。JSONのみを出力する。"""
+
+CHOICE_PROMPT = """## カード（続編生成に投入される指示）
+題: {title}
+要約: {summary}
+書き方の例: {patterns}
+
+## 原作『{work_title}』の中心装置（全{count}件）
+{devices}
+
+## 判定
+このカードの指示に『{work_title}』の続編という文脈で従ったとき、
+**最も再現しやすい中心装置を1つだけ**選べ。どれも再現しないなら none。
+
+選んだ場合は、その関係を答える:
+- `paraphrase`: 装置そのものの言い換え
+- `generalization`: 装置の一成分の一般化。指示は抽象的だが、この文脈では
+  最も確からしい具体化がこの装置になる
+
+⚠️ 抽象度で判定しない。**収束先**で判定する。指示が一般的な書き方に見えても、
+この文脈で最も自然な具体化がその装置なら `generalization` である。
+逆に、収束先が思い当たらないものを無理に選ばない。
+
+## 出力形式(JSONのみ)
+{{
+  "device_id": "上の一覧の device_id。無ければ null",
+  "verdict": "paraphrase | generalization | unrelated",
+  "reason": "この指示に従うと何が起きるかを一文で"
+}}"""
+
+
+def judge_reconvergence_choice(
+    card: dict, devices: list[dict], *, work_title: str, call_json=None
+) -> dict:
+    """1枚につき1回の強制選択。最も収束する中心装置を1つ、無ければ none。"""
+    call = call_json or llm.call_json
+    by_id = {d["device_id"]: d for d in devices}
+    listing = "\n".join(
+        f"- device_id: {d['device_id']} / {d.get('chapter_title')}「{d.get('name')}」"
+        f"\n  {d.get('description') or ''}"
+        for d in devices
+    )
+    result = call(
+        agent_name="creative_card_choice",
+        model=config.MODEL_CREATIVE_MAIN,
+        system=CHOICE_SYSTEM,
+        prompt=CHOICE_PROMPT.format(
+            title=card.get("title") or "",
+            summary=card.get("summary") or card.get("description") or "(なし)",
+            patterns=_patterns(card),
+            work_title=work_title,
+            count=len(devices),
+            devices=listing,
+        ),
+        input_ref=f"card_choice:{card['card_id']}",
+        max_tokens=1024,
+    )
+    device = by_id.get(result.get("device_id"))
+    verdict = result.get("verdict")
+    if verdict not in RECONVERGENCE_VERDICTS:
+        verdict = UNRELATED if device is None else GENERALIZATION
+    if device is None:
+        verdict = UNRELATED
+    return {
+        "device_id": device["device_id"] if device else None,
+        "chapter_title": device.get("chapter_title") if device else None,
+        "device_name": device.get("name") if device else None,
+        "verdict": verdict,
+        "reason": (result.get("reason") or "").strip(),
+    }
+
+
 RECONVERGENCE_PROMPT = """## カード（続編生成に投入される指示）
 題: {title}
 要約: {summary}
@@ -400,15 +482,11 @@ def screen_cards(
             rows.append(row)
             continue
 
-        judgments = [
-            judge_reconvergence(card, d, work_title=title, call_json=call_json)
-            for d in candidates
-        ]
-        hits = [j for j in judgments if j["verdict"] in EXCLUDING_VERDICTS]
-        # 通過分は記録を圧縮する（総当たりで判定数が増えたため）
-        row["judgments"] = hits or [
-            j for j in judgments if j["verdict"] == UNRELATED
-        ][:1]
+        judgment = judge_reconvergence_choice(
+            card, candidates, work_title=title, call_json=call_json
+        )
+        hits = [judgment] if judgment["verdict"] in EXCLUDING_VERDICTS else []
+        row["judgments"] = [judgment]
         row["verdict"] = DEVICE_BOUND if hits else PORTABLE
         row["reason"] = hits[0]["reason"] if hits else ""
         rows.append(row)
