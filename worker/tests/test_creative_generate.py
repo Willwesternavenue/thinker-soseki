@@ -291,8 +291,8 @@ def test_process_generation_records_step_models_in_trace(client, profile):
     )
     assert trace["model_ids"]["outline"] == generate.config.MODEL_CREATIVE_MAIN
     assert trace["model_ids"]["draft"] == generate.config.MODEL_CREATIVE_MAIN
-    # outline は B-1 で Bridge Rule の節を足したため v2(prompts.PROMPT_VERSIONS と対)
-    assert trace["prompt_versions"]["outline"] == "v2"
+    # outline は前提3案の節を足したため v3(prompts.PROMPT_VERSIONS と対)
+    assert trace["prompt_versions"]["outline"] == "v3"
     assert trace["prompt_versions"]["draft"] == "v1"
 
 

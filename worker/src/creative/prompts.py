@@ -9,8 +9,9 @@ creative_traces へ保存する(仕様§14 / T1設計書 §7)。
 PROMPT_VERSIONS = {
     "brief": "v1",
     "sources": "v1",
-    # 承認済み Bridge Rule の節を追加(引き継ぎB-1。橋が無ければ空文字で消える)
-    "outline": "v2",
+    # v3: 中心前提の節を追加(前提3案。収束問題への手当て)
+    # v2: 承認済み Bridge Rule の節を追加(引き継ぎB-1。橋が無ければ空文字で消える)
+    "outline": "v3",
     "draft": "v1",
     "guard_judge": "v2",  # 過検出を抑えるため判定の原則を明記(C-T6の実運用で改訂)
 }
@@ -80,6 +81,9 @@ OUTLINE_PROMPT = """新作の構成(outline)を考えよ。
 - 状況: {situation}
 - 目指す読後感: {emotional_target}
 - 追加制約: {constraints}
+
+## この一夜の中心前提（**必ずこれを軸に構成する**）
+{premise}
 
 ## 承認済み創作カード(必ず踏まえる)
 {cards}

@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 
 from .. import config, llm
 from . import bridges as bridges_mod
-from . import card_devices, device_catalog, guard, prompts, repo
+from . import card_devices, device_catalog, guard, premises as premises_mod, prompts, repo
 
 # v0.1 で本文生成へ投入する章の上限。夢十夜は10篇の小コーパスなので、
 # 関連する一夜の全文を入れる方が semantic search より単純で強い(仕様§6.2 Step4)
@@ -36,6 +36,8 @@ class GenerationContext:
     device_exclusion: dict = field(default_factory=lambda: {"applied": False})
     # outline 段の装置検査の結果（多層防御の最終段）
     device_check: dict = field(default_factory=lambda: {"passed": None})
+    # 十一夜目の中心前提（3案から抽選）。装置の出現率そのものを下げる機構
+    premise: dict = field(default_factory=dict)
 
 
 def normalize_brief(
@@ -167,6 +169,14 @@ def _format_cards(cards: list[dict]) -> str:
     return "\n".join(lines)
 
 
+def _format_premise(premise: dict) -> str:
+    """採用した中心前提をプロンプトへ入れる形にする。"""
+    if not premise:
+        return "(指定なし。依頼から自分で立てる)"
+    image = premise.get("image")
+    return premise["premise"] + (f"\n中心イメージ: {image}" if image else "")
+
+
 def _format_constraints(brief: dict) -> str:
     return "、".join(brief.get("constraints") or []) or "(なし)"
 
@@ -222,6 +232,7 @@ def build_outline(
             situation=ctx.brief.get("situation") or "(指定なし)",
             emotional_target=ctx.brief.get("emotional_target") or "(指定なし)",
             constraints=_format_constraints(ctx.brief),
+            premise=_format_premise(ctx.premise),
             cards=_format_cards(ctx.cards),
             # assist のときだけ橋をプロンプトへ入れる。shadow は trace にのみ残す
             # (仕様§6: 思想が創作へ入る経路は承認済みの橋だけ)
@@ -365,6 +376,26 @@ def prepare_generation(job: dict, *, client=None, call_json=None) -> GenerationC
         else []
     )
 
+    # 中心前提の抽選。装置除外が on のとき（続編・パスティーシュ系）だけ効かせる
+    premise = {}
+    if device_exclusion_enabled(profile):
+        catalog = device_catalog.load_catalog(_scope_source_id(profile))
+        if catalog:
+            resolved = premises_mod.resolve_premise(
+                brief, catalog,
+                past=premises_mod.load_past_premises(job["profile_id"], client=client),
+                work_title=catalog.get("meta", {}).get("work_title") or "",
+                job_id=job_id, call_json=call_json,
+            )
+            premise = resolved["premise"]
+            # 採用前提は brief_normalized に残す（次回の照合リストになる）。
+            # 落ちた前提と理由・抽選の候補集合も残す — 「どんな前提が装置判定で
+            # 落ちるか」の分布は前提生成プロンプトの次の改善材料になり、
+            # (iii)の照合リストの品質確認にもなる
+            brief = {**brief, "premise": premise,
+                     "premise_attempts": resolved["attempts"]}
+            repo.save_brief_normalized(job_id, brief, client=client)
+
     repo.set_generation_step(job_id, "sources", client=client)
     sources = build_source_context(
         profile, brief, job_id=job_id, client=client, call_json=call_json
@@ -382,59 +413,40 @@ def prepare_generation(job: dict, *, client=None, call_json=None) -> GenerationC
         bridges=bridges,
         rules_mode=mode,
         device_exclusion=device_exclusion,
+        premise=premise,
     )
 
 
-# outline を作り直す上限。装置が消えなければ安全側で失敗させる
-MAX_OUTLINE_REGENERATIONS = 2
-
-
-class DeviceReproductionError(RuntimeError):
-    """作り直しても原作の装置が消えなかった。安全側で失敗させる。"""
-
-    def __init__(self, message: str, matches: list[dict]):
-        super().__init__(message)
-        self.matches = matches
-
-
-def enforce_device_free_outline(
+# outline 段の装置検査は**監視モード**（ゲートしない）。
+#
+# 判定の重心は前提レベルへ移した。前提が装置でないことは採用時点で確認済みなので、
+# outline 段で同じ判定を3試行かけて落とすのは二重チェックであり、実測では
+# 偽陽性で正常な生成を殺す側に働いた — 影が体から離れる outline を第七夜
+# 「船からの投身と着水前後悔」と判定して3試行焼き切るなど、装置の成分が1つも
+# 一致しないのに抽象度の高い共通点（不可逆な離別・反復による消耗）で反応した。
+# 第十夜と第七夜は汚染下でも偽陽性の常連で、この judge の癖と考えられる。
+#
+# ゲートを戻すなら、成分一致の要求を厳しくして偽陽性率を測ってから。
+def observe_outline_devices(
     ctx: "GenerationContext", outline: dict, *, job_id=None, call_json=None
 ) -> dict:
-    """outline に原作の装置が出ていれば、理由を渡して作り直す。
-
-    装置除外が off のプロファイル（自由創作）では検査しない — 装置は素材で
-    あって汚染源ではないため（`device_exclusion_enabled` の位置づけと同じ）。
-    """
+    """outline に現れた装置を**記録するだけ**。作り直しも失敗判定もしない。"""
     if not device_exclusion_enabled(ctx.profile):
         return outline
     catalog = device_catalog.load_catalog(_scope_source_id(ctx.profile))
     if not catalog:
         return outline
 
-    for attempt in range(MAX_OUTLINE_REGENERATIONS + 1):
-        matches = device_catalog.detect_devices(
-            device_catalog.outline_text(outline), catalog, call_json=call_json
-        )
-        verdict = device_catalog.verdict_for_matches(matches)
-        ctx.device_check = {
-            "attempts": attempt + 1,
-            "passed": verdict["passed"],
-            "reasons": verdict["reasons"],
-            # 却下された outline も残す。作品ではなく内部表現なので「違反した本文を
-            # 保存しない」規律の対象外で、judge の較正には対象そのものが要る
-            "outlines": (ctx.device_check.get("outlines") or []) + [outline],
-        }
-        if verdict["passed"]:
-            return outline
-        if attempt >= MAX_OUTLINE_REGENERATIONS:
-            raise DeviceReproductionError(
-                "作り直しても原作の装置が残った: " + " / ".join(verdict["reasons"]),
-                matches,
-            )
-        outline = build_outline(
-            ctx, job_id=job_id, call_json=call_json,
-            avoid=verdict["reasons"],
-        )
+    matches = device_catalog.detect_devices(
+        device_catalog.outline_text(outline), catalog, call_json=call_json
+    )
+    verdict = device_catalog.verdict_for_matches(matches)
+    ctx.device_check = {
+        "gated": False,
+        "passed": verdict["passed"],
+        "reasons": verdict["reasons"],
+        "outline": outline,
+    }
     return outline
 
 
@@ -472,7 +484,7 @@ def process_generation(job: dict, *, client=None, call_json=None) -> None:
         outline = build_outline(ctx, job_id=job_id, call_json=call_json)
         # 多層防御の最終段: どの経路から入っても装置は草稿に現れる。
         # カード選別（注入前）を通り抜けたものをここで捕まえ、outline を作り直す
-        outline = enforce_device_free_outline(
+        outline = observe_outline_devices(
             ctx, outline, job_id=job_id, call_json=call_json
         )
 
@@ -510,6 +522,12 @@ def process_generation(job: dict, *, client=None, call_json=None) -> None:
                 violations=guard_results["violations"],
             )
 
+        # 本文への装置検査は**監視モード**。検出しても作り直さず失敗にもしない。
+        # ゲートしなければ生成挙動に影響しないので一変数原則を保ったまま、
+        # draft 段で装置が入るか否かのデータが貯まる（outline 起源説の検証）。
+        # ゲート化するかは監視データを見てから決める
+        body_check = _observe_body_devices(ctx, draft, call_json=call_json)
+
         # Step8: 保存
         repo.set_generation_step(job_id, "save", client=client)
         display_title = repo.build_display_title(
@@ -530,16 +548,17 @@ def process_generation(job: dict, *, client=None, call_json=None) -> None:
             injected_chunk_ids=ctx.injected_chunk_ids,
             model_ids=_model_ids(ctx, reached_outline_draft, guarded=True),
             prompt_versions=dict(prompts.PROMPT_VERSIONS),
-            guard_results={**guard_results, "device_check": ctx.device_check},
+            guard_results={**guard_results, "device_check": ctx.device_check,
+                           "body_device_check": body_check},
             regeneration_count=regeneration_count,
             **_rule_trace_fields(ctx),
             client=client,
         )
-    except repo.CreativeInvariantError as exc:
+    except premises_mod.PremiseExhaustedError as exc:
         _finish_failed(job, repo.ERROR_INVARIANT, str(exc), ctx, reached_outline_draft,
                        client=client)
-    except DeviceReproductionError as exc:
-        _finish_failed(job, repo.ERROR_GUARD, str(exc), ctx, reached_outline_draft,
+    except repo.CreativeInvariantError as exc:
+        _finish_failed(job, repo.ERROR_INVARIANT, str(exc), ctx, reached_outline_draft,
                        client=client)
     except GuardExhaustedError as exc:
         _finish_failed(job, repo.ERROR_GUARD, str(exc), ctx, reached_outline_draft,
@@ -548,6 +567,31 @@ def process_generation(job: dict, *, client=None, call_json=None) -> None:
     except Exception as exc:  # noqa: BLE001 - 監査記録を残してから失敗させる
         _finish_failed(job, repo.ERROR_LLM, str(exc), ctx, reached_outline_draft,
                        client=client)
+
+
+def _observe_body_devices(ctx, draft: str, *, call_json=None) -> dict:
+    """完成本文に装置が現れているかを**記録するだけ**（監視モード）。
+
+    outline 段で止める設計なので、ここは対策ではなく計測。実測は全数が
+    outline 起源だが、draft 段で入る経路は原理上まだ開いている。ゲート化の
+    可否は、この記録が貯まってから判断する。acceptance の (a) 判定の自動化も
+    兼ねる。
+    """
+    if not device_exclusion_enabled(ctx.profile):
+        return {"observed": False}
+    catalog = device_catalog.load_catalog(_scope_source_id(ctx.profile))
+    if not catalog:
+        return {"observed": False}
+    matches = device_catalog.detect_devices(draft, catalog, call_json=call_json)
+    return {
+        "observed": True,
+        "gated": False,
+        "detected": [
+            {"device_id": m["device_id"], "chapter_title": m.get("chapter_title"),
+             "name": m.get("name"), "quote": m.get("detect_quote")}
+            for m in matches
+        ],
+    }
 
 
 def _rule_trace_fields(ctx) -> dict:
