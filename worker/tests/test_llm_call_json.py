@@ -8,7 +8,7 @@
 import anthropic
 import pytest
 
-from src import config, llm
+from src import config, db, llm
 
 
 class _FakeMessage:
@@ -81,3 +81,48 @@ def test_non_timeout_success_still_works(monkeypatch):
     result = llm.call_json(agent_name="x", model="m", system="s", prompt="p", input_ref="r")
 
     assert result == {"ok": True}
+
+
+# ── 所要時間の記録（タイムアウトと対。レイテンシを体感でなく実測で議論する） ──
+
+
+def test_records_duration_on_success(monkeypatch):
+    recorded = []
+    _patch_client(monkeypatch, _FakeMessages())
+    monkeypatch.setattr(llm.db, "log_agent_run", lambda **kw: recorded.append(kw))
+
+    llm.call_json(agent_name="x", model="m", system="s", prompt="p", input_ref="r")
+
+    assert isinstance(recorded[0]["duration_ms"], int)
+    assert recorded[0]["duration_ms"] >= 0
+
+
+def test_records_duration_on_timeout_too(monkeypatch):
+    """失敗時も所要時間を残す — ハングの傾向を事後にログから追うため。"""
+    recorded = []
+    _patch_client(monkeypatch, _FakeMessages(raises=anthropic.APITimeoutError(request=object())))
+    monkeypatch.setattr(llm.db, "log_agent_run", lambda **kw: recorded.append(kw))
+
+    with pytest.raises(llm.LLMTimeout):
+        llm.call_json(agent_name="x", model="m", system="s", prompt="p", input_ref="r")
+
+    assert isinstance(recorded[0]["duration_ms"], int)
+
+
+def test_duration_ms_column_exists_on_the_real_table(client):
+    """マイグレーション(20260801000001)適用の確認。実DBへ1行だけ書いて消す。"""
+    db.log_agent_run(
+        job_id=None, agent_name="test_llm_call_json_duration_check", model="m",
+        input_ref="r", output_json={}, status="success", cost=0, duration_ms=42,
+    )
+    try:
+        row = (
+            client.table("agent_runs").select("duration_ms")
+            .eq("agent_name", "test_llm_call_json_duration_check")
+            .single().execute().data
+        )
+        assert row["duration_ms"] == 42
+    finally:
+        client.table("agent_runs").delete().eq(
+            "agent_name", "test_llm_call_json_duration_check"
+        ).execute()

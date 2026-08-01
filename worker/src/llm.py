@@ -2,6 +2,7 @@
 
 import json
 import re
+import time
 
 import anthropic
 from anthropic import Anthropic
@@ -65,6 +66,10 @@ def call_json(
 ) -> dict:
     """ClaudeにJSONを生成させ、結果とコストを agent_runs に記録して返す。"""
     client = _get_client()
+    # タイムアウト(config.LLM_TIMEOUT_SECONDS)が「体感の遅さ」を止める側なら、
+    # duration_ms は「体感の遅さ」を実測に変える側。片方だけでは不十分
+    # (2026-08-01。46分ハングの件、発生後にログから傾向を追う手段が無かった)
+    started = time.monotonic()
     try:
         try:
             message = client.messages.create(
@@ -97,6 +102,7 @@ def call_json(
             output_json=result,
             status="success",
             cost=cost,
+            duration_ms=round((time.monotonic() - started) * 1000),
         )
         return result
     except Exception as exc:
@@ -108,6 +114,7 @@ def call_json(
             output_json={"error": str(exc)},
             status="error",
             cost=0,
+            duration_ms=round((time.monotonic() - started) * 1000),
         )
         raise
 

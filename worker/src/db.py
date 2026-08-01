@@ -55,8 +55,14 @@ def log_agent_run(
     output_json: dict,
     status: str,
     cost: float,
+    duration_ms: int | None = None,
 ) -> None:
-    """LLM呼び出しを agent_runs に記録する(仕様5.15)。"""
+    """LLM呼び出しを agent_runs に記録する(仕様5.15)。
+
+    duration_ms はタイムアウト・リトライを含む実測の所要時間。LLMのレイテンシを
+    「体感」でなく実測で議論するための列(2026-08-01。config.LLM_TIMEOUT_SECONDS
+    導入と対)。
+    """
     client().table("agent_runs").insert(
         {
             "job_id": job_id,
@@ -66,5 +72,6 @@ def log_agent_run(
             "output_json": output_json,
             "status": status,
             "cost": cost,
+            "duration_ms": duration_ms,
         }
     ).execute()
