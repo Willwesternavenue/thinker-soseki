@@ -19,16 +19,21 @@ JSON に置いて差分をレビューする: `creative/device_catalogs/{source_
 """
 
 import json
+import os
 import re
 from pathlib import Path
 
 from .. import config, llm
 from . import repo
 
+# v3: 中心装置に主要成分(components)を持たせ、judge に成分単位で照合させる。
+#     v2 の記述は像に寄っており(「偽の計数と真の徴による百年成就の反転」)、
+#     同じ計数でも対象が違うと届かなかった（実測: 石段を数えて名前を失う形の
+#     計数は 1/10 しか発火しない）。
 # v2: central を一章1件に絞り、超過は justification 必須にした。
-# v1 は 56装置中38件(68%)が central になり、「中心=即fail」が効きすぎた
-CATALOG_VERSION = "v2"
-PROMPT_VERSION = "v2"
+#     v1 は 56装置中38件(68%)が central になり、「中心=即fail」が効きすぎた
+CATALOG_VERSION = "v3"
+PROMPT_VERSION = "v3"
 
 ROLE_CENTRAL = "central"
 ROLE_INCIDENTAL = "incidental"
@@ -72,6 +77,14 @@ PROMPT = """以下は『{work_title}』の「{chapter_title}」の全文であ�
 
 `incidental`: その章にあるが、他の章や他作品にもありうる装置。
 
+## 主要成分（central には必ず付ける）
+`components` に、その装置を成り立たせている**操作**を2〜4個、短い動詞句で書く。
+⚠️ 具体的な像（赤い日、百合、運慶）を成分にしない。**像を差し替えても装置が
+成立する形**で書くこと。続編は対象を変えて同じ仕掛けをなぞるので、像で書くと
+照合が届かない。
+- 可: 「反復する事象を数え始める」「数えきれなくなって時間感覚が壊れる」
+- 不可: 「赤い日を数える」「百年待つ」
+
 ## 指示
 - `evidence_chunk_ids` は上に与えたチャンクIDから選ぶ（最低1件）
 - 装置ごとに、続編で再現されたら困る理由が分かる説明を付ける
@@ -85,6 +98,7 @@ PROMPT = """以下は『{work_title}』の「{chapter_title}」の全文であ�
       "name": "装置の名前(短い名詞句)",
       "role": "central | incidental",
       "description": "何をする装置か。続編でなぞるとどう見えるか",
+      "components": ["主要成分(操作)を短い動詞句で。centralには必ず", "..."],
       "justification": "centralが2つ以上のときのみ。無ければ省略",
       "evidence_chunk_ids": ["チャンクID", "..."]
     }}
@@ -162,6 +176,9 @@ def absorb_devices(response: dict, *, valid_chunk_ids: set[str], chapter_title: 
             "name": name,
             "role": role,
             "description": (raw.get("description") or "").strip(),
+            "components": [
+                str(x).strip() for x in (raw.get("components") or []) if str(x).strip()
+            ],
             "justification": (raw.get("justification") or "").strip(),
             "chapter_title": chapter_title,
             "evidence_chunk_ids": evidence,
@@ -292,9 +309,14 @@ DETECT_PROMPT = """## 検査対象（続編の草稿・構成案）
 ## 判定
 検査対象が再現している装置を**すべて**挙げよ。無ければ空配列でよい。
 
-- 語句が違っても、仕掛けとして同じことをしていれば再現である
-  （例: 装置が「赤い日の出没を数えて数えきれなくなる」で、草稿が
-   「流れる灯籠を数えて数えきれなくなる」なら、対象が違っても再現）
+- **主要成分の照合で判定する。** 各装置には成分（操作）が並べてある。
+  対象となる像が違っても、成分が揃っていれば再現である
+  （例: 成分が「反復する事象を数え始める」「数えきれなくなる」なら、
+   数える対象が赤い日でも石段でも灯籠でも再現）
+- ⚠️ **成分が全部揃う必要はない。2つ以上**が現れていれば再現とみなす。
+  続編は装置の一部だけを借りることが多く、全部揃うのを待つと素通りする
+  （実測:「数え始める」「数えきれなくなる」の2成分だけを再現した草稿が、
+   残り2成分が無いために見逃された）。ただし成分1つだけの一致は再現としない
 - 主題や雰囲気が似ているだけ、同じ語が出てくるだけでは再現ではない
 - **主要成分が現れている装置はすべて挙げよ。件数を絞らない。**
   裏付けの無い検出は機械側で破棄されるので、挙げること自体の代償は小さい
@@ -324,7 +346,7 @@ def _normalized(text: str) -> str:
 # 対して独立に k 回走らせ、検出の**和集合**を取る必要がある(k=3 で 0.8%)。
 # 和集合で偽陽性も増えるが、偽陽性の代償は作り直し1回・偽陰性の代償は違反作品の
 # 出荷、という非対称性から運転点としては正当化される。
-DETECT_REPEATS = 3
+DETECT_REPEATS = int(os.environ.get("SOSEKI_DETECT_REPEATS") or 3)
 
 
 def detect_devices(
@@ -381,6 +403,8 @@ def _detect_once(draft: str, catalog: dict, *, call_json=None, model=None) -> li
     listing = "\n".join(
         f"- device_id: {d['device_id']} / {d.get('chapter_title')}「{d.get('name')}」"
         f"\n  {d.get('description') or ''}"
+        + (f"\n  主要成分: {' / '.join(d.get('components') or [])}"
+           if d.get("components") else "")
         for d in centrals
     )
     result = call(

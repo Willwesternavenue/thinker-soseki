@@ -2,11 +2,11 @@
   "meta": {
     "source_id": "AOZORA_000799",
     "work_title": "夢十夜",
-    "catalog_version": "v2",
-    "prompt_version": "v2",
+    "catalog_version": "v3",
+    "prompt_version": "v3",
     "model_id": "claude-sonnet-5",
     "chapters": 10,
-    "devices": 51,
+    "devices": 43,
     "central_devices": 10,
     "chapters_without_central": []
   },
@@ -15,35 +15,50 @@
       "chapter_title": "第一夜",
       "devices": [
         {
-          "device_id": "false_count_true_sign",
-          "name": "偽の計数と真の徴による百年成就の反転",
+          "device_id": "count_until_collapse_then_retroactive_fulfillment",
+          "name": "数え崩れによる事後的成就",
           "role": "central",
-          "description": "「百年待て」という約束を、赤い日の出没を一つ二つと数える作業に置き換え、数える行為そのものを裏切る（数えても数えても百年に届かない）。しかし物理的計数とは無関係に、墓から伸びた百合の開花という象徴的出来事によって、実は百年が「すでに来ていた」と主人公が事後的に気づく。約束の履行を、線的な計数ではなく非計量的な徴（花・匂い・暁の星）へとすり替えて完結させる構造。続編でこの型（数える約束→数えが無効化され象徴で成就を告げる）を繰り返すと、この章の核心的な仕掛けをそのまま再演することになる。",
+          "description": "反復する事象（日の出没）をひとつずつ数える行為が、途中で数えきれなくなり、語り手が約束の不成立（欺き）を疑い始めた瞬間に、実は条件がすでに満たされていたと事後的に判明する。約束の時間そのものを主観の数え違いとして扱い、最後に『もう来ていた』と気づかせることで章を閉じる。続編で同型の『数える→数えきれず疑う→実は成就済みだった』という反転を用いると、この章の核心構造をそのまま流用したことになる。",
+          "components": [
+            "反復する事象を一つずつ数え始める",
+            "数える行為が際限なく続き数え切れなくなる",
+            "数え切れなさから約束不履行への疑念が生じる",
+            "疑念が生じた直後に条件がすでに満たされていたと反転的に判明する"
+          ],
           "justification": "",
           "chapter_title": "第一夜",
           "evidence_chunk_ids": [
-            "AOZORA_000799_C01_006",
             "AOZORA_000799_C01_007",
             "AOZORA_000799_C01_008",
             "AOZORA_000799_C01_009"
           ]
         },
         {
-          "device_id": "death_foretold_with_certainty",
-          "name": "健康的な女による自己の死の確信的予告",
+          "device_id": "death_prophecy_with_conditions",
+          "name": "生者による自らの死の予告と再来の条件提示",
           "role": "incidental",
-          "description": "血色よく生気に満ちて見える女が、外見に反して「もう死にます」と静かに断言し、聞き手（自分）もそれを疑わずに受け入れる。外見と発話内容の矛盾を疑問視せず飲み込む語りの構え。",
+          "description": "死に見えない女が自らの死を静かに宣言し、埋葬方法と待機期間という条件を一方的に告げて死ぬ。語り手はその真偽を確かめる術を持たず、ただ従うしかない。",
+          "components": [
+            "死の予告を外見と矛盾させて提示する",
+            "再来のための具体的条件を死者側から一方的に指定する"
+          ],
           "justification": "",
           "chapter_title": "第一夜",
           "evidence_chunk_ids": [
-            "AOZORA_000799_C01_001"
+            "AOZORA_000799_C01_001",
+            "AOZORA_000799_C01_002",
+            "AOZORA_000799_C01_006"
           ]
         },
         {
-          "device_id": "eye_as_mirror",
-          "name": "瞳に映る自分の像とその消失",
+          "device_id": "eye_as_mirror_proof",
+          "name": "瞳への映り込みによる存在確認",
           "role": "incidental",
-          "description": "女の黒い瞳に自分の姿が鮮明に映っているという描写が、女の死の瞬間に「ぼうっと崩れて」消える形で対応づけられる。生死の移行を瞳の映像の消失という視覚的仕掛けで示す。",
+          "description": "女の黒い瞳の中に語り手自身の姿が映ることで、女がまだ語り手を見ている＝生きている証とされる。この映像が崩れる瞬間が死の合図として使われる。",
+          "components": [
+            "相手の眼に自分の像が映ることを生の証とする",
+            "その像が乱れ消えることを死の合図とする"
+          ],
           "justification": "",
           "chapter_title": "第一夜",
           "evidence_chunk_ids": [
@@ -52,28 +67,19 @@
           ]
         },
         {
-          "device_id": "ritual_burial_objects",
-          "name": "非現実的な葬具（真珠貝・星の破片）による埋葬儀式",
+          "device_id": "burial_transforms_into_return_sign",
+          "name": "埋葬物の変容による再来の証",
           "role": "incidental",
-          "description": "現実にはあり得ない道具（真珠貝の墓穴、星の破片の墓標）を用いて埋葬を行う手順を丁寧に描写する。夢特有の物質が儀式の小道具として機能する。",
+          "description": "墓に置かれたものが花などの別の形へ変容し、それが約束の相手の再来（あるいは成就）の証として解釈される。死者の再来が直接の姿ではなく、変容した対象を通して暗示される。",
+          "components": [
+            "埋葬した対象を別の生物・物体へ変容させる",
+            "変容した対象への接触を通じて約束の成就を悟らせる"
+          ],
           "justification": "",
           "chapter_title": "第一夜",
           "evidence_chunk_ids": [
-            "AOZORA_000799_C01_002",
-            "AOZORA_000799_C01_007"
-          ]
-        },
-        {
-          "device_id": "direct_speech_isolation",
-          "name": "女の台詞を独立チャンク化する構成",
-          "role": "incidental",
-          "description": "女の重要な発話（埋葬の指示、百年待てという要求）を地の文から切り離し、独立した台詞として提示することで、約束の言葉に特権的な重みを与える構成上の操作。",
-          "justification": "",
-          "chapter_title": "第一夜",
-          "evidence_chunk_ids": [
-            "AOZORA_000799_C01_002",
-            "AOZORA_000799_C01_004",
-            "AOZORA_000799_C01_006"
+            "AOZORA_000799_C01_008",
+            "AOZORA_000799_C01_009"
           ]
         }
       ]
@@ -82,10 +88,16 @@
       "chapter_title": "第二夜",
       "devices": [
         {
-          "device_id": "deadline_by_clock_strike",
-          "name": "時計の音による悟りの期限設定",
+          "device_id": "deadline_bound_enlightenment",
+          "name": "刻限による自己追い込み",
           "role": "central",
-          "description": "「次の刻の鐘が鳴るまでに悟らねば自刃する」という自己課した期限が緊張の中心軸を作る。時計の音（チーン、チーン）が唯一の外的カウントとして侵入し、内面の膠着状態に強制終了を突きつける。続編で同型の「音による締切のカウントダウン→未解決のまま音が鳴って終わる」を繰り返すと、この章の緊張構造をそのまま流用したことになる。",
+          "description": "外部の時計が次に鳴るまでという期限を自ら設定し、それまでに『無』という抽象的境地に到達できなければ自刃するという、達成不能かもしれない課題に生命を賭ける構造。時計の音という外的・機械的な合図が内的な精神の危機と直結し、章全体の緊張を駆動する。続編でこの『期限内に不可能事を成せねば自害する』という賭けの型を繰り返すと、この章の核であるサスペンスの仕組みをそのまま再利用したことになる。",
+          "components": [
+            "外部の周期的合図に内面の期限を結びつける",
+            "抽象的な達成目標（悟り）を設定し進捗を測れなくする",
+            "失敗した場合の自傷・自害という代償を予告する",
+            "合図が鳴るたびに緊張を段階的に引き上げる"
+          ],
           "justification": "",
           "chapter_title": "第二夜",
           "evidence_chunk_ids": [
@@ -94,10 +106,49 @@
           ]
         },
         {
-          "device_id": "sword_as_proof_of_resolve",
-          "name": "座蒲団の下の短刀の確認と手の反復",
+          "device_id": "hidden_object_confirmation",
+          "name": "隠し持つ凶器の確認と再確認",
           "role": "incidental",
-          "description": "布団の下に隠した短刀を何度も手で確かめる仕草が、侍としての覚悟と自刃の選択肢を身体的に担保する。刃の冷たさや殺気の描写が緊張を可視化する道具として機能する。",
+          "description": "座蒲団の下に短刀を隠し持ち、触って確かめる仕草を繰り返す。これから使う凶器の存在を身体的に確認する反復動作で、後の抜刀の伏線となる。",
+          "components": [
+            "隠した対象に触れて存在を確かめる",
+            "確認後に元へ戻して平静を装う",
+            "同じ確認動作を後半で再度行う"
+          ],
+          "justification": "",
+          "chapter_title": "第二夜",
+          "evidence_chunk_ids": [
+            "AOZORA_000799_C02_001",
+            "AOZORA_000799_C02_003"
+          ]
+        },
+        {
+          "device_id": "unreachable_negation",
+          "name": "到達しない『無』への反復接近",
+          "role": "incidental",
+          "description": "禅の公案『無』を心中で繰り返し唱えるが、雑念（線香の香、和尚の顔）が割り込み続けて完成しない。目標語を連呼しながらそのたびに失敗する反復構造。",
+          "components": [
+            "同一語を繰り返し念じる",
+            "雑念や感覚が割り込んで集中を妨げる",
+            "失敗のたびに感情（怒り・苦痛）が増幅する"
+          ],
+          "justification": "",
+          "chapter_title": "第二夜",
+          "evidence_chunk_ids": [
+            "AOZORA_000799_C02_002",
+            "AOZORA_000799_C02_003"
+          ]
+        },
+        {
+          "device_id": "internalized_antagonist_voice",
+          "name": "不在の相手の声の内面再生",
+          "role": "incidental",
+          "description": "和尚は実際にはその場にいないのに、侮辱の言葉や嘲笑う顔が語り手の脳裏にありありと再生され、怒りを煽る。実在しない対話相手を内面で作動させる仕掛け。",
+          "components": [
+            "過去の発言を記憶から再生する",
+            "不在の相手の表情・声を幻視的に生成する",
+            "再生された言葉に対して感情的に反応する"
+          ],
           "justification": "",
           "chapter_title": "第二夜",
           "evidence_chunk_ids": [
@@ -106,38 +157,19 @@
           ]
         },
         {
-          "device_id": "wu_koan_as_unsolvable_object",
-          "name": "「無」という公案が解けない対象として反復される",
+          "device_id": "perception_dissolution",
+          "name": "苦痛による知覚の融解",
           "role": "incidental",
-          "description": "趙州の「無」という一語が繰り返し念じられるが、意味内容は与えられず、ただ唱えることと現前しないことの往復だけが続く。禅の公案という具体的装置は本作特有で、続編で別の思想的キーワードに置き換えても同じ「唱えても実体化しない言葉」の構造を繰り返すと二番煎じになる。",
+          "description": "身体的苦痛と精神的集中の極限状態で、周囲の物体が『有って無いような、無くって有るような』曖昧な知覚に変容する。境地との近さを錯覚させるが実体には届かない。",
+          "components": [
+            "身体的苦痛を段階的に累積させる",
+            "知覚対象の実在感を曖昧化する",
+            "曖昧化を目標達成の兆しと誤認させる"
+          ],
           "justification": "",
           "chapter_title": "第二夜",
           "evidence_chunk_ids": [
-            "AOZORA_000799_C02_002",
             "AOZORA_000799_C02_003"
-          ]
-        },
-        {
-          "device_id": "physical_pain_as_proxy_for_spiritual_failure",
-          "name": "身体的苦痛が精神的未達成の代理表現になる",
-          "role": "incidental",
-          "description": "歯を噛む、頭を殴る、膝が痛む等の身体苦痛の累積が、悟りに至れないもどかしさをそのまま量的に表現する。精神的な行き詰まりを直接語らず、身体反応の列挙で肩代わりさせる手法。",
-          "justification": "",
-          "chapter_title": "第二夜",
-          "evidence_chunk_ids": [
-            "AOZORA_000799_C02_002",
-            "AOZORA_000799_C02_003"
-          ]
-        },
-        {
-          "device_id": "master_disciple_provocation",
-          "name": "和尚による「侍ではない」という挑発の型",
-          "role": "incidental",
-          "description": "和尚が「侍なら悟れるはず」「悟れないなら侍ではない、屑だ」と挑発し、主人公の武士としての自己同一性を賭けさせる。この対話は主人公の内面のみで再生される記憶であり、和尚自身は物語内で行動しない。続編で同型の権威者による一方的な挑発とそれへの過剰な内面反応を繰り返すと構造が透けて見える。",
-          "justification": "",
-          "chapter_title": "第二夜",
-          "evidence_chunk_ids": [
-            "AOZORA_000799_C02_001"
           ]
         }
       ]
@@ -147,38 +179,36 @@
       "devices": [
         {
           "device_id": "blind_child_as_omniscient_accuser",
-          "name": "盲目の子供=全知の告発者",
+          "name": "盲目の背負い子による全知の告発",
           "role": "central",
-          "description": "背負われている盲目の our子供が、視覚を持たないにもかかわらず父の過去・現在・未来を全て見通し、道を「指示」しながら最終的に百年前の殺人を暴露する。無力・従属の姿(背負われる盲目の子)と全知・支配の実態(道案内し記憶を強制する者)が一致する逆転構造そのものが章の核。続編でこの「弱者に見える者が実は真相を握り裁く」構図を繰り返すと同じ仕掛けの再演になる。",
+          "description": "背負われている盲目の子供が、視覚を持たないにもかかわらず語り手の過去・現在・未来を正確に言い当て続け、最終的に語り手自身も忘れていた過去の罪を暴露する。子が親より多く知っているという知の逆転構造が章全体を駆動し、最後に語り手を告発者へと反転させる。",
+          "components": [
+            "背負う者と背負われる者の間に知識の非対称を仕掛ける",
+            "視覚を欠いた者に外界を的確に言い当てさせる",
+            "断片的な予言めいた発言を積み重ねて確信へ導く",
+            "最後に語り手自身の忘却していた行為を子の口から名指しさせる"
+          ],
           "justification": "",
           "chapter_title": "第三夜",
           "evidence_chunk_ids": [
             "AOZORA_000799_C03_001",
             "AOZORA_000799_C03_002",
-            "AOZORA_000799_C03_009",
-            "AOZORA_000799_C03_013",
+            "AOZORA_000799_C03_010",
+            "AOZORA_000799_C03_016",
             "AOZORA_000799_C03_018",
             "AOZORA_000799_C03_019"
           ]
         },
         {
-          "device_id": "route_choice_forced_by_passenger",
-          "name": "背負われた者による進路の逐次指示",
-          "role": "incidental",
-          "description": "二股・杉の根など、背負う側(父)が選ぶはずの道を、背中の子供が先回りして言い当て、選ばせる。自由意志による移動に見えて実は誘導されているという反復パターン。",
-          "justification": "",
-          "chapter_title": "第三夜",
-          "evidence_chunk_ids": [
-            "AOZORA_000799_C03_008",
-            "AOZORA_000799_C03_010",
-            "AOZORA_000799_C03_014"
-          ]
-        },
-        {
           "device_id": "increasing_weight_as_guilt_gauge",
-          "name": "重さの漸増=罪の可視化",
+          "name": "重さの変化による罪の可視化",
           "role": "incidental",
-          "description": "「今に重くなるよ」という予告どおり、子供の重量が心理的負荷（罪の自覚）に比例して増し、最後に石地蔵のようになる。抽象的な良心の呵責を物理的感覚に変換する装置。",
+          "description": "背中の子の重さが物理的にではなく心理的必然として増していき、最後に石地蔵のように固まる。感情の高まりを身体感覚の変化に変換する仕掛け。",
+          "components": [
+            "軽いはずのものが徐々に重くなる予告を挟む",
+            "重さの変化を心理的転換点と同期させる",
+            "最終的に無機物的な重さへ変質させて終える"
+          ],
           "justification": "",
           "chapter_title": "第三夜",
           "evidence_chunk_ids": [
@@ -187,29 +217,38 @@
           ]
         },
         {
-          "device_id": "delayed_recognition_structure",
-          "name": "既知感の遅延的想起",
+          "device_id": "fork_in_the_road_forced_choice",
+          "name": "分岐路での誘導的選択",
           "role": "incidental",
-          "description": "「知ってるはずだ」「もう少し行けば分る」という台詞により、語り手が抑圧していた記憶が段階的に呼び戻される。分かってしまうことへの恐れと接近が交互に語られる時間差の仕掛け。",
+          "description": "道が二股に分かれ、盲目のはずの子供が一方を強く指示し、語り手がそれに逆らえず従う。選択の自由が見せかけであることを示す構造。",
+          "components": [
+            "道を分岐させて選択を迫る",
+            "情報を持たないはずの者が断定的に指示する",
+            "指示者に従うことで後戻りできない方向へ進ませる"
+          ],
+          "justification": "",
+          "chapter_title": "第三夜",
+          "evidence_chunk_ids": [
+            "AOZORA_000799_C03_007",
+            "AOZORA_000799_C03_008",
+            "AOZORA_000799_C03_010"
+          ]
+        },
+        {
+          "device_id": "delayed_recognition_of_repetition",
+          "name": "既視感による反復の遅延認知",
+          "role": "incidental",
+          "description": "語り手が「こんな晩だった」という既視感を覚えながらも、それが何を意味するか直視することを恐れて足を速める。真実への接近と回避が同時に進行する。",
+          "components": [
+            "既視感を提示するが正体を明かさない",
+            "登場人物に真実から意図的に目を逸らさせる",
+            "回避行動そのものが真実への接近を加速させる"
+          ],
           "justification": "",
           "chapter_title": "第三夜",
           "evidence_chunk_ids": [
             "AOZORA_000799_C03_012",
-            "AOZORA_000799_C03_016",
-            "AOZORA_000799_C03_017"
-          ]
-        },
-        {
-          "device_id": "date_confirmation_as_confession_trigger",
-          "name": "年号の確認による自白の誘発",
-          "role": "incidental",
-          "description": "子供が「文化五年辰年だろう」と具体的な日付を提示し、父がうっかり肯定することで、抽象的な既視感が確定的な自己認識（殺人の自覚）へと転化する。曖昧な不安を一点の事実に収束させる仕掛け。",
-          "justification": "",
-          "chapter_title": "第三夜",
-          "evidence_chunk_ids": [
-            "AOZORA_000799_C03_016",
-            "AOZORA_000799_C03_017",
-            "AOZORA_000799_C03_018"
+            "AOZORA_000799_C03_013"
           ]
         }
       ]
@@ -218,13 +257,20 @@
       "chapter_title": "第四夜",
       "devices": [
         {
-          "device_id": "unresolved_vanishing_promise",
-          "name": "果たされない約束のままの失踪",
+          "device_id": "deferred_spectacle_vanishing",
+          "name": "先送りされる見世物とその未回収消失",
           "role": "central",
-          "description": "「蛇になる」という見世物の約束を反復して煽っておきながら、老人はそれを見せることなく河に真直ぐ歩み入り、そのまま二度と浮かび上がらずに話が終わる。回収されるはずの伏線が意図的に宙吊りにされたまま章が閉じる、という『解決を拒否する結末』の型。続編でこれをなぞると、単に「未回収の謎」を装置として使い回すだけの二番煎じになる。",
+          "description": "『今に見せる』『今になる』と繰り返し予告されることで期待が積み上げられるが、その予告が果たされる直前に、行為者自身が観察不能な領域(水中)へ進み続け、姿ごと消えてしまう。約束は否定も肯定もされず、ただ確認不能になることで宙吊りのまま終わる。続編でこの型（何かを見せると予告し、追跡させ、確認する寸前に対象が消える）をなぞると、この章の固有性が消える。",
+          "components": [
+            "実演の予告を繰り返し口にして期待を煽る",
+            "予告の実行を空間的・時間的に先送りし続ける",
+            "先送りの果てに行為者が知覚限界の外（水中・闇）へ進み見えなくする",
+            "結果を確認しないまま待機状態で語りを止める"
+          ],
           "justification": "",
           "chapter_title": "第四夜",
           "evidence_chunk_ids": [
+            "AOZORA_000799_C04_004",
             "AOZORA_000799_C04_008",
             "AOZORA_000799_C04_009",
             "AOZORA_000799_C04_010",
@@ -232,10 +278,15 @@
           ]
         },
         {
-          "device_id": "evasive_riddle_answers",
-          "name": "禅問答風のはぐらかし",
+          "device_id": "unanswerable_riddle_dialogue",
+          "name": "禅問答式の質疑応答",
           "role": "incidental",
-          "description": "神さんの「いくつ」「どこ」「どこへ」という素朴な問いに対し、老人は「臍の奥」「あっちへ」などの禅問答めいた答えで正体・出自を一切明かさない。人物の実体を空白のまま進める手法。",
+          "description": "年齢・住所・行先という素朴な問いに対し、老人が『臍の奥』『あっちへ行く』のような、意味を持つようで持たない答えを返す。問う側（神さん）は納得もせず追及もしない。続編でこの噛み合わない一問一答形式を再利用すると、この章特有の飄々とした不気味さが薄れる。",
+          "components": [
+            "日常的な問いを投げかける",
+            "答えを意味論的にずらして返す",
+            "問い手がそれ以上追及せず流す"
+          ],
           "justification": "",
           "chapter_title": "第四夜",
           "evidence_chunk_ids": [
@@ -243,10 +294,15 @@
           ]
         },
         {
-          "device_id": "mutating_chant",
-          "name": "変容していく唄",
+          "device_id": "chant_escalation",
+          "name": "唄による状況変化の告知反復",
           "role": "incidental",
-          "description": "老人が繰り返す唄が「今になる、蛇になる」から「深くなる、夜になる」「真直になる」へと、歩行と水没の進行に合わせて言葉を変えていく。反復に変化を仕込むことで不穏さを積み上げる仕掛け。",
+          "description": "老人が歩みながら唄を三度変奏し（今になる／深くなる・夜になる／真直になる）、唄の内容がそのまま状況（水深・時刻・進路）の悪化と同期して進む。唄が事態の進行を予告し、かつ確定していく構造。続編でこの『唄＝状況変化の実況』をなぞると独自性が失われる。",
+          "components": [
+            "同型の短い唄句を繰り返しながら変奏する",
+            "唄の内容と実際の状況変化を同期させる",
+            "変奏のたびに不可逆性を強める"
+          ],
           "justification": "",
           "chapter_title": "第四夜",
           "evidence_chunk_ids": [
@@ -256,29 +312,20 @@
           ]
         },
         {
-          "device_id": "silent_child_follower",
-          "name": "介入しない子供の追跡者",
+          "device_id": "childs_blind_pursuit",
+          "name": "無批判な追跡者としての子供",
           "role": "incidental",
-          "description": "語り手の子供は蛇が見たい一心で老人をどこまでも追うが、声をかけることも制止することもせず、ただ見ている・待っているだけの立場に徹する。無力な傍観者としての語り手の位置づけ。",
+          "description": "語り手を含む子供たちが、老人の異常な言動や進行の危険性（河に入っていくこと）を疑わずについていき、危険の兆候を読み取らないまま終局まで追う。続編でこの『疑わず追う観察者』を繰り返すと、この章の無垢さと不気味さの組合せが再利用される形になる。",
+          "components": [
+            "異常な行動を疑問視せず追随する",
+            "危険の兆候（深さの増加）を認識しても中断しない",
+            "結末を待つだけの受動的姿勢を保つ"
+          ],
           "justification": "",
           "chapter_title": "第四夜",
           "evidence_chunk_ids": [
             "AOZORA_000799_C04_008",
             "AOZORA_000799_C04_011"
-          ]
-        },
-        {
-          "device_id": "conjuring_ritual",
-          "name": "手拭が蛇になる見世物の儀式",
-          "role": "incidental",
-          "description": "手拭を縄状に綯い、輪を描き、笛を吹きながら回るという、手順化された大道芸的儀式。観客（子供たち）の期待を煽る小道具として機能する。",
-          "justification": "",
-          "chapter_title": "第四夜",
-          "evidence_chunk_ids": [
-            "AOZORA_000799_C04_003",
-            "AOZORA_000799_C04_004",
-            "AOZORA_000799_C04_006",
-            "AOZORA_000799_C04_007"
           ]
         }
       ]
@@ -288,9 +335,15 @@
       "devices": [
         {
           "device_id": "deadline_by_natural_signal",
-          "name": "鶏鳴という自然現象による生死の期限設定",
+          "name": "自然の合図による期限設定と外部干渉での破綻",
           "role": "central",
-          "description": "「鶏が鳴くまで」という、人為的な合図ではなく自然現象を境界とした絶対的なタイムリミットが設定され、その一瞬の到達／不達で生死が決する。続編で同じ「自然のサインが運命を切る」形を繰り返すと、この章固有の緊張構造の模倣になる。",
+          "description": "「鶏が鳴くまで」という猶予が設定され、当事者の意志や努力とは無関係に、第三者(天探女)が合図そのものを偽造・先取りすることで期限が破られる。主人公は待つだけの受動的立場に置かれ、成否を決めるのは当人の力量ではなく、第三者による合図の操作である。続編でこの型を反復すると、「制限時間+それを操作する介入者」という構造がテンプレ化してしまう。",
+          "components": [
+            "自然現象を期限の合図として設定する",
+            "合図が来るまで当事者を受動的に待たせる",
+            "第三者が合図を模倣・偽造して先取りする",
+            "偽の合図によって望みが破綻し、痕跡だけが残る"
+          ],
           "justification": "",
           "chapter_title": "第五夜",
           "evidence_chunk_ids": [
@@ -299,21 +352,14 @@
           ]
         },
         {
-          "device_id": "false_signal_by_third_party",
-          "name": "天探女による偽の鶏鳴という第三者の介入",
+          "device_id": "gesture_as_negotiation",
+          "name": "言葉によらない身振りでの交渉成立",
           "role": "incidental",
-          "description": "当事者（大将・自分・女）以外の存在（天探女）が鶏の鳴き真似をして結末を操作し、女を破滅させる。すれ違いや運命の逆転が第三者の欺瞞によって生じる仕掛けで、他作品でも使われうる。",
-          "justification": "",
-          "chapter_title": "第五夜",
-          "evidence_chunk_ids": [
-            "AOZORA_000799_C05_002"
-          ]
-        },
-        {
-          "device_id": "one_word_answer_fate",
-          "name": "一言の返答で生死が確定する問答",
-          "role": "incidental",
-          "description": "「死ぬか生きるか」という二択の問いに一言で答えることで、以後の運命全体が決定づけられる。単純な二者択一が全体を規定する構造で、他の場面でも転用可能。",
+          "description": "生死の返答という重大な場面で、言語的説得ではなく手を掲げるという単純な身振りだけで猶予を勝ち取る。会話劇ではなく身体動作が交渉の単位になっている。",
+          "components": [
+            "重大な問いに一言で答える",
+            "手や体の動きだけで相手の行動を止める"
+          ],
           "justification": "",
           "chapter_title": "第五夜",
           "evidence_chunk_ids": [
@@ -321,10 +367,14 @@
           ]
         },
         {
-          "device_id": "unreachable_approach",
-          "name": "近づくほど間に合わない疾走描写",
+          "device_id": "residual_trace_as_ongoing_hostility",
+          "name": "痕跡が持続する限り敵対関係も持続する",
           "role": "incidental",
-          "description": "女が馬を飛ばして必死に近づくが、篝火の明るみに達する直前で鶏が鳴き、間に合わないまま破局する。距離が縮まるのに時間切れになるという典型的なサスペンス型反復で、他の追跡・救出場面にも使い回せる。",
+          "description": "岩に刻まれた蹄の跡という物理的痕跡が消えない限り、天探女への敵意も終わらないとされる。感情の終結条件が、心理ではなく外部の物的証拠の残存に紐づけられている。",
+          "components": [
+            "出来事の結果を物的痕跡として固定する",
+            "痕跡の存否を感情・関係の持続条件にすり替える"
+          ],
           "justification": "",
           "chapter_title": "第五夜",
           "evidence_chunk_ids": [
@@ -332,10 +382,14 @@
           ]
         },
         {
-          "device_id": "unresolved_curse_ending",
-          "name": "現在まで続く痕跡と未解消の敵対関係による結末",
+          "device_id": "escalating_approach_race",
+          "name": "接近するほど緊迫が増す疾走描写",
           "role": "incidental",
-          "description": "話が完結せず、岩に残る蹄の跡が「今も残っている」こと、天探女が「今も自分の敵である」こととして、過去の物語が現在の語り手に地続きの呪いとして残る終わり方。過去の夢の出来事が現在の語り手の状態に直結する結び方は反復すると陳腐化する。",
+          "description": "女が馬で駆けつける過程を、距離が縮まるごとに音や光やスピード感を積み増しながら描き、間に合うかどうかのサスペンスを煽る反復構造。",
+          "components": [
+            "同一の動作(疾走)を段階的に強調しながら繰り返す",
+            "距離の接近と時間の切迫を並行して描写する"
+          ],
           "justification": "",
           "chapter_title": "第五夜",
           "evidence_chunk_ids": [
@@ -348,44 +402,29 @@
       "chapter_title": "第六夜",
       "devices": [
         {
-          "device_id": "anachronistic_survival",
-          "name": "時代錯誤の生存(運慶が明治に生きている)",
+          "device_id": "literal_theory_imitation_failure",
+          "name": "理論の字義通り模倣による反復失敗",
           "role": "central",
-          "description": "鎌倉時代の人物である運慶が、明治の見物人に混ざって当然のように仕事をしているという時間軸の異常が、章全体の前提として説明なく置かれる。この『一人だけ時代がずれている』という異常の一点提示を繰り返すと、単なる歴史パロディになり仕掛けが陳腐化する。",
+          "description": "見物人が語る『彫刻とは木に埋っている像を掘り出すだけ』という説明を、語り手が字義通りに信じ、自らも同じ手順を実行しようとする。しかし対象(薪)を変えて何度も試みても失敗し続け、その反復失敗の果てに『この時代の木には仁王が埋っていない』という時代の断絶を悟る。理論の受容→字義通りの実践→反復する失敗→失敗から逆説的な真理への到達、という運動そのものが章を成立させている装置。続編でこの型(他者の説明を字義通りに実行して繰り返し失敗し、そこから悟りに至る)を別の対象で繰り返すと同じ仕掛けの反復になる。",
+          "components": [
+            "他者の解説を通じて行為の原理を聞き取る",
+            "その原理を字義通りに信じて自ら模倣を試みる",
+            "対象を変えながら同じ行為を何度も繰り返す",
+            "繰り返しの失敗の蓄積から逆説的な結論(時代の断絶)に到達する"
+          ],
           "justification": "",
           "chapter_title": "第六夜",
           "evidence_chunk_ids": [
-            "AOZORA_000799_C06_001",
-            "AOZORA_000799_C06_005"
-          ]
-        },
-        {
-          "device_id": "carving_as_extraction_theory",
-          "name": "彫刻=掘り出し説",
-          "role": "incidental",
-          "description": "彫るのではなく木に埋まっているものを掘り出すだけだ、という若い男の説明が、主人公の思い込みと行動を誘発する理論装置。他の章にも『もっともらしい理屈が人を動かす』型は転用可能。",
-          "justification": "",
-          "chapter_title": "第六夜",
-          "evidence_chunk_ids": [
-            "AOZORA_000799_C06_010"
-          ]
-        },
-        {
-          "device_id": "naive_imitation_failure",
-          "name": "素人の模倣とその失敗",
-          "role": "incidental",
-          "description": "聞きかじった理屈を鵜呑みにして即座に真似し、当然のごとく失敗する主人公の行動パターン。他の夜（例えば芋粥的模倣譚）にも使い回せる汎用的な型。",
-          "justification": "",
-          "chapter_title": "第六夜",
-          "evidence_chunk_ids": [
+            "AOZORA_000799_C06_010",
             "AOZORA_000799_C06_011"
           ]
         },
         {
-          "device_id": "onlooker_chorus",
-          "name": "見物人の下馬評合唱",
+          "device_id": "crowd_commentary_layering",
+          "name": "群衆による下馬評の積層",
           "role": "incidental",
-          "description": "無教育な野次馬たちの断片的な感想の羅列が、運慶の超然とした態度を際立たせる背景装置。単なる群衆コメントの積み重ねは他章でも使える一般的手法。",
+          "description": "車夫や無教育な男など複数の見物人の発言を順に並べ、それぞれ異なる無知・誤解・感心を示すことで、運慶の異常性を間接的に浮き立たせる。語り手はその声の中の一つ(若い男の説明)だけを信じて行動に移す。",
+          "components": [],
           "justification": "",
           "chapter_title": "第六夜",
           "evidence_chunk_ids": [
@@ -395,13 +434,28 @@
           ]
         },
         {
-          "device_id": "negative_epiphany_ending",
-          "name": "否定形の悟りで終わる結末",
+          "device_id": "artisan_indifference",
+          "name": "職人の没入による周囲への無関心",
           "role": "incidental",
-          "description": "『仁王は見当たらなかった』を三度重ねた末に、時代そのものが失われたと悟る結末型。願望が叶わないことで真理に到達する反転構造は、他の夜にも似た型がありうる。",
+          "description": "運慶が見物人の評判やざわめきに全く動じず、迷いなく鑿を動かし続ける超越的態度。周囲の近代的な軽薄さと対比されることで、彼の異物性(時代錯誤)を強調する機能を持つ。",
+          "components": [],
           "justification": "",
           "chapter_title": "第六夜",
           "evidence_chunk_ids": [
+            "AOZORA_000799_C06_005",
+            "AOZORA_000799_C06_009"
+          ]
+        },
+        {
+          "device_id": "anachronistic_figure",
+          "name": "時代錯誤の人物が現代に紛れ込む違和感",
+          "role": "incidental",
+          "description": "鎌倉時代の装束・技法を持つ運慶が、明治の見物人たちの中に何の説明もなく現れている。語り手はその不思議さに気づきながらも深く追及せず、むしろ最後にその『生きている理由』を勝手に悟って終わる。",
+          "components": [],
+          "justification": "",
+          "chapter_title": "第六夜",
+          "evidence_chunk_ids": [
+            "AOZORA_000799_C06_005",
             "AOZORA_000799_C06_011"
           ]
         }
@@ -411,48 +465,51 @@
       "chapter_title": "第七夜",
       "devices": [
         {
-          "device_id": "destination_unknown_voyage",
-          "name": "行き先の分からない船",
+          "device_id": "unreachable_voyage_and_irreversible_leap",
+          "name": "行き先不明の船からの投身と着水前後悔の不可逆性",
           "role": "central",
-          "description": "船が絶えず進み続けているのに、誰に聞いても行き先が分からないという一つの異常が全篇を支配する。目的地の不在そのものが不安の源泉であり、続編でこの『進むが着かない』構造をそのまま流用すると、この章の核が失われる。",
+          "description": "目的も行き先も明示されない移動体に乗せられ続けるという異常な状況を維持し、そこから生じる疎外感・心細さを臨界点まで蓄積させたうえで、語り手に決定的な自滅行為(飛び込み)を実行させる。しかし行為に着手した瞬間に心理を反転させて後悔させ、それでも身体は物理的にもう引き返せないという構造で終える。続編でこの型(目的不明の乗り物＋衝動的決断＋着手後の即時後悔＋不可逆性)をなぞると、この章の専売特許を再演することになる。",
+          "components": [
+            "移動体の行き先・目的を最後まで明示しない",
+            "到達不能な追跡運動を反復させて閉塞感を強める",
+            "疎外感を段階的に蓄積させ決定的行動へ橋渡しする",
+            "行動着手の瞬間に心理を反転させるが物理的にはもう戻せない状態にする"
+          ],
           "justification": "",
           "chapter_title": "第七夜",
           "evidence_chunk_ids": [
             "AOZORA_000799_C07_001",
-            "AOZORA_000799_C07_002",
-            "AOZORA_000799_C07_004",
-            "AOZORA_000799_C07_007"
+            "AOZORA_000799_C07_007",
+            "AOZORA_000799_C07_008"
           ]
         },
         {
-          "device_id": "sun_chase_repetition",
-          "name": "太陽を追うが追いつかない反復",
+          "device_id": "unanswered_destination_dialogue",
+          "name": "行き先を問う対話が笑いで流される型",
           "role": "incidental",
-          "description": "毎日毎夜、太陽が昇っては沈み、船がそれを追いかけるが決して追いつかないという反復运动。行き先不明という中心異常を視覚的に反復して見せる装置で、他の設定でも転用可能。",
-          "justification": "",
-          "chapter_title": "第七夜",
-          "evidence_chunk_ids": [
-            "AOZORA_000799_C07_001"
-          ]
-        },
-        {
-          "device_id": "unanswered_question",
-          "name": "誰も答えを知らない問い",
-          "role": "incidental",
-          "description": "「西へ行くのか」という問いに船の男は答えず笑って去る。語り手だけでなく作中の誰もが行き先を知らないという知の不在の共有型。続編で同型の『誰も答えない問答』を繰り返すと二番煎じになる。",
+          "description": "語り手が船の男に行き先を問い、まともな答えを得られず笑って去られるという、知の非対称(相手は知っているかもしれないが語らない、あるいは誰も知らない)を示す短い問答。",
+          "components": [
+            "核心的な問いを発する",
+            "答えを得られずに笑いで流される"
+          ],
           "justification": "",
           "chapter_title": "第七夜",
           "evidence_chunk_ids": [
             "AOZORA_000799_C07_002",
+            "AOZORA_000799_C07_003",
             "AOZORA_000799_C07_004",
             "AOZORA_000799_C07_005"
           ]
         },
         {
-          "device_id": "indifferent_bystanders",
-          "name": "自分の孤独に無頓着な乗客たち",
+          "device_id": "indifferent_fellow_passengers",
+          "name": "周囲に無関心な同乗者たちの並置",
           "role": "incidental",
-          "description": "泣く女、天文学を語る異人、恋人同士の男女――皆それぞれの世界に閉じており、語り手の絶望に気づかない。孤立感を強調するための背景人物配置で、他の章でも使える型。",
+          "description": "泣く女、神を語る異人、音楽に没入する男女など、それぞれ自分の世界に閉じて語り手や状況そのものに無関心な人物群を並べ、語り手の孤立を強調する。",
+          "components": [
+            "複数の他者を並べて配置する",
+            "各人物を自分の関心に没入させ語り手から切り離す"
+          ],
           "justification": "",
           "chapter_title": "第七夜",
           "evidence_chunk_ids": [
@@ -460,14 +517,18 @@
           ]
         },
         {
-          "device_id": "instant_regret_reversal",
-          "name": "飛び込んだ瞬間の後悔という結末反転",
+          "device_id": "chanted_riddle_song",
+          "name": "意味の定まらない囃し歌の挿入",
           "role": "incidental",
-          "description": "死を決意し実行した直後、「命が惜しくなった」と即座に後悔し取り消せないという結末の型。決断とその直後の不可逆な後悔をワンセットで終わらせる構造で、同じ反転を続編でなぞると予定調和になる。",
+          "description": "西と東、日の出と日の入りを反転させて問う謎めいた歌を水夫たちに歌わせ、方向感覚や真偽の判断を宙吊りにする挿話。",
+          "components": [
+            "方位や真偽を反転させる文言を歌として挿入する",
+            "答えの検証を放棄して流す"
+          ],
           "justification": "",
           "chapter_title": "第七夜",
           "evidence_chunk_ids": [
-            "AOZORA_000799_C07_008"
+            "AOZORA_000799_C07_006"
           ]
         }
       ]
@@ -476,33 +537,34 @@
       "chapter_title": "第八夜",
       "devices": [
         {
-          "device_id": "mirror_selective_reflection",
-          "name": "鏡が選んで映す／映さないという異常",
+          "device_id": "mirror_selective_visibility",
+          "name": "鏡というフィルター越しの選択的可視/不可視",
           "role": "central",
-          "description": "鏡は往来の人物や物音の出処を律儀に反映するはずなのに、芸者・粟餅屋・帳場の女という特定の人物だけは声や音や気配だけがして姿が鏡に映らない、あるいは一瞬映って消える。鏡という本来「すべてを正確に映す装置」が恣意的に取捨選択することが章全体の異常の核。続編で同じ「鏡に映らない者」トリックを使うと、この章の専売特許を繰り返すことになる。",
+          "description": "鏡という限定された視界装置を通してのみ外界を観察させ、見たいもの(女、金魚売の様子、餅屋)は映らず、見たくないもの(危険な自転車と人力車の交差、勘定する女)だけが映る、という視線の裏切りを繰り返す。続編でこの「窓/鏡越しに覗く」構図と「見たい対象が意図的に隠される」パターンをなぞると同じ仕掛けの再演になる。",
+          "components": [
+            "限定された枠(鏡)を通してのみ外界を見せる",
+            "観察者が見たいと望む対象を映さずに終わらせる",
+            "望まない/不吉な対象を不意に映して視界を遮断させる",
+            "他人(理髪師)が観察者の視線の向きを物理的に操作する"
+          ],
           "justification": "",
           "chapter_title": "第八夜",
           "evidence_chunk_ids": [
             "AOZORA_000799_C08_001",
-            "AOZORA_000799_C08_005"
+            "AOZORA_000799_C08_005",
+            "AOZORA_000799_C08_006"
           ]
         },
         {
-          "device_id": "frozen_window_parade",
-          "name": "窓外を流れる人物の一回性通過",
+          "device_id": "endless_counting_woman",
+          "name": "終わらない勘定",
           "role": "incidental",
-          "description": "庄太郎、豆腐屋、芸者などが窓の外を一度だけ通過し、二度と戻らない。それぞれ束の間だけ観察され、深追いできずに終わる反復構造。続編で同じ「通行人が次々現れては消える」羅列をやると単なる模倣になる。",
-          "justification": "",
-          "chapter_title": "第八夜",
-          "evidence_chunk_ids": [
-            "AOZORA_000799_C08_001"
-          ]
-        },
-        {
-          "device_id": "endless_counting_bills",
-          "name": "尽きない札勘定",
-          "role": "incidental",
-          "description": "帳場の女が百枚程度の札をどれだけ数えても百枚のまま尽きない、という数量の無限ループ。時間や物量の異常な固定化を示す小道具的仕掛け。続編で「数えても減らない／終わらない」動作を繰り返すと二番煎じになる。",
+          "description": "女が札を勘定し続けるが、数えても数えても同じ枚数のまま尽きない、という数の無限性・停滞を描く反復。続編で「数えても減らない/終わらない作業」を出すとこの仕掛けの再利用になる。",
+          "components": [
+            "同じ動作(勘定)を繰り返させる",
+            "数えても数量が変化しないという矛盾を提示する",
+            "対象が唐突に消失して確認不能にする"
+          ],
           "justification": "",
           "chapter_title": "第八夜",
           "evidence_chunk_ids": [
@@ -510,34 +572,31 @@
           ]
         },
         {
-          "device_id": "blinded_barber_chair",
-          "name": "散髪中の視界の強制的な開閉",
+          "device_id": "answerless_questioning",
+          "name": "問いへの無反応",
           "role": "incidental",
-          "description": "髪を切られる間、恐怖や白い男の手によって目を開けたり閉じたりを強いられ、そのたびに見える／見えない世界が切り替わる。視界の制御を他者（白い男）に委ねられている点が特徴。続編で同じ「散髪椅子で目を閉じさせられる」装置を使うと反復になる。",
-          "justification": "",
-          "chapter_title": "第八夜",
-          "evidence_chunk_ids": [
-            "AOZORA_000799_C08_003",
-            "AOZORA_000799_C08_005"
-          ]
-        },
-        {
-          "device_id": "unanswered_question_barber",
-          "name": "白い男の无応答と唐突な話題転換",
-          "role": "incidental",
-          "description": "「物になるだろうか」という問いに白い男は答えず、代わりに関係のない「金魚売を見たか」という質問を発する。会話が噛み合わないまま進行する対話の型。続編で同じ「問いに答えず無関係な問いを返す」職人を出すと反復になる。",
+          "description": "自分が白い男に「物になるだろうか」と繰り返し尋ねるが、男は一切答えず作業(鋏)を続けるだけ、という対話不成立の型。続編で「問いかけても応答がない他者」を出すと同型になる。",
+          "components": [
+            "同じ問いを繰り返し発する",
+            "相手が無言で作業だけを続ける",
+            "問いの答えを最後まで与えない"
+          ],
           "justification": "",
           "chapter_title": "第八夜",
           "evidence_chunk_ids": [
             "AOZORA_000799_C08_001",
-            "AOZORA_000799_C08_004"
+            "AOZORA_000799_C08_002"
           ]
         },
         {
-          "device_id": "unmoving_goldfish_seller_ending",
-          "name": "無動の金魚売による結末の停止",
+          "device_id": "static_ending_gaze",
+          "name": "静止したものを見つめて終わる結末",
           "role": "incidental",
-          "description": "店を出た先、金魚売が微動だにせず往来の喧騒に無関心なまま眺め合いが続き、物語がオチではなく静止によって終わる。動から静への反転で終わる結末の型。続編で同じ「無反応の人物を眺めて終わる」幕切れを使うと重複する。",
+          "description": "動きのない金魚売をじっと見つめ続けるが、金魚売は一切動かない、という運動の欠如で章を閉じる型。続編で「動かない対象を見つめ続けて終わる」結末を使うとこの型の再現になる。",
+          "components": [
+            "外界の喧騒と対象の無反応を対比させる",
+            "観察を持続させても変化が起きないまま終える"
+          ],
           "justification": "",
           "chapter_title": "第八夜",
           "evidence_chunk_ids": [
@@ -550,34 +609,33 @@
       "chapter_title": "第九夜",
       "devices": [
         {
-          "device_id": "retroactive_futility_reveal",
-          "name": "祈願が既に無意味だったことの事後開示",
+          "device_id": "futile_repeated_prayer",
+          "name": "徒労に帰す反復祈願",
           "role": "central",
-          "description": "母が幾晩も続けた祈願・御百度の全過程が語られた直後、最後の一文で「父はとくの昔に殺されていた」と明かされ、それまでの反復行為すべてが遡及的に無効化される。行為の意味が結末で丸ごと反転する型であり、続編で同型の『実は最初から無駄だった』落ちを繰り返すと、この章の効果が使い回しに見える。",
+          "description": "毎夜同じ祈願行為(参拝・御百度)を積み重ねさせ、その努力が意味を持つかのように読者に思わせておいて、最後の一文で対象がすでに失われていたと明かし、積み重ねてきた反復全体を無効化する。反復の量そのものが結末の反転の落差を作る仕掛けであり、続編で同種の『健気な反復→実は無意味だった』を使うと構造の使い回しになる。",
+          "components": [
+            "同一の祈願・儀礼的行為を夜ごとに繰り返させる",
+            "反復行為を数えられる単位(百度・往復)に分解して描写する",
+            "行為の対象がまだ有効であるという前提で物語を進行させる",
+            "末尾で前提がとうに崩れていたことを明かし反復全体を無効化する"
+          ],
           "justification": "",
           "chapter_title": "第九夜",
           "evidence_chunk_ids": [
             "AOZORA_000799_C09_001",
-            "AOZORA_000799_C09_003"
-          ]
-        },
-        {
-          "device_id": "nightly_pilgrimage_repetition",
-          "name": "夜毎の道程・御百度の反復描写",
-          "role": "incidental",
-          "description": "屋敷から神社までの道筋、鈴・柏手・御百度という同一手順を毎晩繰り返す描写。回数や道順の反復によって儀式性を積み上げる仕掛けで、他の章でも使える一般的な反復技法。",
-          "justification": "",
-          "chapter_title": "第九夜",
-          "evidence_chunk_ids": [
             "AOZORA_000799_C09_002",
             "AOZORA_000799_C09_003"
           ]
         },
         {
-          "device_id": "child_misunderstanding_answer",
-          "name": "子供の的外れな定型応答（『あっち』『今に』）",
+          "device_id": "child_fixed_phrase_response",
+          "name": "子供の定型句応答",
           "role": "incidental",
-          "description": "子供が『御父様は』という問いに対して意味を理解しないまま同じ言葉で答え続ける。無垢な反復応答が悲劇性を際立たせる仕掛けで、状況を変えれば流用可能な装置。",
+          "description": "問いに対して子供が『あっち』『今に』という同じ言葉しか返さない反復。無知・不在を象徴する台詞の固定化として機能する。",
+          "components": [
+            "同じ問いを繰り返し投げかける",
+            "毎回同一の定型句だけが返る"
+          ],
           "justification": "",
           "chapter_title": "第九夜",
           "evidence_chunk_ids": [
@@ -585,10 +643,14 @@
           ]
         },
         {
-          "device_id": "unexplained_father_disappearance",
-          "name": "父の失踪理由の不開示",
+          "device_id": "unexplained_disappearance",
+          "name": "理由なき出奔",
           "role": "incidental",
-          "description": "父がなぜ黒頭巾・草鞋で夜中に出て行ったのか、その目的や事情は語り手からも母からも説明されない。読者は結末まで理由を知らされないまま進行を追わされる。",
+          "description": "父がなぜ・どこへ行ったのか一切説明されないまま姿を消す。動機や行き先の空白が物語を駆動する。",
+          "components": [
+            "出来事の動機を説明せずに配置する",
+            "行き先を不明のまま放置する"
+          ],
           "justification": "",
           "chapter_title": "第九夜",
           "evidence_chunk_ids": [
@@ -596,14 +658,33 @@
           ]
         },
         {
-          "device_id": "child_left_bound_at_shrine",
-          "name": "拝殿に子を縛りつけて祈る母の行為",
+          "device_id": "secondhand_dream_frame",
+          "name": "伝聞の夢という二重枠",
           "role": "incidental",
-          "description": "母が子供を細帯で拝殿の欄干に括りつけて御百度を踏む具体的行為。母の必死さと子の孤立を同時に描く一場面的仕掛けであり、他の場面でも転用しうる具体的動作。",
+          "description": "語り手は母から聞いた話として夢を提示し、自身は出来事の当事者でも直接の目撃者でもない。知の階層(母が知る/子が知らない/語り手が又聞きする)を作る。",
+          "components": [
+            "体験者と語り手の間に伝聞の層を挟む",
+            "語り手自身の関与を最小化する"
+          ],
           "justification": "",
           "chapter_title": "第九夜",
           "evidence_chunk_ids": [
             "AOZORA_000799_C09_003"
+          ]
+        },
+        {
+          "device_id": "traced_path_description",
+          "name": "経路を辿る空間描写",
+          "role": "incidental",
+          "description": "屋敷から神社までの道筋を距離・目印ごとに逐一辿る描写。反復行為の舞台を具体的な歩数・地点で刻む。",
+          "components": [
+            "移動経路を目印ごとに区切って描写する",
+            "距離や単位で空間を数える"
+          ],
+          "justification": "",
+          "chapter_title": "第九夜",
+          "evidence_chunk_ids": [
+            "AOZORA_000799_C09_002"
           ]
         }
       ]
@@ -612,10 +693,16 @@
       "chapter_title": "第十夜",
       "devices": [
         {
-          "device_id": "endless_pig_repetition",
-          "name": "無限に押し寄せる豚を打ち続ける反復",
+          "device_id": "infinite_repetition_exhaustion",
+          "name": "無限反復による消耗と敗北",
           "role": "central",
-          "description": "一匹また一匹と際限なく現れる豚の鼻を、洋杖で打っては谷に落とすという単純動作が『七日六晩』という誇張された時間軸で反復される。数が増殖し続け、終わりが見えないこと自体が恐怖の中心装置。続編で『同じ動作をひたすら繰り返すことで疲弊し破滅する』構造を再度使うと、この章の核をなぞることになる。",
+          "description": "一つの脅威を撃退しても同じ脅威が絶えず現れ続け、数え切れない反復のうちに主体の力が尽きて最終的に敗れる。反復そのものが恐怖の実体であり、量が質に転化して破局に至る仕掛け。続編で同種の『撃っても撃っても来る』式の消耗戦を繰り返すと、この章の専売特許をなぞることになる。",
+          "components": [
+            "一つを退けると同種のものが次々現れる状況を作る",
+            "反復の回数を数えさせ、やがて数えきれなくする",
+            "反復のたびに主体の体力・気力を漸減させる",
+            "最終的に力尽きて防御が破綻するところで反復を止める"
+          ],
           "justification": "",
           "chapter_title": "第十夜",
           "evidence_chunk_ids": [
@@ -624,22 +711,11 @@
           ]
         },
         {
-          "device_id": "unexplained_abduction_by_woman",
-          "name": "女による無条件の連れ去りと不条理な要求",
+          "device_id": "nested_hearsay_frame",
+          "name": "又聞きの入れ子構造",
           "role": "incidental",
-          "description": "見知らぬ女に誘われるまま従い、脈絡のない場所（絶壁）へ連れて行かれ、脈絡のない命令（飛び込め）をされる。理由の説明は一切ない。続編で同型の『女に導かれて不条理な試練に晒される』筋を繰り返すと二番煎じになる。",
-          "justification": "",
-          "chapter_title": "第十夜",
-          "evidence_chunk_ids": [
-            "AOZORA_000799_C10_001",
-            "AOZORA_000799_C10_002"
-          ]
-        },
-        {
-          "device_id": "hearsay_narration_via_kensan",
-          "name": "又聞き構造（健さんの伝聞として語られる本人不在の体験談）",
-          "role": "incidental",
-          "description": "本人（庄太郎）は瀕死で語れず、友人の健さんが又聞きしたことを『自分』に語るという二重の伝聞構造。真偽の検証不能性を担保する。続編で同じ『生死の境にある当人の体験を第三者が伝える』形をなぞると、この章の情報構造そのものの再演になる。",
+          "description": "語り手（自分）は事件を直接見ておらず、健さんから聞いた話、さらにその中身は庄太郎自身の語りという二重の伝聞で構成される。真偽の検証不能性がそのまま宙吊りの結末を支える。",
+          "components": [],
           "justification": "",
           "chapter_title": "第十夜",
           "evidence_chunk_ids": [
@@ -648,10 +724,11 @@
           ]
         },
         {
-          "device_id": "single_frivolous_flaw_leads_to_ruin",
-          "name": "たった一つの道楽が破滅の引き金になる構図",
+          "device_id": "result_first_then_flashback",
+          "name": "結果先出し・遡及型の時間構成",
           "role": "incidental",
-          "description": "善良で欠点のない男の『女を眺める』という唯一の道楽が、そのまま怪異へ引きずり込まれる直接の原因として機能する。人物造形上の単一の脆弱性が破局を招く型。続編で『無害に見える一つの癖が破滅を呼ぶ』構図を繰り返すと類似作になる。",
+          "description": "冒頭でまず『女に攫われ七日目に戻り高熱で倒れた』という結末に近い状態を提示し、その後に発端から経緯を遡って語る構成。先に危機の輪郭を示してから謎解き的に肉付けする型。",
+          "components": [],
           "justification": "",
           "chapter_title": "第十夜",
           "evidence_chunk_ids": [
@@ -659,14 +736,27 @@
           ]
         },
         {
-          "device_id": "callous_coda_with_material_desire",
-          "name": "当人の生死そっちのけで物欲を語る締めくくりの反転",
+          "device_id": "bathetic_closure",
+          "name": "深刻な事態を俗物的関心で相対化する結末",
           "role": "incidental",
-          "description": "瀕死の庄太郎を気の毒がる体裁を取りつつ、健さんも語り手も彼の帽子（パナマ）を欲しがるという、教訓めいた台詞のすぐ後に俗物的な本音を滑り込ませる終わり方。深刻な結末を軽薄な一言で無効化する型。続編でこの『教訓→俗な下心』の落差オチを使うと同じ仕掛けの反復になる。",
+          "description": "瀕死・生死不明という深刻な結末に対し、周囲の人物が『パナマ帽が欲しい』という卑小な物欲を語ることで、恐怖や悲劇のトーンを一気に日常的・滑稽なものへ引き戻して締める。",
+          "components": [],
           "justification": "",
           "chapter_title": "第十夜",
           "evidence_chunk_ids": [
             "AOZORA_000799_C10_003"
+          ]
+        },
+        {
+          "device_id": "trivial_vice_leads_to_abduction",
+          "name": "些細な道楽が異界への拉致の糸口になる",
+          "role": "incidental",
+          "description": "人畜無害などうでもいい日常的な趣味（女の顔を眺める、水菓子の色を品評する）が、そのまま見知らぬ女に連れ去られ異界（原・絶壁）へ迷い込む発端として機能する導入部の仕掛け。",
+          "components": [],
+          "justification": "",
+          "chapter_title": "第十夜",
+          "evidence_chunk_ids": [
+            "AOZORA_000799_C10_001"
           ]
         }
       ]
