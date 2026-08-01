@@ -3,6 +3,7 @@
 import json
 import re
 
+import anthropic
 from anthropic import Anthropic
 
 from . import config, db
@@ -12,6 +13,16 @@ class LLMResponseTruncated(RuntimeError):
 
     切れたJSONは「Unterminated string」という原因の分かりにくいエラーになるため、
     パースを試みる前にここで明確に落とす。
+    """
+
+
+class LLMTimeout(RuntimeError):
+    """呼び出しが LLM_TIMEOUT_SECONDS 以内に応答しなかった。
+
+    ⚠️ SDK既定はタイムアウト無しに近く、実際に1本のハングが worker の
+    パイプライン全体を46分止めた(2026-08-01、検出層の較正走行)。
+    config.LLM_TIMEOUT_SECONDS で上限を設け、詰まった1本が全体を無期限に
+    止めないようにする。
     """
 
 
@@ -55,12 +66,19 @@ def call_json(
     """ClaudeにJSONを生成させ、結果とコストを agent_runs に記録して返す。"""
     client = _get_client()
     try:
-        message = client.messages.create(
-            model=model,
-            max_tokens=max_tokens,
-            system=system,
-            messages=[{"role": "user", "content": prompt}],
-        )
+        try:
+            message = client.messages.create(
+                model=model,
+                max_tokens=max_tokens,
+                system=system,
+                messages=[{"role": "user", "content": prompt}],
+                timeout=config.LLM_TIMEOUT_SECONDS,
+            )
+        except anthropic.APITimeoutError as exc:
+            raise LLMTimeout(
+                f"応答が {config.LLM_TIMEOUT_SECONDS}秒以内に返りませんでした"
+                f"(agent={agent_name})。過負荷または詰まりの可能性。"
+            ) from exc
         ensure_not_truncated(
             getattr(message, "stop_reason", None),
             agent_name=agent_name,
