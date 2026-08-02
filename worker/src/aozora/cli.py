@@ -109,22 +109,34 @@ def cmd_ingest_phase_a(_args) -> None:
     print(f"合計 {len(PHASE_A_EDITIONS)}資料 / {total}チャンク")
 
 
-def cmd_create_profile(_args) -> None:
-    """『夢十夜』の creative profile を作る(C-T6 の前提)。"""
+def cmd_create_profile(args) -> None:
+    """creative profile を作る(C-T6 の前提)。既定値は『夢十夜』(引数省略時は従来通り)。
+
+    ⚠️ 第2作品向けにプロファイルを作る場合、source_scope.source_ids を
+    その作品の source_id だけに絞ること。gen_creative_cards は
+    (source_scope 修正後)ここを見てカードの根拠チャンクを絞り込む —
+    絞らないと他作品の本文まで根拠に混ざる(引き継ぎ B-2 で発覚した穴)。
+    """
     c = db.client()
+    source_ids = (
+        [s.strip() for s in args.source_ids.split(",") if s.strip()]
+        if args.source_ids else ["AOZORA_000799"]
+    )
+    corpus_roles = (
+        [r.strip() for r in args.corpus_roles.split(",") if r.strip()]
+        if args.corpus_roles else ["narrative_reference", "creative_grammar"]
+    )
     c.table("creative_profiles").upsert({
-        "profile_id": YUME_PROFILE_ID,
+        "profile_id": args.profile_id,
         "person_id": PERSON_ID,
-        "name": "夢十夜",
-        "slug": "yume-juya",
-        "description": "『夢十夜』を参照した新作短編を生成するためのプロファイル",
-        # 参照する原典。C-T5 で投入した夢十夜と創作論
-        "source_scope": {"source_ids": ["AOZORA_000799"],
-                         "corpus_roles": ["narrative_reference", "creative_grammar"]},
+        "name": args.name,
+        "slug": args.slug,
+        "description": args.description or f"『{args.name}』を参照した新作短編を生成するためのプロファイル",
+        "source_scope": {"source_ids": source_ids, "corpus_roles": corpus_roles},
         # 生成文の正書法。青空文庫の底本(新字新仮名)に合わせる
         "orthography_policy": "新字新仮名",
         "target_language": "ja",
-        "historical_period": "明治",
+        "historical_period": args.historical_period,
         "default_generation_settings": {
             "use_rag": True, "use_cards": True, "rules": "off",
             "preset_name": "cards_only",
@@ -137,22 +149,22 @@ def cmd_create_profile(_args) -> None:
         ),
         # 誤認防止のため題名レベルで固定する(仕様§5.1)
         "display_title_format": "{title}（AI創作）",
-        "copyright_policy": "原典はパブリックドメイン(夏目漱石・没1916年)",
+        "copyright_policy": args.copyright_policy,
         "status": "active",
     }).execute()
-    print(f"creative_profile を作成/更新: {YUME_PROFILE_ID}")
+    print(f"creative_profile を作成/更新: {args.profile_id} (source_ids={source_ids})")
 
 
-def cmd_gen_cards(_args) -> None:
+def cmd_gen_cards(args) -> None:
     """承認前の創作カード候補を生成する(必ず draft)。"""
-    result = gen_creative_cards.generate_for_profile(YUME_PROFILE_ID)
+    result = gen_creative_cards.generate_for_profile(args.profile_id)
     print(f"カード候補: 新規{result['created']}件 / "
           f"既存スキップ{result['skipped_existing']}件 / "
           f"根拠不足スキップ{result['skipped_no_evidence']}件")
     c = db.client()
     cards = (
         c.table("creative_cards").select("card_id,card_type,title,evidence_type,status")
-        .eq("profile_id", YUME_PROFILE_ID).order("card_type").execute().data
+        .eq("profile_id", args.profile_id).order("card_type").execute().data
     )
     for card in cards:
         print(f"  {card['card_id']} [{card['status']:8s}] {card['card_type']:12s} "
@@ -429,10 +441,22 @@ def main(argv=None) -> int:
         func=cmd_ingest_phase_a)
     sub.add_parser("embed", help="未生成チャンクのembeddingを作る").set_defaults(
         func=cmd_embed)
-    sub.add_parser("create-profile", help="『夢十夜』のcreative profileを作る").set_defaults(
-        func=cmd_create_profile)
-    sub.add_parser("gen-cards", help="創作カード候補を生成する(draft)").set_defaults(
-        func=cmd_gen_cards)
+    p_cp = sub.add_parser(
+        "create-profile", help="creative profileを作る(既定は『夢十夜』)")
+    p_cp.add_argument("--profile-id", default=YUME_PROFILE_ID)
+    p_cp.add_argument("--name", default="夢十夜")
+    p_cp.add_argument("--slug", default="yume-juya")
+    p_cp.add_argument("--source-ids", help="対象作品のsource_id(カンマ区切り。省略時は夢十夜)")
+    p_cp.add_argument("--corpus-roles",
+                      help="対象corpus_role(カンマ区切り。省略時は narrative_reference,creative_grammar)")
+    p_cp.add_argument("--description")
+    p_cp.add_argument("--historical-period", default="明治")
+    p_cp.add_argument("--copyright-policy",
+                      default="原典はパブリックドメイン(夏目漱石・没1916年)")
+    p_cp.set_defaults(func=cmd_create_profile)
+    p_gc = sub.add_parser("gen-cards", help="創作カード候補を生成する(draft)")
+    p_gc.add_argument("--profile-id", default=YUME_PROFILE_ID)
+    p_gc.set_defaults(func=cmd_gen_cards)
     p_dc = sub.add_parser("gen-device-catalog",
                           help="原作の章ごとの装置カタログを作る(続編生成の防具)")
     p_dc.add_argument("--source-id", default="AOZORA_000799")
