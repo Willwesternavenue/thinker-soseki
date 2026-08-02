@@ -324,6 +324,13 @@ def approve_card(card_id: str, *, reviewed_by: str, client=None) -> dict:
     # links も同時に有効化する。approved の links だけが回答時に引かれる
     c.table("thought_evidence_links").update({"status": "approved"}).eq(
         "thought_id", card["thought_id"]).execute()
+    # 代表質問も active 化する(仕様6.11)。
+    # ⚠️ これが漏れると Thought Router の Stage2(代表質問のベクトル検索。RPC
+    # match_thought_questions は status='active' で絞る)が常に空振りし、思想質問が
+    # すべてフォールバックカードへ流れる。回答自体は返るので気づきにくい
+    # (実測: 承認済み12枚に対し質問113件が全てdraftのまま放置されていた)
+    c.table("thought_questions").update({"status": "active"}).eq(
+        "target_thought_id", card["thought_id"]).execute()
     return {"card_id": card_id, "status": "approved", "reviewed_by": reviewed_by}
 
 

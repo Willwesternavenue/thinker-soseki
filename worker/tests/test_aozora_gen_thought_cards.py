@@ -268,6 +268,48 @@ def test_approve_activates_card_and_links(clean_corpus, client):
     assert all(link["status"] == "approved" for link in links), "承認済みlinksだけがRAGで引かれる"
 
 
+def test_approve_activates_representative_questions(clean_corpus, client):
+    """承認すると代表質問も active になる(仕様6.11)。
+
+    ⚠️ これが漏れると Thought Router の Stage2(代表質問のベクトル検索)が常に
+    空振りし、思想質問がすべてフォールバックカードへ流れる。回答は返るので
+    気づきにくい(実測: 承認済み12枚に対し質問113件が全てdraftのままだった)。
+    RPC match_thought_questions は status='active' で絞る。
+    """
+    _seed(client)
+    gen_thought_cards.generate(client=client, call_json=_llm(_ONE_CARD))
+    card = client.table("thought_cards").select("card_id, thought_id").execute().data[0]
+    client.table("thought_questions").insert({
+        "question_id": "tq_test01", "person_id": "natsume_soseki",
+        "question": "開化は内発的であるべきか", "target_thought_id": card["thought_id"],
+        "target_card_id": card["card_id"], "status": "draft",
+    }).execute()
+
+    gen_thought_cards.approve_card(card["card_id"], reviewed_by="tester", client=client)
+
+    q = client.table("thought_questions").select("status").eq(
+        "question_id", "tq_test01").single().execute().data
+    assert q["status"] == "active", "承認済みカードの代表質問はactiveになる"
+
+
+def test_approve_does_not_touch_other_cards_questions(clean_corpus, client):
+    """他カードの代表質問まで active にしない(承認は1枚ずつの操作)。"""
+    _seed(client)
+    gen_thought_cards.generate(client=client, call_json=_llm(_ONE_CARD))
+    card = client.table("thought_cards").select("card_id, thought_id").execute().data[0]
+    client.table("thought_questions").insert({
+        "question_id": "tq_other", "person_id": "natsume_soseki",
+        "question": "別カードの質問", "target_thought_id": "unrelated_thought",
+        "status": "draft",
+    }).execute()
+
+    gen_thought_cards.approve_card(card["card_id"], reviewed_by="tester", client=client)
+
+    q = client.table("thought_questions").select("status").eq(
+        "question_id", "tq_other").single().execute().data
+    assert q["status"] == "draft", "無関係なカードの質問は触らない"
+
+
 def test_approve_refuses_evidence_outside_thought_index(clean_corpus, client):
     """承認時にも「小説が根拠になっていないか」を見る。"""
     _seed(client)
