@@ -25,6 +25,22 @@ YUME = f"AOZORA_{YUME_EDITION}"
 # 3つの corpus_role が揃う最小構成。思想・創作・小説の分離を確かめるのに要る
 REQUIRED = {KAIKA: KAIKA_EDITION, SHASEI: SHASEI_EDITION, YUME: YUME_EDITION}
 
+# Phase C (docs/CORPUS_T1_SPEC.md §12.6) で夢十夜に加えて投入された9長編。
+# narrative_reference / character_judgment Index はこれらも含む。
+PHASE_C_NOVEL_EDITIONS = {
+    "056143",  # それから
+    "000789",  # 吾輩は猫である
+    "000776",  # 草枕
+    "000794",  # 三四郎
+    "000785",  # 門
+    "000775",  # 行人
+    "000773",  # こころ
+    "000783",  # 道草
+    "000782",  # 明暗
+}
+ALL_NOVEL_SOURCE_IDS = {YUME} | {f"AOZORA_{e}" for e in PHASE_C_NOVEL_EDITIONS}
+SOREKARA = "AOZORA_056143"  # それから(代助の character_id が付く作品)
+
 
 @pytest.fixture(scope="module")
 def phase_a(client):
@@ -99,8 +115,14 @@ def test_thought_route_marks_fiction_as_requiring_attribution(phase_a):
     fiction_step = next(s for s in route if s["index"] == "narrative_reference")
 
     assert fiction_step["requires_attribution_notice"] is True
-    # 実データ側でも、その Index に入るのは夢十夜だけ
-    assert {c["source_id"] for c in _index_chunks(phase_a, "narrative_reference")} == {YUME}
+    # ⚠️ phase_a は KAIKA/SHASEI/YUME の3資料しか自己修復しない(docstring 参照)ので、
+    # フルスイート実行でコーパスが一度空にされた環境では YUME だけのことがある。
+    # 「YUME は必ず入る」「小説以外・未知の作品は混入しない」の両方を、環境に依らず検証する
+    novel_ids = {c["source_id"] for c in _index_chunks(phase_a, "narrative_reference")}
+    assert YUME in novel_ids, "夢十夜が narrative_reference Index に入っていない"
+    assert novel_ids <= ALL_NOVEL_SOURCE_IDS, (
+        f"想定外の source が narrative_reference Index に混入: {novel_ids - ALL_NOVEL_SOURCE_IDS}"
+    )
 
 
 # ── シナリオ2: 第十一夜の生成 ──
@@ -166,7 +188,13 @@ def test_character_index_finds_speech_inside_novels(phase_a):
     chunks = _index_chunks(phase_a, "character_judgment")
 
     assert chunks, "作中人物の発言が1件も引けていない"
-    assert {c["source_id"] for c in chunks} == {YUME}
+    # Phase C 投入済みの環境では全長編の作中人物発言が引けるが、phase_a の自己修復のみ
+    # (YUMEだけ)の環境でも壊れないよう、YUME必須+未知作品の非混入で検証する
+    source_ids = {c["source_id"] for c in chunks}
+    assert YUME in source_ids, "夢十夜の作中人物発言が引けていない"
+    assert source_ids <= ALL_NOVEL_SOURCE_IDS, (
+        f"想定外の source が character_judgment Index に混入: {source_ids - ALL_NOVEL_SOURCE_IDS}"
+    )
     assert {c["speaker_role"] for c in chunks} == {"character"}
 
 
@@ -191,14 +219,34 @@ def test_character_speech_is_still_excluded_from_thought(phase_a):
     assert not ({c["chunk_id"] for c in character} & core_ids)
 
 
-def test_named_characters_await_phase_c(phase_a):
-    """代助（『それから』）のような固有名の人物は Phase C の取り込み待ち。
+def test_named_characters_are_resolved_after_phase_c(phase_a):
+    """代助（『それから』）のような固有名の人物は Phase C 投入後、発言まで絞り込める。
 
-    `character_id` は Pass2 でも埋めていないため、いまは「誰の発言か」まで
-    絞り込めない。夢十夜の登場人物は無名なので当面は困らない。
+    docs/CORPUS_T1_SPEC.md §12.6: Pass2 の character_id 付与は「自作品の中でだけ」
+    行われ、作品間の混線はゼロ。代助はそれからにしか現れない。
+
+    ⚠️ phase_a は KAIKA/SHASEI/YUME の3資料しか自己修復しない(モジュール docstring
+    参照)。それから(SOREKARA)が無い環境では Pass2 の character_id 付与も無いので、
+    この検証自体が意味を持たない → skip する(元のテスト名 `..._await_phase_c` が
+    持っていた「未投入なら待つ」という設計を、投入後の検証を保ったまま引き継ぐ)。
     """
     assert routing.detect_character("代助はなぜ働かないのか") == "daisuke"
+
+    present = {
+        r["source_id"]
+        for r in phase_a.table("sources").select("source_id")
+        .eq("source_id", SOREKARA).execute().data or []
+    }
+    if not present:
+        pytest.skip(f"{SOREKARA}(それから)が未取り込みのため character_id 検証を skip")
+
     named = [
         c for c in _index_chunks(phase_a, "character_judgment") if c.get("character_id")
     ]
-    assert named == [], "character_id はまだ埋めていない"
+    assert named, "character_id を持つ作中人物発言が1件も無い"
+
+    daisuke = [c for c in named if c["character_id"] == "daisuke"]
+    assert daisuke, "代助の発言が引けていない"
+    assert {c["source_id"] for c in daisuke} == {SOREKARA}, (
+        "代助の発言が『それから』以外に混線している"
+    )
