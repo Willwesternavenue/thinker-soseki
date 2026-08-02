@@ -239,6 +239,108 @@ def test_approve_refuses_card_whose_evidence_is_missing(clean_corpus, client):
     assert card["status"] == "draft", "承認されていないこと"
 
 
+# ── source_scope による絞り込み(Phase C で narrative_reference が複数作品に
+# またがるようになったための修正。技術調査B-2で発覚) ──
+
+
+def test_narrative_reference_scoped_to_profiles_source_ids(clean_corpus, client):
+    """demonstrated_in_fiction 系は profile の source_scope.source_ids に絞る。
+
+    絞らないと、他プロファイル(他作品)の本文までLLMへ渡り、カードの根拠に
+    混ざりうる(実測: 夢十夜専用プロファイルで再実行すると他の9長編の本文が
+    候補チャンクに入っていた)。
+    """
+    profile = _seed_profile(client)
+    _seed_source(client, "SRC_A", corpus_role="narrative_reference", genre="short_story",
+                 chunks=[("Aの本文その一。", "candidate"), ("Aの本文その二。", "candidate")])
+    _seed_source(client, "SRC_B", corpus_role="narrative_reference", genre="novel",
+                 chunks=[("Bの本文その一。", "candidate"), ("Bの本文その二。", "candidate")])
+    client.table("creative_profiles").update(
+        {"source_scope": {"source_ids": ["SRC_A"]}}
+    ).eq("profile_id", profile).execute()
+    llm = FakeLLM({"cards": [{
+        "card_type": "narrative", "title": "Aだけの特徴",
+        "evidence_chunk_ids": ["SRC_A_000", "SRC_A_001"],
+    }]})
+
+    gen.generate_for_profile(profile, client=client, call_json=llm)
+
+    prompt = llm.calls[0]["prompt"]
+    assert "SRC_A_000" in prompt
+    assert "SRC_B_000" not in prompt, "スコープ外の作品のチャンクをLLMへ渡さない"
+
+
+def test_evidence_from_out_of_scope_source_is_rejected(clean_corpus, client):
+    """LLMがスコープ外のchunk_idを挙げても根拠として採用しない。"""
+    profile = _seed_profile(client)
+    _seed_source(client, "SRC_A", corpus_role="narrative_reference", genre="short_story",
+                 chunks=[("Aの本文その一。", "candidate"), ("Aの本文その二。", "candidate")])
+    _seed_source(client, "SRC_B", corpus_role="narrative_reference", genre="novel",
+                 chunks=[("Bの本文その一。", "candidate"), ("Bの本文その二。", "candidate")])
+    client.table("creative_profiles").update(
+        {"source_scope": {"source_ids": ["SRC_A"]}}
+    ).eq("profile_id", profile).execute()
+    llm = FakeLLM({"cards": [{
+        "card_type": "narrative", "title": "混線した特徴",
+        "evidence_chunk_ids": ["SRC_A_000", "SRC_B_000"],
+    }]})
+
+    result = gen.generate_for_profile(profile, client=client, call_json=llm)
+
+    assert result["created"] == 0
+    assert result["skipped_no_evidence"] == 1
+
+
+def test_creative_grammar_is_not_scoped_by_source_ids(clean_corpus, client):
+    """creative_grammar(著者の創作論一般)は source_scope.source_ids に無くても候補に残す。
+
+    特定の作品に紐づかないため。実例: cp_yume_juya の source_ids は夢十夜のみだが、
+    既存カードは写生文・作物の批評からの根拠も持つ。
+    """
+    profile = _seed_profile(client)
+    _seed_source(client, "SRC_A", corpus_role="narrative_reference", genre="short_story",
+                 chunks=[("Aの本文その一。", "candidate"), ("Aの本文その二。", "candidate")])
+    _seed_source(client, "SRC_ESSAY", corpus_role="creative_grammar",
+                 genre="literary_theory",
+                 chunks=[("創作論その一。", "support"), ("創作論その二。", "support")])
+    client.table("creative_profiles").update(
+        {"source_scope": {"source_ids": ["SRC_A"]}}  # SRC_ESSAY は含まれない
+    ).eq("profile_id", profile).execute()
+    # _TARGET_ROLES の順(creative_grammar が先)通りに応答を用意する
+    llm = FakeLLM(
+        {"cards": [{"card_type": "style", "title": "創作論の特徴",
+                    "evidence_chunk_ids": ["SRC_ESSAY_000", "SRC_ESSAY_001"]}]},
+        {"cards": [{"card_type": "narrative", "title": "Aの特徴",
+                    "evidence_chunk_ids": ["SRC_A_000", "SRC_A_001"]}]},
+    )
+
+    result = gen.generate_for_profile(profile, client=client, call_json=llm)
+
+    assert result["created"] == 2, "source_idsに無くてもcreative_grammarは候補に残る"
+
+
+def test_empty_source_scope_does_not_restrict(clean_corpus, client):
+    """source_scope が未設定(既定の{})なら、従来通り絞り込みをしない。
+
+    既存プロファイルへの後方互換(source_scopeを設定していないプロファイルの
+    挙動を変えない)。
+    """
+    profile = _seed_profile(client)
+    _seed_source(client, "SRC_A", corpus_role="narrative_reference", genre="short_story",
+                 chunks=[("Aの本文その一。", "candidate"), ("Aの本文その二。", "candidate")])
+    _seed_source(client, "SRC_B", corpus_role="narrative_reference", genre="novel",
+                 chunks=[("Bの本文その一。", "candidate"), ("Bの本文その二。", "candidate")])
+    # source_scope は _seed_profile の既定({})のまま
+    llm = FakeLLM({"cards": [{
+        "card_type": "narrative", "title": "混合特徴",
+        "evidence_chunk_ids": ["SRC_A_000", "SRC_B_000"],
+    }]})
+
+    result = gen.generate_for_profile(profile, client=client, call_json=llm)
+
+    assert result["created"] == 1, "source_scope未設定なら従来通り絞らない"
+
+
 def test_reject_card_keeps_it_out_of_generation(clean_corpus, client):
     profile = _seed_profile(client)
     client.table("creative_cards").insert({

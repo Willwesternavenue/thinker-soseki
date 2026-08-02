@@ -74,10 +74,24 @@ perspective(視点) / ending(終結) / criticism(批評の型) / prohibition(禁
 }}"""
 
 
-def _fetch_usable_chunks(person_id: str, *, client) -> dict[str, list[dict]]:
+def _fetch_usable_chunks(
+    person_id: str, *, source_ids: set[str] | None = None, client
+) -> dict[str, list[dict]]:
     """corpus_role ごとに、創作の参照に使えるチャンクを集める。
 
     `creative_eligibility='excluded'` のチャンクは渡さない。
+
+    ⚠️ `source_ids` を渡すと、demonstrated_in_fiction 系(narrative_reference /
+    style_reference / character_judgment)はその中に絞る。Phase C で
+    narrative_reference が複数作品にまたがるようになったため、person_id だけで
+    集めると**他プロファイル(他作品)の本文までカードの根拠に混ざる**
+    (実測: 夢十夜専用プロファイルで再実行すると他の9長編が候補に入っていた)。
+
+    creative_grammar(著者の創作論一般)は特定の作品に紐づかないので、この絞り込み
+    の対象外にする — profile の source_scope.source_ids には対象小説のIDしか
+    無く、創作論エッセイのIDは含まれない(実例: cp_yume_juya の
+    source_ids=["AOZORA_000799"] だが、既存カードは写生文・作物の批評からの
+    根拠も持つ)。
     """
     sources = (
         client.table("sources")
@@ -89,6 +103,14 @@ def _fetch_usable_chunks(person_id: str, *, client) -> dict[str, list[dict]]:
     )
     if not sources:
         return {}
+
+    if source_ids:
+        sources = [
+            s for s in sources
+            if s["corpus_role"] == "creative_grammar" or s["source_id"] in source_ids
+        ]
+        if not sources:
+            return {}
 
     by_source = {s["source_id"]: s for s in sources}
     # 全件取得はページング必須(PostgRESTの1000行上限。paged.py 参照)
@@ -139,7 +161,10 @@ def generate_for_profile(profile_id: str, *, client=None, call_json=None) -> dic
     call = call_json or llm.call_json
 
     profile = repo.get_active_profile(profile_id, client=c)
-    grouped = _fetch_usable_chunks(profile["person_id"], client=c)
+    scope_source_ids = set((profile.get("source_scope") or {}).get("source_ids") or [])
+    grouped = _fetch_usable_chunks(
+        profile["person_id"], source_ids=scope_source_ids, client=c
+    )
 
     # 既存カード(rejected以外)は作り直さない
     existing = {
