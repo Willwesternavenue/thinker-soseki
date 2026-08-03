@@ -39,11 +39,26 @@ export function runOutputGuardExact(answer: string, persona: Persona): string[] 
   return hits;
 }
 
+/**
+ * judge の実行結果。
+ *
+ * ⚠️ `pass` と `executed` を分ける。judge 自体が落ちた場合も回答は止めない
+ * (フェイルオープン。完全一致は通過済み)が、**それを「合格」として記録しない**。
+ * 分けないと、APIキー失効やモデルID変更で judge が全件失敗しても trace 上は
+ * 「全件 Guard 通過」に見え、検査が静かに死んでいることに気づけない。
+ */
+export type JudgeOutcome = {
+  pass: boolean;
+  issues: string[];
+  /** judge を実際に実行して判定を得られたか(false は例外で判定不能) */
+  executed: boolean;
+};
+
 /** 第二段: 軽量LLM judge(Haiku、仕様13.2)。文脈依存語と一人称を判定。 */
 export async function runOutputGuardJudge(
   answer: string,
   persona: Persona
-): Promise<{ pass: boolean; issues: string[] }> {
+): Promise<JudgeOutcome> {
   const contextualTerms = persona.banned_terms_contextual ?? [];
   try {
     const result = await callJson<{ pass: boolean; issues: string[] }>({
@@ -73,10 +88,15 @@ ${answer}
 出力形式(JSONのみ): {"pass": true/false, "issues": ["明確な違反の具体内容(無ければ空)"]}`,
       maxTokens: 400,
     });
-    return { pass: Boolean(result.pass), issues: result.issues ?? [] };
+    return {
+      pass: Boolean(result.pass),
+      issues: result.issues ?? [],
+      executed: true,
+    };
   } catch {
-    // judge自体の失敗は回答を止めない(完全一致は通過済み)
-    return { pass: true, issues: ["judge実行失敗(スキップ)"] };
+    // judge自体の失敗は回答を止めない(完全一致は通過済み)。
+    // ただし executed=false で「判定できなかった」ことを残す — 合格と区別する
+    return { pass: true, issues: ["judge実行失敗(スキップ)"], executed: false };
   }
 }
 
@@ -93,6 +113,24 @@ export function buildRegenerateInstruction(
 /** 再生成も失敗した場合の安全側回答(仕様13.3)。決定的テキストでGuardリスクなし。 */
 export function buildSafeAnswer(persona: Persona): string {
   return `すまん、今回はうまく言葉にならなかった。${persona.first_person}なりに真剣に考えたいから、もう一度、別の言い方で聞いてくれないか。`;
+}
+
+/**
+ * Guard の結果を GuardResult(trace記録用)へ変換する。
+ *
+ * judge を「実行して合格/不合格だった」のと「そもそも実行していない/できなかった」
+ * のを混ぜない。混ぜると監査記録が実態と食い違う:
+ *
+ * - judge が例外で落ちた回を "pass" と書くと、APIキー失効やモデルID変更で judge が
+ *   全件失敗しても trace 上は「全件 Guard 通過」に見える(静かに死ぬ)
+ * - 完全一致でヒットして judge を**実行していない**回を "fail" と書くと、走って
+ *   いない判定を失敗として記録することになる
+ *
+ * どちらも "skipped" で表す(型は types.ts の GuardResult)。
+ */
+export function judgeResultFor(judge: JudgeOutcome | null): GuardResult["judge_result"] {
+  if (!judge || !judge.executed) return "skipped";
+  return judge.pass ? "pass" : "fail";
 }
 
 export function emptyGuardResult(): GuardResult {

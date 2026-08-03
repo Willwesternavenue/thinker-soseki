@@ -32,6 +32,7 @@ import {
 import {
   buildRegenerateInstruction,
   buildSafeAnswer,
+  judgeResultFor,
   runOutputGuardExact,
   runOutputGuardJudge,
 } from "./guard";
@@ -307,18 +308,20 @@ async function runGuardWithRegenerate(
   context: { system: string; userContent: string }
 ): Promise<{ finalAnswer: string; guard: GuardResult }> {
   const firstExact = runOutputGuardExact(answer, persona);
+  // 完全一致でヒットした回は judge を**実行しない**(再生成が確定しているため)。
+  // その場合は null にする — 走っていない判定を "fail" として記録しないため
   const firstJudge =
-    firstExact.length === 0
-      ? await runOutputGuardJudge(answer, persona)
-      : { pass: false, issues: [] as string[] };
+    firstExact.length === 0 ? await runOutputGuardJudge(answer, persona) : null;
 
-  if (firstExact.length === 0 && firstJudge.pass) {
+  if (firstExact.length === 0 && firstJudge?.pass) {
     return {
       finalAnswer: answer,
       guard: {
         passed: true,
         exact_match_hits: [],
-        judge_result: "pass",
+        // judge が例外で落ちた回は "pass" ではなく "skipped"(検査を静かに死なせない)
+        judge_result: judgeResultFor(firstJudge),
+        judge_issues: firstJudge.issues,
         regenerated: false,
         safe_answer_used: false,
       },
@@ -326,7 +329,7 @@ async function runGuardWithRegenerate(
   }
 
   // 再生成(最大1回、仕様13.3)
-  const instruction = buildRegenerateInstruction(firstExact, firstJudge.issues);
+  const instruction = buildRegenerateInstruction(firstExact, firstJudge?.issues ?? []);
   const regenerated = await callText({
     model: MODEL_ANSWER,
     system: context.system,
@@ -349,8 +352,10 @@ async function runGuardWithRegenerate(
       guard: {
         passed: false,
         exact_match_hits: [...new Set([...firstExact, ...secondExact])],
-        judge_result: "fail",
-        judge_issues: firstJudge.issues,
+        // 完全一致で落としたので judge は実行していない。走っていない判定を
+        // "fail" と書かない(不合格の根拠は exact_match_hits 側にある)
+        judge_result: judgeResultFor(firstJudge),
+        judge_issues: firstJudge?.issues ?? [],
         regenerated: true,
         safe_answer_used: true,
       },
@@ -363,7 +368,7 @@ async function runGuardWithRegenerate(
     guard: {
       passed: secondJudge.pass,
       exact_match_hits: firstExact,
-      judge_result: secondJudge.pass ? "pass" : "fail",
+      judge_result: judgeResultFor(secondJudge),
       judge_issues: secondJudge.issues,
       regenerated: true,
       safe_answer_used: false,
