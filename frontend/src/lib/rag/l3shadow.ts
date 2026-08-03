@@ -21,6 +21,26 @@ const PERSON_ID = "natsume_soseki";
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const SHADOW_TIMEOUT_MS = 8000;
 
+/**
+ * L3 の判定対象から外す rule_scope。
+ *
+ * ⚠️ Bridge Rule は「思想 → 創作」の対応であり、通常回答の判断規則ではない。
+ * pipeline は routeKind==="creative" のときだけ fetchBridges を呼び、仕様§6
+ * 「創作依頼における思想の唯一の経路」としてブリッジを創作ルートに閉じ込めている。
+ * ここで除外しないと L3 経路がその囲いを迂回する。
+ *
+ * 実測(2026-08-02): 除外前は judgment 23件ではなく bridge_rule 6件を含む29件を
+ * 評価していた。ブリッジ版の content は trigger_conditions を持たない
+ * (source_thought_id / target_creative_card_id / forbidden_inferences のみ)ため
+ * 発火条件が空のまま判定にかかり、L3_MODE の既定が "assist" なので創作専用の制約が
+ * 通常回答へ注入されうる状態だった。
+ *
+ * 除外は bridge_rule だけに留める。dialogue / response_policy を将来使い始めた
+ * ときに黙って落とさないため(rule_scope の許容値は judgment / dialogue /
+ * response_policy / bridge_rule)。
+ */
+export const L3_EXCLUDED_RULE_SCOPES = ["bridge_rule"] as const;
+
 /** 判定・注入に必要な規則情報(最新バージョンのcontentから展開) */
 export type L3Rule = {
   rule_id: string;
@@ -173,6 +193,16 @@ export async function runL3Shadow(
   }
 }
 
+/** テスト用: 5分キャッシュを捨てる(テスト間で読み込み条件を検証できるように)。 */
+export function resetL3RulesCache(): void {
+  rulesCache = null;
+}
+
+/** テスト用: 規則の読み込み条件(rule_scope 除外など)を検証するための入口。 */
+export function loadL3RulesForTest(db: SupabaseClient): Promise<L3Rule[]> {
+  return loadL3Rules(db);
+}
+
 /** 全active規則の最新バージョン(draft含む)を取得。5分キャッシュ。 */
 async function loadL3Rules(db: SupabaseClient): Promise<L3Rule[]> {
   if (rulesCache && Date.now() - rulesCache.at < CACHE_TTL_MS) {
@@ -182,7 +212,9 @@ async function loadL3Rules(db: SupabaseClient): Promise<L3Rule[]> {
     .from("judgment_rules")
     .select("rule_id, title, rule_type")
     .eq("person_id", PERSON_ID)
-    .eq("lifecycle", "active");
+    .eq("lifecycle", "active")
+    // Bridge Rule は創作ルート専用。ここに混ぜると通常回答へ創作用の制約が入る
+    .neq("rule_scope", L3_EXCLUDED_RULE_SCOPES[0]);
   if (!identities?.length) {
     rulesCache = { rules: [], at: Date.now() };
     return [];
