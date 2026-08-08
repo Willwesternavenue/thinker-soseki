@@ -3,10 +3,18 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { LogoutButton } from "@/components/logout-button";
+import { WorkerStatus } from "@/components/worker-status";
+import { startWorker } from "@/lib/worker-control";
+import {
+  WORKER_ALIVE_THRESHOLD_SEC,
+  workerPresence,
+  type WorkerHeartbeat,
+} from "@/lib/worker-presence";
 import {
   createCreativeGeneration,
   getCreativeGeneration,
   getCreativeTrace,
+  getWorkerHeartbeat,
   type CreativeTraceView,
   type GenerationState,
   type ProfileOption,
@@ -39,6 +47,7 @@ type Tab = "work" | "outline" | "cards" | "trace" | "guard";
 export function CreativeClient({
   profiles,
   isAdmin,
+  canStartWorker,
 }: {
   profiles: ProfileOption[];
   isAdmin: boolean;
@@ -80,6 +89,47 @@ export function CreativeClient({
     }, POLL_MS);
     return () => clearInterval(timer);
   }, [generation, loadTrace]);
+
+  const [heartbeat, setHeartbeat] = useState<WorkerHeartbeat | null>(null);
+  // 取得に失敗した回は判定しない(誤って「不在」と断定しないため)
+  const [hbUnknown, setHbUnknown] = useState(true);
+  const [startError, setStartError] = useState<string | null>(null);
+  const [starting, setStarting] = useState(false);
+  // 起動を押した時刻。ハートビートが出ないまま閾値を超えたら失敗と見なす
+  const [startedAt, setStartedAt] = useState<number | null>(null);
+  // render中に Date.now() を直に呼ぶと純度違反になるため、ポーリングのたびに
+  // 時計を進める(admin/jobs の jobs-client.tsx と同じ手当て)
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    let stop = false;
+    const tick = async () => {
+      const { heartbeat: hb, error } = await getWorkerHeartbeat();
+      if (stop) return;
+      setNow(Date.now());
+      if (error) {
+        setHbUnknown(true);
+        return;
+      }
+      setHbUnknown(false);
+      setHeartbeat(hb ?? null);
+    };
+    tick();
+    const timer = setInterval(tick, POLL_MS);
+    return () => {
+      stop = true;
+      clearInterval(timer);
+    };
+  }, []);
+
+  async function handleStartWorker() {
+    setStarting(true);
+    setStartError(null);
+    const { error } = await startWorker();
+    setStarting(false);
+    setStartedAt(error ? null : Date.now());
+    if (error) setStartError(error);
+  }
 
   async function handleSubmit() {
     if (submitting) return;
@@ -223,6 +273,30 @@ export function CreativeClient({
           </p>
         </section>
       )}
+
+      {!hbUnknown &&
+        (() => {
+          const presence = workerPresence(heartbeat, now, generation?.job_id);
+          // 起動したのに閾値を過ぎてもハートビートが出ない = 起動に失敗した
+          // (spawn の失敗は例外で来ないため、ここでしか気づけない)
+          const startFailed =
+            presence === "absent" &&
+            startedAt != null &&
+            now - startedAt > WORKER_ALIVE_THRESHOLD_SEC * 1000;
+          return (
+            <WorkerStatus
+              presence={presence}
+              canStart={canStartWorker}
+              starting={starting}
+              onStart={handleStartWorker}
+              error={
+                startFailed
+                  ? "起動できませんでした。上のコマンドをターミナルで実行してください"
+                  : startError
+              }
+            />
+          );
+        })()}
 
       {running && generation && <Progress step={generation.current_step} />}
 
