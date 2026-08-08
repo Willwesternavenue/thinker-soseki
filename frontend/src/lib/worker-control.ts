@@ -28,11 +28,15 @@ export async function startWorker(): Promise<{ started?: boolean; error?: string
   }
 
   const supabase = createAdminClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("worker_heartbeats")
     .select("status, current_job_id, last_seen_at")
     .eq("worker_name", "ingestion")
     .maybeSingle();
+  // 取得失敗を「不在」と扱わない(設計 §6)。data は取得失敗時も null になり、
+  // workerPresence(null, ...) は "absent" を返すため、ここで弾かないと
+  // 稼働中でも起動してしまい二重起動(=同じジョブの二重処理)につながる。
+  if (error) return { error: error.message };
   if (workerPresence((data as WorkerHeartbeat) ?? null, Date.now()) !== "absent") {
     return { started: false }; // 既に動いている。何もしない
   }

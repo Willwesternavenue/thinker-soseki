@@ -2,14 +2,18 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const h = vi.hoisted(() => ({
   spawned: [] as string[],
+  spawnedChild: null as { on: ReturnType<typeof vi.fn>; unref: ReturnType<typeof vi.fn> } | null,
   heartbeat: null as Record<string, unknown> | null,
+  hbError: null as { message: string } | null,
   supabaseUrl: "http://127.0.0.1:55421",
 }));
 
 vi.mock("node:child_process", () => ({
   spawn: (cmd: string) => {
     h.spawned.push(cmd);
-    return { on: () => {}, unref: () => {} };
+    const child = { on: vi.fn(), unref: vi.fn() };
+    h.spawnedChild = child;
+    return child;
   },
 }));
 vi.mock("@/lib/auth", () => ({ requireAdmin: async () => {} }));
@@ -27,7 +31,7 @@ vi.mock("@/lib/supabase/admin", () => ({
       eq() {
         return this;
       },
-      maybeSingle: async () => ({ data: h.heartbeat }),
+      maybeSingle: async () => ({ data: h.heartbeat, error: h.hbError }),
     }),
   }),
 }));
@@ -37,7 +41,9 @@ const { startWorker } = await import("./worker-control");
 describe("startWorker(ローカル限定の起動)", () => {
   beforeEach(() => {
     h.spawned.length = 0;
+    h.spawnedChild = null;
     h.heartbeat = null;
+    h.hbError = null;
     h.supabaseUrl = "http://127.0.0.1:55421";
   });
 
@@ -63,5 +69,17 @@ describe("startWorker(ローカル限定の起動)", () => {
     const result = await startWorker();
     expect(h.spawned).toEqual(["uv"]);
     expect(result.started).toBe(true);
+    // spawn失敗はerrorイベントで来るため、拾わないと未処理例外になる
+    expect(h.spawnedChild?.on).toHaveBeenCalledWith("error", expect.any(Function));
+    // 親プロセス終了後もワーカーが生き続けられるようunrefしておく
+    expect(h.spawnedChild?.unref).toHaveBeenCalled();
+  });
+
+  it("生存確認の取得に失敗したら起動しない(取得失敗を不在と扱わない)", async () => {
+    h.hbError = { message: "network error" };
+    const result = await startWorker();
+    expect(h.spawned).toEqual([]);
+    expect(result.error).toBeTruthy();
+    expect(result.started).toBeUndefined();
   });
 });
