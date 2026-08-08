@@ -37,12 +37,19 @@ worker_heartbeats.last_seen_at : 6日前
 
 | 部品 | 置き場所 | 責務 | 依存 |
 |---|---|---|---|
-| `workerPresence()` | `frontend/src/lib/worker-presence.ts` | ハートビート行＋現在時刻＋自分の job_id → 状態を返す**純関数** | なし |
-| `getWorkerHeartbeat()` | 同上 | `worker_heartbeats` を1行読む server action | Supabase |
-| `<WorkerStatus>` | `frontend/src/components/worker-status.tsx` | 状態の描画。不在時だけ起動UIを出す | 上2つ |
+| `workerPresence()` / `workerStatusView()` | `frontend/src/lib/worker-presence.ts` | 生死判定と**表示の分岐**を返す純関数 | なし |
+| `getWorkerHeartbeat()` | `frontend/src/app/creative/actions.ts` | `worker_heartbeats` を1行読む server action | Supabase |
+| `<WorkerStatus>` | `frontend/src/components/worker-status.tsx` | `workerStatusView()` の結果を描くだけ | 上2つ |
 | `startWorker()` | `frontend/src/lib/worker-control.ts` | ローカル限定でプロセスを起こす server action | `child_process` |
 
 判定を純関数として独立させることで、**DBもプロセスも無しで全状態を検証できる**。
+
+表示の分岐も純関数へ出す。既存のテスト11ファイルはすべて `.test.ts` で TSX
+テストの前例が無く、分岐をコンポーネント内に置くと検証が前例作りとセットに
+なるため。コンポーネントは描くだけの部品にする。
+
+`getWorkerHeartbeat()` は創作画面の既存 server action 群に置く。共通化は
+`/admin/jobs` を触らない判断（§2）と釣り合わない。
 
 ## 4. 状態判定
 
