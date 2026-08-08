@@ -120,7 +120,11 @@ export function CreativeClient({
         const seen = workerPresence(hb ?? null, Date.now());
         setStartedAt((prev) => nextStartWatch(prev, seen));
         if (seen !== "absent") setStartError(null);
-      } catch {
+      } catch (e) {
+        // ここを握りつぶすと、セッション失効やserver actionの失敗が続いても
+        // 警告ボックスが痕跡なく消え続ける。フェイルオープンは維持しつつ、
+        // 原因はdevtoolsに残す(handleStartWorkerと同じ扱い)
+        console.error("ハートビート取得エラー:", e);
         // 取得自体が落ちても(requireUser の例外・POST 失敗・オフライン)
         // 時計は進める。止めると now が凍り、その間に落ちたワーカーを
         // 不在と判定できなくなる
