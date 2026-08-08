@@ -132,8 +132,21 @@ export type ProfileRow = {
  * DB に入れる行を組み立てる。**status は含めない** —
  * 状態変更（draft→active→archived）は編集とは別の操作にして、
  * 保存のついでに公開されることを防ぐ。
+ *
+ * ⚠️ `existingSettings` を必ず渡すこと（更新時）。
+ * `default_generation_settings` は丸ごと置き換えられるため、ここで既存値を
+ * 引き継がないと**フォームに入力欄が無い設定が保存のたびに消える**。
+ * 2026-08-03 に実際に起きた: 管理画面で Guard 閾値を直しただけで
+ * `rules` が assist → off に戻り、ブリッジ6件が黙って切れた
+ * （エラーも警告も出ないので、生成物を読むまで気づけない）。
+ *
+ * このフォームが所有するのは Guard 閾値だけ。それ以外のキー
+ * (`rules` / `device_exclusion` など) は触らずに通す。
  */
-export function buildProfileRow(fields: ProfileFormFields): ProfileRow {
+export function buildProfileRow(
+  fields: ProfileFormFields,
+  existingSettings?: Record<string, unknown>
+): ProfileRow {
   const lines = (s: string) => s.split("\n").map((l) => l.trim()).filter(Boolean);
   const optional = (s: string) => (s.trim() ? s.trim() : null);
 
@@ -155,10 +168,13 @@ export function buildProfileRow(fields: ProfileFormFields): ProfileRow {
     },
     // 閾値はコードに直書きせずここに持たせる（仕様§8.1）
     default_generation_settings: {
+      // 新規作成時の既定値。既存があればそちらが優先される
       use_rag: true,
       use_cards: true,
       rules: "off",
       preset_name: "cards_only",
+      ...existingSettings,
+      // Guard 閾値だけはこのフォームが所有するので、既存値を上書きする
       guard: {
         ngram_n: Number(fields.ngram_n),
         lcs_threshold: Number(fields.lcs_threshold),

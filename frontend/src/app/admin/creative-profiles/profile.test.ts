@@ -123,6 +123,28 @@ describe("buildProfileRow(DB行の組み立て)", () => {
     });
   });
 
+  it("フォームに無い設定(rules・device_exclusion)を保存で消さない", () => {
+    // 2026-08-03 実測: 管理画面で閾値を直しただけで rules が assist → off に戻り、
+    // ブリッジ6件が黙って切れた。フォームが持たないキーは既存値を残すこと。
+    const row = buildProfileRow(valid, {
+      use_rag: true,
+      use_cards: true,
+      rules: "assist",
+      device_exclusion: "on",
+      preset_name: "cards_only",
+      guard: {
+        ngram_n: 1,
+        lcs_threshold: 1,
+        ngram_overlap_ratio_max: 1,
+        max_regenerations: 1,
+      },
+    });
+    expect(row.default_generation_settings).toMatchObject({
+      rules: "assist",
+      device_exclusion: "on",
+    });
+  });
+
   it("status は含めない(状態変更は別操作にするため)", () => {
     expect(buildProfileRow(valid)).not.toHaveProperty("status");
   });

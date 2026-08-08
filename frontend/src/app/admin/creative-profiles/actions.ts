@@ -26,15 +26,34 @@ export async function saveCreativeProfile(
   if (!validation.ok) return { errors: validation.errors };
 
   const supabase = createClient();
-  const row = buildProfileRow(fields);
+  const profileId = fields.profile_id.trim();
+  const personId = fields.person_id.trim();
 
   // 人物が実在することを確かめる（FK違反をDBエラーとして見せない）
   const { data: person } = await supabase
     .from("personas")
     .select("person_id")
-    .eq("person_id", row.person_id)
+    .eq("person_id", personId)
     .maybeSingle();
-  if (!person) return { error: `人物 ${row.person_id} が存在しません` };
+  if (!person) return { error: `人物 ${personId} が存在しません` };
+
+  // 更新時は既存の設定を読んでから組み立てる。
+  // `update` は default_generation_settings を丸ごと置き換えるので、ここで
+  // 読まないと**フォームに入力欄の無い設定が保存のたびに消える**
+  // （2026-08-03: Guard 閾値を直しただけで rules が assist → off に戻った）。
+  let existingSettings: Record<string, unknown> | undefined;
+  if (mode === "update") {
+    const { data: existing } = await supabase
+      .from("creative_profiles")
+      .select("default_generation_settings")
+      .eq("profile_id", profileId)
+      .maybeSingle();
+    existingSettings =
+      (existing?.default_generation_settings as Record<string, unknown> | null) ??
+      undefined;
+  }
+
+  const row = buildProfileRow(fields, existingSettings);
 
   if (mode === "create") {
     const { error } = await supabase.from("creative_profiles").insert(row);
