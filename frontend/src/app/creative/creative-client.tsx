@@ -42,6 +42,7 @@ export function CreativeClient({
 }: {
   profiles: ProfileOption[];
   isAdmin: boolean;
+  canStartWorker: boolean;
 }) {
   const [form, setForm] = useState<BriefFormInput>({
     ...EMPTY_FORM,

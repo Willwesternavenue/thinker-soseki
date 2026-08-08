@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getUserWithProfile } from "@/lib/supabase/server";
+import { SUPABASE_URL } from "@/lib/const";
+import { canStartWorkerHere } from "@/lib/worker-presence";
 import { CreativeClient } from "@/app/creative/creative-client";
 import type { ProfileOption } from "@/app/creative/actions";
 
@@ -24,6 +26,7 @@ export default async function AdminCreativePage() {
     <CreativeClient
       profiles={(data ?? []) as ProfileOption[]}
       isAdmin={auth?.profile.role === "admin"}
+      canStartWorker={canStartWorkerHere(SUPABASE_URL)}
     />
   );
 }

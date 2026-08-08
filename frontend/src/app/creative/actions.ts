@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
+import type { WorkerHeartbeat } from "@/lib/worker-presence";
 import {
   buildBriefRaw,
   isDuplicateKeyError,
@@ -187,4 +188,25 @@ export async function getCreativeTrace(jobId: string): Promise<{
     .in("card_id", trace.used_card_ids);
 
   return { trace, cards: (cards ?? []) as NonNullable<Awaited<ReturnType<typeof getCreativeTrace>>["cards"]> };
+}
+
+/**
+ * ワーカーの生存確認(創作画面のポーリング用)。
+ *
+ * ⚠️ 「行が無い」(= 一度も起動していない)と「取得に失敗した」を区別する。
+ * 取得失敗を不在として扱うと誤警告が続き、警告そのものが無視されるようになる。
+ */
+export async function getWorkerHeartbeat(): Promise<{
+  heartbeat?: WorkerHeartbeat | null;
+  error?: string;
+}> {
+  await requireUser();
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("worker_heartbeats")
+    .select("status, current_job_id, last_seen_at")
+    .eq("worker_name", "ingestion")
+    .maybeSingle();
+  if (error) return { error: error.message };
+  return { heartbeat: (data as WorkerHeartbeat) ?? null };
 }
