@@ -6,8 +6,9 @@ import { LogoutButton } from "@/components/logout-button";
 import { WorkerStatus } from "@/components/worker-status";
 import { startWorker } from "@/lib/worker-control";
 import {
-  WORKER_ALIVE_THRESHOLD_SEC,
+  nextStartWatch,
   workerPresence,
+  workerStartOutcome,
   type WorkerHeartbeat,
 } from "@/lib/worker-presence";
 import {
@@ -92,9 +93,10 @@ export function CreativeClient({
 
   const [heartbeat, setHeartbeat] = useState<WorkerHeartbeat | null>(null);
   // 取得に失敗した回は判定しない(誤って「不在」と断定しないため)
-  const [hbUnknown, setHbUnknown] = useState(true);
+  const [heartbeatUnknown, setHeartbeatUnknown] = useState(true);
   const [startError, setStartError] = useState<string | null>(null);
-  const [starting, setStarting] = useState(false);
+  // server action の往復中。返ってきたあとは startedAt 側で無効化を引き継ぐ
+  const [startInFlight, setStartInFlight] = useState(false);
   // 起動を押した時刻。ハートビートが出ないまま閾値を超えたら失敗と見なす
   const [startedAt, setStartedAt] = useState<number | null>(null);
   // render中に Date.now() を直に呼ぶと純度違反になるため、ポーリングのたびに
@@ -104,15 +106,28 @@ export function CreativeClient({
   useEffect(() => {
     let stop = false;
     const tick = async () => {
-      const { heartbeat: hb, error } = await getWorkerHeartbeat();
-      if (stop) return;
-      setNow(Date.now());
-      if (error) {
-        setHbUnknown(true);
-        return;
+      try {
+        const { heartbeat: hb, error } = await getWorkerHeartbeat();
+        if (stop) return;
+        if (error) {
+          setHeartbeatUnknown(true);
+          return;
+        }
+        setHeartbeatUnknown(false);
+        setHeartbeat(hb ?? null);
+        // ハートビートが出たら起動待ちを降ろす。残したままだと、起動に成功した
+        // 数分後にワーカーが落ちたときに「起動できませんでした」と誤った原因を出す
+        const seen = workerPresence(hb ?? null, Date.now());
+        setStartedAt((prev) => nextStartWatch(prev, seen));
+        if (seen !== "absent") setStartError(null);
+      } catch {
+        // 取得自体が落ちても(requireUser の例外・POST 失敗・オフライン)
+        // 時計は進める。止めると now が凍り、その間に落ちたワーカーを
+        // 不在と判定できなくなる
+        if (!stop) setHeartbeatUnknown(true);
+      } finally {
+        if (!stop) setNow(Date.now());
       }
-      setHbUnknown(false);
-      setHeartbeat(hb ?? null);
     };
     tick();
     const timer = setInterval(tick, POLL_MS);
@@ -123,12 +138,23 @@ export function CreativeClient({
   }, []);
 
   async function handleStartWorker() {
-    setStarting(true);
+    setStartInFlight(true);
     setStartError(null);
-    const { error } = await startWorker();
-    setStarting(false);
-    setStartedAt(error ? null : Date.now());
-    if (error) setStartError(error);
+    try {
+      const { error } = await startWorker();
+      // 起動待ちに入る。ボタンはハートビートが出るか閾値を過ぎるまで無効のまま
+      setStartedAt(error ? null : Date.now());
+      if (error) setStartError(error);
+    } catch (e) {
+      // requireAdmin() は戻り値ではなく例外で拒否する(lib/auth.ts)。握らないと
+      // ボタンが「起動中…」のまま理由も出ずに固まる。本番では server action の
+      // 例外メッセージは伏せられるため、生のまま出さず定型文にする
+      console.error("worker起動エラー:", e);
+      setStartedAt(null);
+      setStartError("起動できませんでした。権限を確認するか、管理者に連絡してください");
+    } finally {
+      setStartInFlight(false);
+    }
   }
 
   async function handleSubmit() {
@@ -169,6 +195,10 @@ export function CreativeClient({
 
   const profile = profiles.find((p) => p.profile_id === form.profileId);
   const running = generation != null && shouldKeepPolling(generation.status);
+  const presence = workerPresence(heartbeat, now, generation?.job_id);
+  // 起動したのに閾値を過ぎてもハートビートが出ない = 起動に失敗した
+  // (spawn の失敗は例外で来ないため、ここでしか気づけない)
+  const startOutcome = workerStartOutcome(presence, startedAt, now);
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6 p-6">
@@ -274,29 +304,21 @@ export function CreativeClient({
         </section>
       )}
 
-      {!hbUnknown &&
-        (() => {
-          const presence = workerPresence(heartbeat, now, generation?.job_id);
-          // 起動したのに閾値を過ぎてもハートビートが出ない = 起動に失敗した
-          // (spawn の失敗は例外で来ないため、ここでしか気づけない)
-          const startFailed =
-            presence === "absent" &&
-            startedAt != null &&
-            now - startedAt > WORKER_ALIVE_THRESHOLD_SEC * 1000;
-          return (
-            <WorkerStatus
-              presence={presence}
-              canStart={canStartWorker}
-              starting={starting}
-              onStart={handleStartWorker}
-              error={
-                startFailed
-                  ? "起動できませんでした。上のコマンドをターミナルで実行してください"
-                  : startError
-              }
-            />
-          );
-        })()}
+      {!heartbeatUnknown && (
+        <WorkerStatus
+          presence={presence}
+          canStart={canStartWorker}
+          isAdmin={isAdmin}
+          hasPendingJob={running}
+          starting={startInFlight || startOutcome === "starting"}
+          onStart={handleStartWorker}
+          error={
+            startOutcome === "failed"
+              ? "起動できませんでした。上のコマンドをターミナルで実行してください"
+              : startError
+          }
+        />
+      )}
 
       {running && generation && <Progress step={generation.current_step} />}
 

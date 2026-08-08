@@ -14,6 +14,7 @@ export const WORKER_ALIVE_THRESHOLD_SEC = 30;
 export const WORKER_START_COMMAND = "cd worker && uv run python -m src.main";
 
 export type WorkerHeartbeat = {
+  /** 判定には使わない。落ちた行は最後の値のまま残るため(下の workerPresence 参照) */
   status: string;
   current_job_id: string | null;
   last_seen_at: string;
@@ -61,26 +62,72 @@ export function canStartWorkerHere(supabaseUrl: string): boolean {
   }
 }
 
+export type WorkerStatusContext = {
+  /** 接続先がローカルで、この画面から起こせるプロセスと同じDBを見るか */
+  canStart: boolean;
+  /** 起動する権限があるか。無いまま押すと startWorker が例外を投げる(lib/auth.ts) */
+  isAdmin: boolean;
+  /** 処理を待っているジョブがあるか。無ければ「依頼は保存されています」は嘘になる */
+  hasPendingJob: boolean;
+};
+
 /** 表示の分岐。コンポーネントはこの結果を描くだけにする(検証を純関数に寄せる)。 */
 export function workerStatusView(
   presence: WorkerPresence,
-  canStart: boolean
+  { canStart, isAdmin, hasPendingJob }: WorkerStatusContext
 ): WorkerStatusView {
   if (presence === "queued") {
     return {
       tone: "info",
-      title: "Workerは他の生成を処理中です",
+      // 同じプロセスが ingestion_jobs / distillation_jobs も回す(worker/src/main.py)
+      // ため、待たされている原因は創作の生成とは限らない
+      title: "Workerは他の処理を実行中です",
       body: "順番が来るまでお待ちください。",
       showStartButton: false,
       showCommand: false,
     };
   }
   if (presence !== "absent") return null;
+  const body = hasPendingJob
+    ? "依頼は保存されていますが、処理するWorkerが起動していないため始まりません。"
+    : "いま依頼しても、処理するWorkerが起動していないため始まりません。";
   return {
     tone: "warn",
     title: "Workerが動いていません",
-    body: "依頼は保存されていますが、処理するWorkerが起動していないため始まりません。",
-    showStartButton: canStart,
-    showCommand: true,
+    // 起動手段を持たない人には手順ではなく連絡先を出す(押せないボタンを
+    // 出さないのと同じ理由。設計 §2)
+    body: isAdmin ? body : `${body}管理者に連絡してください。`,
+    showStartButton: canStart && isAdmin,
+    showCommand: isAdmin,
   };
+}
+
+/**
+ * 起動を押したあとの状態。押した時刻を渡し、ハートビートが出るまでを "starting"、
+ * 閾値を過ぎても出ないままなら "failed" とする。
+ *
+ * "starting" の間ボタンを無効にして二重起動の窓を狭める(設計 §5.2)。spawn の
+ * 失敗は例外で来ないため、失敗はここでしか気づけない(設計 §6)。
+ */
+export function workerStartOutcome(
+  presence: WorkerPresence,
+  startedAt: number | null,
+  nowMs: number
+): "starting" | "failed" | null {
+  if (startedAt == null) return null;
+  if (presence !== "absent") return null; // ハートビートが出た = 起動できた
+  return nowMs - startedAt > WORKER_ALIVE_THRESHOLD_SEC * 1000 ? "failed" : "starting";
+}
+
+/**
+ * 起動待ちを続けるか。ハートビートが出た時点で降ろす。
+ * 降ろさないと、起動に成功した数分後にワーカーが落ちたとき
+ * 「起動できませんでした」という誤った原因を出してしまう。
+ */
+export function nextStartWatch(
+  startedAt: number | null,
+  presence: WorkerPresence
+): number | null {
+  if (startedAt == null) return null;
+  return presence === "absent" ? startedAt : null;
 }

@@ -13,17 +13,21 @@ import {
 export function WorkerStatus({
   presence,
   canStart,
+  isAdmin,
+  hasPendingJob,
   starting,
   onStart,
   error,
 }: {
   presence: WorkerPresence;
   canStart: boolean;
+  isAdmin: boolean;
+  hasPendingJob: boolean;
   starting: boolean;
   onStart: () => void;
   error?: string | null;
 }) {
-  const view = workerStatusView(presence, canStart);
+  const view = workerStatusView(presence, { canStart, isAdmin, hasPendingJob });
   if (!view) return null;
 
   const box =
