@@ -20,6 +20,7 @@ import {
   directSourceIds,
   rankByRoute,
   retrievalFiltersFor,
+  usableSubject,
 } from "./corpus-routing";
 import {
   diversifyEvidence,
@@ -97,6 +98,9 @@ export async function answerQuestion(
 
   // 3. 質問分類
   const classification = await classifyQuery(retrievalQuery);
+  // 分類器が返す主題語は生成物なので、質問文に実在する語だけを採る。
+  // 実測でプロンプトの例(「鴎外」)を写して返したことがある
+  const subject = usableSubject(classification.subject, retrievalQuery);
 
   // 4. Thought Router(多段)
   // フォールバックカードはルーティング候補から除外する(全滅時の安全網であり、
@@ -166,8 +170,8 @@ export async function answerQuestion(
       : Promise.resolve([]),
     // 主題語が原典に一度も出てこないなら、関連度が足りていても断定させない。
     // ベクトルのスコアはこの判別ができない(§A-3・実測0.002差)
-    classification.subject
-      ? subjectFoundInCorpus(db, PERSON_ID, classification.subject)
+    subject
+      ? subjectFoundInCorpus(db, PERSON_ID, subject)
       : Promise.resolve(true),
   ]);
   // linked(承認リンクの代表原典)を最優先し、関連度検索を足す。
@@ -184,9 +188,7 @@ export async function answerQuestion(
   const abstentionReason = decideAbstention({
     kind: routeKind,
     evidence,
-    subject: classification.subject
-      ? { term: classification.subject, foundInCorpus: subjectPresent }
-      : null,
+    subject: subject ? { term: subject, foundInCorpus: subjectPresent } : null,
   });
 
   // 引用可能フィルタ(仕様7.8、コードで強制)

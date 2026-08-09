@@ -10,6 +10,7 @@ import {
   hasDirectSource,
   rankByRoute,
   retrievalFiltersFor,
+  usableSubject,
 } from "./corpus-routing";
 
 type TestChunk = {
@@ -267,6 +268,30 @@ describe("hasDirectSource(直接の原典があるか)", () => {
 
   it("根拠が無ければ false", () => {
     expect(hasDirectSource([], "thought")).toBe(false);
+  });
+});
+
+describe("usableSubject(分類器が返した主題語を使ってよいか)", () => {
+  it("質問文に出てくる語ならそのまま使う", () => {
+    expect(usableSubject("鴎外", "森鴎外の作品について印象を述べて下さい")).toBe("鴎外");
+    expect(usableSubject("維新", "明治維新は日本を前に進めましたか")).toBe("維新");
+  });
+
+  it("質問文に無い語は捨てる(プロンプトの例を写した場合に効く)", () => {
+    // 2026-08-09 実測: 明治維新の質問に対し分類器が「鴎外」を返した。
+    // プロンプトに書いた例をそのまま写したもので、そのまま使うと
+    // 「『鴎外』を扱った原典が無い」という無関係な理由で留保が出る
+    expect(usableSubject("鴎外", "明治維新は日本を前に進めましたか")).toBeNull();
+  });
+
+  it("空・未指定はそのまま null", () => {
+    expect(usableSubject("", "何か質問")).toBeNull();
+    expect(usableSubject(null, "何か質問")).toBeNull();
+    expect(usableSubject(undefined, "何か質問")).toBeNull();
+  });
+
+  it("前後の空白は無視して照合する", () => {
+    expect(usableSubject(" 維新 ", "明治維新について")).toBe("維新");
   });
 });
 

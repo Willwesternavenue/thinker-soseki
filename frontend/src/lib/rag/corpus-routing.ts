@@ -228,6 +228,27 @@ export function rankByRoute<T extends CorpusTagged & { score: number }>(
 }
 
 /**
+ * 分類器が返した主題語を、留保の判定に使ってよいか確かめる。
+ *
+ * ⚠️ **質問文に実際に出てくる語でなければ捨てる。**
+ * 2026-08-09 実測: 「明治維新は日本を前に進めましたか」に対し分類器が
+ * 「鴎外」を返した。プロンプトに書いた例をそのまま写したもので、
+ * そのまま使うと**無関係な語を理由に留保が出る**
+ * (実際に `abstention_reason` が「『鴎外』を扱った原典が…」になった)。
+ *
+ * 生成に頼る値は、生成に頼らない条件で裏を取る。ここでは「質問文の部分文字列で
+ * あること」がその条件で、写し・言い換え・作り話をまとめて弾ける。
+ */
+export function usableSubject(
+  raw: string | null | undefined,
+  query: string
+): string | null {
+  const term = (raw ?? "").trim();
+  if (!term) return null;
+  return query.includes(term) ? term : null;
+}
+
+/**
  * 「直接の原典」と数えるための関連度の下限。
  *
  * ベクトル検索は関連が無くても常に上位N件を返すため、ヒットの有無だけでは
