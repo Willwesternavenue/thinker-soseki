@@ -14,6 +14,14 @@ export const WORKER_ALIVE_THRESHOLD_SEC = 30;
 export const WORKER_START_COMMAND = "cd worker && uv run python -m src.main";
 
 /**
+ * 起動したワーカーの出力を落とす先(worker/ からの相対)。
+ *
+ * ⚠️ 起動失敗の理由はここにしか残らない。ワーカーは起動直後に落ちうるが、
+ * 画面には30秒後の「起動できませんでした」しか出ない。
+ */
+export const WORKER_START_LOG = ".worker-start.log";
+
+/**
  * `uv` 実行ファイルの探し先。PATH を先に、既知のインストール先を後ろに置く。
  *
  * ⚠️ **dev server の PATH は、あなたがターミナルで使っている PATH とは限らない。**

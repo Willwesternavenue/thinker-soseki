@@ -1,7 +1,7 @@
 "use server";
 
 import { spawn } from "node:child_process";
-import { accessSync, constants } from "node:fs";
+import { accessSync, constants, openSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { requireAdmin } from "@/lib/auth";
@@ -12,6 +12,7 @@ import {
   uvCandidatePaths,
   workerPresence,
   WORKER_START_COMMAND,
+  WORKER_START_LOG,
   type WorkerHeartbeat,
 } from "@/lib/worker-presence";
 
@@ -66,10 +67,16 @@ export async function startWorker(): Promise<{ started?: boolean; error?: string
 
   // process.cwd() は frontend/。worker は隣にある
   const cwd = path.join(process.cwd(), "..", "worker");
+
+  // ⚠️ stdio を "ignore" にしないこと。ワーカーは**起動直後に落ちうる**
+  // (秘匿キーが渡らないと Secret Manager へフォールバックし、その API が
+  // 無効なら即死する)。捨てると画面には30秒後の「起動できませんでした」しか
+  // 残らず、理由を追う手段が無くなる。追記モードでログへ落とす
+  const out = openSync(path.join(cwd, WORKER_START_LOG), "a");
   const child = spawn(uv, ["run", "python", "-m", "src.main"], {
     cwd,
     detached: true,
-    stdio: "ignore",
+    stdio: ["ignore", out, out],
     env: process.env,
   });
   // ここまで来ての失敗(worker 側の依存解決など)は error イベントで来る。

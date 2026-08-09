@@ -20,6 +20,7 @@ vi.mock("node:fs", () => ({
     if (p !== h.existingUv) throw new Error(`ENOENT: ${p}`);
   },
   constants: { X_OK: 1 },
+  openSync: () => 7, // ログ用のfd(値は何でもよい)
 }));
 vi.mock("node:os", () => ({ default: { homedir: () => "/Users/test" } }));
 
@@ -121,7 +122,8 @@ describe("startWorker(ローカル限定の起動)", () => {
     expect(call.options.cwd).toMatch(/[\\/]worker$/);
     // detached が無いと、Next.js を止めたときにワーカーも道連れで死ぬ
     expect(call.options.detached).toBe(true);
-    expect(call.options.stdio).toBe("ignore");
+    // 起動直後に落ちた理由はここにしか残らない。"ignore" にすると失われる
+    expect(call.options.stdio).toEqual(["ignore", 7, 7]);
     expect(result.started).toBe(true);
     // spawn失敗はerrorイベントで来るため、拾わないと未処理例外になる
     expect(h.spawnedChild?.on).toHaveBeenCalledWith("error", expect.any(Function));

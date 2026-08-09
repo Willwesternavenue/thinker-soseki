@@ -35,3 +35,6 @@ data/*.mp3
 .firebase/
 firebase-debug.log
 backups/
+
+# 画面から起動したワーカーの出力(起動失敗の理由がここに残る)
+worker/.worker-start.log
