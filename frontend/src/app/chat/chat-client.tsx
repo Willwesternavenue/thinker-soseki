@@ -9,7 +9,6 @@ import {
   renameSession,
   type SessionRow as Session,
 } from "./actions";
-import { LogoutButton } from "@/components/logout-button";
 
 type Message = {
   message_id: string;
@@ -143,7 +142,9 @@ export function ChatClient({
       className={
         embedded
           ? "flex h-[calc(100vh-8rem)] overflow-hidden rounded-lg border border-stone-200"
-          : "flex h-screen"
+          // 画面高はレイアウト(chat/layout.tsx)が持つ。ここで h-screen にすると
+          // 共通ヘッダーの分だけ縦に溢れる
+          : "flex h-full"
       }
     >
       {/* セッション一覧 */}
@@ -185,18 +186,9 @@ export function ChatClient({
         </div>
         <div className="border-t border-stone-200 p-3 text-xs text-stone-500">
           <p>{displayName}</p>
-          {/* 創作は思想対話と別機能。動線は用意しつつ呼称で区別する(仕様§9.1) */}
-          <a href="/creative" className="block underline hover:text-stone-700">
-            創作（新作を書く）
-          </a>
-          {isAdmin && !embedded && (
-            <a href="/admin/sources" className="underline hover:text-stone-700">
-              管理画面へ
-            </a>
-          )}
-          {!embedded && (
-            <LogoutButton className="mt-1 block underline hover:text-red-700" />
-          )}
+          {/* 創作・管理画面へ・ログアウトは共通ヘッダー(MemberHeader)へ移した。
+              画面ごとに移動手段の置き場所が変わるのをやめるため。
+              /admin/chat では管理レイアウトのナビが同じ役目を果たす */}
           <p className="mt-2 text-[10px] leading-relaxed">
             これはAI対話体験であり、本人の実際の判断を保証するものではありません。
           </p>

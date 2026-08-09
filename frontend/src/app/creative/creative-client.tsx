@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { LogoutButton } from "@/components/logout-button";
 import { WorkerStatus } from "@/components/worker-status";
 import { startWorker } from "@/lib/worker-control";
 import {
@@ -215,14 +214,8 @@ export function CreativeClient({
             とは別の機能です。
           </p>
         </div>
-        <div className="text-xs text-stone-500">
-          {isAdmin && (
-            <Link href="/admin/creative-cards" className="mr-3 underline hover:text-stone-700">
-              管理画面へ
-            </Link>
-          )}
-          <LogoutButton className="underline hover:text-red-700" />
-        </div>
+        {/* 「管理画面へ」「ログアウト」は共通ヘッダー(MemberHeader)に移した。
+            ここに置くと画面ごとに移動手段の場所が変わって一貫性を欠く */}
       </header>
 
       {profiles.length === 0 && (
