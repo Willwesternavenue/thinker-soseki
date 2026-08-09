@@ -230,12 +230,21 @@ describe("hasDirectSource(直接の原典があるか)", () => {
 
   it("全文検索由来のスコアも関連度として数えない(固定値0.5のため)", () => {
     // PGroonga のスコアは正規化されていないので捨てて 0.5 を入れている。
-    // 閾値 0.45 を必ず超えるので、そのまま数えると常に「原典あり」になる
+    // 閾値(現在 0.40)を必ず超えるので、そのまま数えると常に「原典あり」になる
     expect(hasDirectSource([chunk({ score: 0.5, origin: "keyword" })], "thought")).toBe(false);
   });
 
   it("ベクトル検索由来だけを閾値で判定する", () => {
     expect(hasDirectSource([chunk({ score: 0.68, origin: "vector" })], "thought")).toBe(true);
+  });
+
+  it("較正: 実測3例の関係を固定する", () => {
+    // 2026-08-09 実測(10,152チャンク時点)。閾値の役割は「明らかに無関係」を
+    // 落とすことだけ。被覆あり(0.445)と被覆なし(0.443)は 0.002 差で分離できず、
+    // そちらは主題語の実在で判別する(decideAbstention)
+    const v = (score: number) => [chunk({ score, origin: "vector" })];
+    expect(hasDirectSource(v(0.445), "thought")).toBe(true); // 明治維新: 被覆あり
+    expect(hasDirectSource(v(0.329), "thought")).toBe(false); // スマートフォン: 被覆なし
   });
 
   it("関連度が低すぎるヒットは直接の原典として数えない", () => {
