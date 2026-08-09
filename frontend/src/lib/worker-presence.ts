@@ -13,6 +13,32 @@ export const WORKER_ALIVE_THRESHOLD_SEC = 30;
 /** 画面に出す起動コマンド(ボタンを出せない環境ではこれを案内する) */
 export const WORKER_START_COMMAND = "cd worker && uv run python -m src.main";
 
+/**
+ * `uv` 実行ファイルの探し先。PATH を先に、既知のインストール先を後ろに置く。
+ *
+ * ⚠️ **dev server の PATH は、あなたがターミナルで使っている PATH とは限らない。**
+ * uv の公式インストーラは `~/.local/bin` に置くが、そこを PATH へ足すのは
+ * シェルのプロファイル(.zshrc 等)であって、そこを経由せずに起動された Node には
+ * 引き継がれない。2026-08-08、起動ボタンがまさにこれで失敗した
+ * (`spawn("uv", ...)` が ENOENT。理由は握りつぶされ、画面には
+ * 「起動できませんでした」としか出なかった)。
+ */
+export function uvCandidatePaths(
+  pathEnv: string | undefined,
+  homeDir: string
+): string[] {
+  const fromPath = (pathEnv ?? "")
+    .split(":")
+    .filter(Boolean)
+    .map((dir) => `${dir}/uv`);
+  const wellKnown = [
+    `${homeDir}/.local/bin/uv`, // uv 公式インストーラの既定
+    "/opt/homebrew/bin/uv", // Homebrew (Apple Silicon)
+    "/usr/local/bin/uv", // Homebrew (Intel)
+  ];
+  return [...new Set([...fromPath, ...wellKnown])];
+}
+
 export type WorkerHeartbeat = {
   /** 判定には使わない。落ちた行は最後の値のまま残るため(下の workerPresence 参照) */
   status: string;

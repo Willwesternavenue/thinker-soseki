@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   WORKER_ALIVE_THRESHOLD_SEC,
   canStartWorkerHere,
+  uvCandidatePaths,
   nextStartWatch,
   workerPresence,
   workerStartOutcome,
@@ -48,6 +49,29 @@ describe("workerPresence(ワーカーの生死)", () => {
 
   it("待つジョブを渡さない画面では、生存していれば idle", () => {
     expect(workerPresence(hb({ current_job_id: "j2" }), NOW)).toBe("idle");
+  });
+});
+
+describe("uvCandidatePaths(uv の探し先)", () => {
+  it("PATH の各要素に uv を付けて候補にする", () => {
+    const got = uvCandidatePaths("/usr/bin:/opt/homebrew/bin", "/Users/x");
+    expect(got.slice(0, 2)).toEqual(["/usr/bin/uv", "/opt/homebrew/bin/uv"]);
+  });
+
+  it("PATH に無くても既知のインストール先を候補に含める", () => {
+    // 2026-08-08 実測: dev server の PATH に ~/.local/bin が無く起動できなかった。
+    // uv 公式インストーラの既定はここで、PATH へ足すのはシェルのプロファイル
+    const got = uvCandidatePaths("/usr/bin", "/Users/x");
+    expect(got).toContain("/Users/x/.local/bin/uv");
+  });
+
+  it("PATH が未設定でも候補を返す(落ちない)", () => {
+    expect(uvCandidatePaths(undefined, "/Users/x").length).toBeGreaterThan(0);
+  });
+
+  it("同じ場所を二度探さない", () => {
+    const got = uvCandidatePaths("/opt/homebrew/bin:/opt/homebrew/bin", "/Users/x");
+    expect(got.filter((p) => p === "/opt/homebrew/bin/uv")).toHaveLength(1);
   });
 });
 

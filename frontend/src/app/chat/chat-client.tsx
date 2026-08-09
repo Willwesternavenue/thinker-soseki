@@ -208,7 +208,7 @@ export function ChatClient({
         <div className="flex-1 space-y-4 overflow-y-auto p-6">
           {messages.length === 0 && !sending && (
             <div className="flex h-full items-center justify-center text-stone-500">
-              なんでも聞いてくれ。
+              まあ、掛けたまえ。少し話そうじゃないか。
             </div>
           )}
           {messages.map((message) => (

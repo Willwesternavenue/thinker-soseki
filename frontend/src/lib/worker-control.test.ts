@@ -10,7 +10,18 @@ const h = vi.hoisted(() => ({
   supabaseUrl: "http://127.0.0.1:55421",
   /** 非nullなら requireAdmin がこのメッセージで例外を投げる(権限不足の再現) */
   adminError: null as string | null,
+  /** 実行可能な uv があると見なす場所。null なら「どこにも無い」 */
+  existingUv: "/Users/test/.local/bin/uv" as string | null,
 }));
+
+// 実機の PATH に依存させない。uv の在処だけをテストが決める
+vi.mock("node:fs", () => ({
+  accessSync: (p: string) => {
+    if (p !== h.existingUv) throw new Error(`ENOENT: ${p}`);
+  },
+  constants: { X_OK: 1 },
+}));
+vi.mock("node:os", () => ({ default: { homedir: () => "/Users/test" } }));
 
 vi.mock("node:child_process", () => ({
   spawn: (cmd: string, args: string[], options: Record<string, unknown>) => {
@@ -56,6 +67,22 @@ describe("startWorker(ローカル限定の起動)", () => {
     h.hbError = null;
     h.supabaseUrl = "http://127.0.0.1:55421";
     h.adminError = null;
+    h.existingUv = "/Users/test/.local/bin/uv";
+  });
+
+  it("uv が見つからなければ起動せず、理由を返す", async () => {
+    // 2026-08-08 実測: dev server の PATH に ~/.local/bin が無く ENOENT だった。
+    // spawn の失敗は例外で来ないため、名前で呼ぶと理由の分からない失敗になる
+    h.existingUv = null;
+    const result = await startWorker();
+    expect(h.spawned).toEqual([]);
+    expect(result.error).toContain("uv");
+    expect(result.started).toBeUndefined();
+  });
+
+  it("PATH に無くても既知のインストール先の uv を実体で起動する", async () => {
+    await startWorker();
+    expect(h.spawned[0].cmd).toBe("/Users/test/.local/bin/uv");
   });
 
   it("管理者でなければ起動しない。戻り値ではなく例外で拒否する", async () => {
@@ -88,7 +115,7 @@ describe("startWorker(ローカル限定の起動)", () => {
     const result = await startWorker();
     expect(h.spawned).toHaveLength(1);
     const [call] = h.spawned;
-    expect(call.cmd).toBe("uv");
+    expect(call.cmd).toBe("/Users/test/.local/bin/uv");
     expect(call.args).toEqual(["run", "python", "-m", "src.main"]);
     // frontend の隣の worker/ で動かさないとモジュールが見つからない
     expect(call.options.cwd).toMatch(/[\\/]worker$/);

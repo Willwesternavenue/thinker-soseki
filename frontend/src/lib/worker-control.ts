@@ -1,13 +1,17 @@
 "use server";
 
 import { spawn } from "node:child_process";
+import { accessSync, constants } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { requireAdmin } from "@/lib/auth";
 import { SUPABASE_URL } from "@/lib/const";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   canStartWorkerHere,
+  uvCandidatePaths,
   workerPresence,
+  WORKER_START_COMMAND,
   type WorkerHeartbeat,
 } from "@/lib/worker-presence";
 
@@ -41,18 +45,39 @@ export async function startWorker(): Promise<{ started?: boolean; error?: string
     return { started: false }; // 既に動いている。何もしない
   }
 
+  // ⚠️ `spawn("uv", ...)` と名前で呼ばない。dev server の PATH は、あなたが
+  // ターミナルで使っている PATH とは限らない(2026-08-08 の実測: ~/.local/bin が
+  // 無く ENOENT)。しかも spawn の失敗は例外ではなく error イベントで来るので、
+  // 名前で呼ぶと「理由の分からない失敗」になる。先に実体を解決して、
+  // 見つからないなら**その場で理由を返す**。
+  const uv = uvCandidatePaths(process.env.PATH, os.homedir()).find((candidate) => {
+    try {
+      accessSync(candidate, constants.X_OK);
+      return true;
+    } catch {
+      return false;
+    }
+  });
+  if (!uv) {
+    return {
+      error: `uv が見つかりませんでした。ターミナルで次を実行してください: ${WORKER_START_COMMAND}`,
+    };
+  }
+
   // process.cwd() は frontend/。worker は隣にある
   const cwd = path.join(process.cwd(), "..", "worker");
-  const child = spawn("uv", ["run", "python", "-m", "src.main"], {
+  const child = spawn(uv, ["run", "python", "-m", "src.main"], {
     cwd,
     detached: true,
     stdio: "ignore",
     env: process.env,
   });
-  // spawn の失敗(uv が見つからない等)は例外ではなく error イベントで来るため
-  // try/catch では捕まらない。ここで握り、失敗は「ハートビートが出ない」ことで
-  // 画面側が検知する(設計 §6 / Task 4 の起動タイムアウト)
-  child.on("error", () => {});
+  // ここまで来ての失敗(worker 側の依存解決など)は error イベントで来る。
+  // 画面へは返せない(既に return した後)ので、せめてサーバーログに残す。
+  // 無言にすると、この機能が問題にしている「静かな劣化」と同じ形になる
+  child.on("error", (err) => {
+    console.error("ワーカーの起動に失敗:", err);
+  });
   child.unref();
 
   return { started: true };
