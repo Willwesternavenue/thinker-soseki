@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { embedText } from "@/lib/embedding";
+import { rankByRoute, type CorpusRouteKind } from "./corpus-routing";
 import type { EvidenceChunk } from "./types";
 
 const MAX_EVIDENCE = 10; // LLMへ渡す原典の上限(伝記質問で複数エピソードを拾えるよう拡大)
@@ -283,4 +284,26 @@ export async function subjectFoundInCorpus(
   } catch {
     return true;
   }
+}
+
+/**
+ * 検索結果から、実際に回答へ渡す原典を選ぶ。
+ *
+ * ⚠️ **並べ替えが先、切り詰めが後。この順序に意味がある。**
+ * `diversifyEvidence` は入力順の貪欲選択で `MAX_EVIDENCE` 件を採るので、
+ * 先に切り詰めると `rankByRoute` は「既に選ばれた10件の並べ替え」しかできず、
+ * **何を残すかに影響しない**。
+ *
+ * 2026-08-02 実測: 小説寄りの検索語で上位10件が全て小説になった。作者の直接発言は
+ * 全10,152チャンク中408件(4%)しかなく、ベクトル検索は文体の似た小説をよく引く。
+ * 順序が逆だと「小説を作者発言より後ろへ下げる」防御が選抜の段階で無効になり、
+ * **文体の一致が思想の一致として提示される**(指示書§18)。
+ *
+ * この関数にまとめてあるのは、順序を戻せないようにするため。
+ */
+export function selectEvidence(
+  merged: EvidenceChunk[],
+  routeKind: CorpusRouteKind
+): EvidenceChunk[] {
+  return diversifyEvidence(rankByRoute(merged, routeKind));
 }

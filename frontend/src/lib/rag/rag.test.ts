@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { mergeThoughtCards } from "./cards";
-import { diversifyEvidence, filterQuotableChunks, mergeEvidence } from "./evidence";
+import {
+  diversifyEvidence,
+  filterQuotableChunks,
+  mergeEvidence,
+  selectEvidence,
+} from "./evidence";
 import { runOutputGuardExact, buildSafeAnswer } from "./guard";
 import { aggregateThoughtHits } from "./router";
 import { buildRetrievalQuery, normalizeSubjectReferences } from "./session";
@@ -276,5 +281,48 @@ describe("mergeEvidence / diversifyEvidence(仕様7.7)", () => {
     expect(result.length).toBeLessThanOrEqual(10);
     const fromBook1 = result.filter((c) => c.source_id === "BOOK_001");
     expect(fromBook1.length).toBeLessThanOrEqual(5);
+  });
+});
+
+describe("selectEvidence(選抜と並べ替えの順序)", () => {
+  // 小説はベクトル検索でよく上位に来る(文体が似ているため)。作者の直接発言は
+  // 全10,152チャンク中408件(4%)しかない
+  const fiction = Array.from({ length: 10 }, (_, i) =>
+    chunk({
+      chunk_id: `f${i}`,
+      source_id: `NOVEL_${i}`,
+      corpus_role: "narrative_reference",
+      speaker_role: "character",
+      score: 0.9 - i * 0.01,
+      origin: "vector",
+    })
+  );
+  const author = chunk({
+    chunk_id: "a",
+    source_id: "ESSAY_1",
+    corpus_role: "core_thought",
+    speaker_role: "author_direct",
+    score: 0.5,
+    origin: "vector",
+  });
+
+  it("思想質問では、小説がスコア上位を占めても作者の直接発言を落とさない", () => {
+    // 2026-08-02 実測: 小説寄りの検索語で上位10件が全て小説になった。
+    // 切り詰めてから並べ替えると、作者発言は選抜の段階で消えている
+    const got = selectEvidence([...fiction, author], "thought");
+    expect(got.map((c) => c.chunk_id)).toContain("a");
+    expect(got[0].chunk_id).toBe("a");
+  });
+
+  it("人物質問では下げない(人物の発言こそが根拠のため)", () => {
+    const got = selectEvidence([...fiction, author], "character");
+    expect(got[0].chunk_id).toBe("f0");
+  });
+
+  it("多様性の制御(同一source は MAX_PER_SOURCE=5 まで)は保つ", () => {
+    const sameSource = Array.from({ length: 8 }, (_, i) =>
+      chunk({ chunk_id: `s${i}`, source_id: "ESSAY_1", score: 0.9 - i * 0.01, origin: "vector" })
+    );
+    expect(selectEvidence(sameSource, "thought")).toHaveLength(5);
   });
 });

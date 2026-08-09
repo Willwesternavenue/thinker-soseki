@@ -18,18 +18,17 @@ import {
   decideAbstention,
   detectCharacter,
   directSourceIds,
-  rankByRoute,
   retrievalFiltersFor,
   usableSubject,
 } from "./corpus-routing";
 import {
-  diversifyEvidence,
   fetchLinkedEvidence,
   filterQuotableChunks,
   mergeEvidence,
   retrieveRoutedEvidence,
   retrieveUnscopedEvidence,
   subjectFoundInCorpus,
+  selectEvidence,
 } from "./evidence";
 import {
   buildRegenerateInstruction,
@@ -179,10 +178,7 @@ export async function answerQuestion(
   // そのうえで、思想質問では小説由来を作者の直接発言より後ろへ下げる
   // (ベクトル検索は文体の似た小説をよく引く。順序をそのまま使うと、
   //  文体の一致が思想の一致として提示されてしまう)。
-  const evidence = rankByRoute(
-    diversifyEvidence(mergeEvidence(linked, routed, unscoped)),
-    routeKind
-  );
+  const evidence = selectEvidence(mergeEvidence(linked, routed, unscoped), routeKind);
 
   // 直接の原典が無いまま断定させない(受入#14 / 指示書§13)
   const abstentionReason = decideAbstention({
