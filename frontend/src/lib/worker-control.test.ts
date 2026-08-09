@@ -124,6 +124,8 @@ describe("startWorker(ローカル限定の起動)", () => {
     expect(call.options.detached).toBe(true);
     // 起動直後に落ちた理由はここにしか残らない。"ignore" にすると失われる
     expect(call.options.stdio).toEqual(["ignore", 7, 7]);
+    // Next.js の PORT を渡すとワーカーがヘルスサーバを立てて bind に失敗する
+    expect((call.options.env as Record<string, unknown>).PORT).toBeUndefined();
     expect(result.started).toBe(true);
     // spawn失敗はerrorイベントで来るため、拾わないと未処理例外になる
     expect(h.spawnedChild?.on).toHaveBeenCalledWith("error", expect.any(Function));

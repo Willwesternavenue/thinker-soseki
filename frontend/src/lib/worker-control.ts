@@ -1,6 +1,6 @@
 "use server";
 
-import { spawn } from "node:child_process";
+import { spawn, type SpawnOptions } from "node:child_process";
 import { accessSync, constants, openSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -13,6 +13,7 @@ import {
   workerPresence,
   WORKER_START_COMMAND,
   WORKER_START_LOG,
+  workerChildEnv,
   type WorkerHeartbeat,
 } from "@/lib/worker-presence";
 
@@ -73,16 +74,22 @@ export async function startWorker(): Promise<{ started?: boolean; error?: string
   // 無効なら即死する)。捨てると画面には30秒後の「起動できませんでした」しか
   // 残らず、理由を追う手段が無くなる。追記モードでログへ落とす
   const out = openSync(path.join(cwd, WORKER_START_LOG), "a");
-  const child = spawn(uv, ["run", "python", "-m", "src.main"], {
+  // オプションをまとめて SpawnOptions として渡す。stdio をタプルで直書きすると
+  // spawn のオーバーロードが決まらず戻り値が never になる
+  const options: SpawnOptions = {
     cwd,
     detached: true,
     stdio: ["ignore", out, out],
-    env: process.env,
-  });
+    // ⚠️ process.env をそのまま渡さない。Next.js の PORT がワーカー側で
+    // 「Cloud Run が指定したポート」と解釈され、ヘルスサーバの bind に失敗して
+    // 即死する(2026-08-08 実測)
+    env: workerChildEnv(process.env),
+  };
+  const child = spawn(uv, ["run", "python", "-m", "src.main"], options);
   // ここまで来ての失敗(worker 側の依存解決など)は error イベントで来る。
   // 画面へは返せない(既に return した後)ので、せめてサーバーログに残す。
   // 無言にすると、この機能が問題にしている「静かな劣化」と同じ形になる
-  child.on("error", (err) => {
+  child.on("error", (err: Error) => {
     console.error("ワーカーの起動に失敗:", err);
   });
   child.unref();

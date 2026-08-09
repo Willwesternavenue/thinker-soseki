@@ -47,6 +47,31 @@ export function uvCandidatePaths(
   return [...new Set([...fromPath, ...wellKnown])];
 }
 
+/**
+ * ワーカーへ渡してはいけない環境変数。
+ *
+ * ⚠️ `env: process.env` をそのまま渡すと、**Next.js の値がワーカーの意味に
+ * 化ける**。`PORT` がその例で、ワーカーは `PORT` があると Cloud Run 上だと
+ * 判断してヘルスサーバを立てる(`worker/src/main.py` の `__main__`)。
+ * dev server の 5555 を渡すと `Address already in use` で即死する
+ * (2026-08-08 の実測。起動ボタンが動かなかった真の原因)。
+ */
+export const WORKER_ENV_BLOCKLIST = ["PORT"] as const;
+
+/**
+ * 親の環境から、ワーカーに渡してはいけないものを落とす。
+ * 入力の型をそのまま返す(`process.env` を渡しても `ProcessEnv` のまま)。
+ */
+export function workerChildEnv<T extends Record<string, string | undefined>>(
+  parentEnv: T
+): T {
+  const child: T = { ...parentEnv };
+  for (const key of WORKER_ENV_BLOCKLIST) {
+    delete (child as Record<string, string | undefined>)[key];
+  }
+  return child;
+}
+
 export type WorkerHeartbeat = {
   /** 判定には使わない。落ちた行は最後の値のまま残るため(下の workerPresence 参照) */
   status: string;

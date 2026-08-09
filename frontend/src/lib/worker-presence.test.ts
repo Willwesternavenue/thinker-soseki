@@ -3,6 +3,7 @@ import {
   WORKER_ALIVE_THRESHOLD_SEC,
   canStartWorkerHere,
   uvCandidatePaths,
+  workerChildEnv,
   nextStartWatch,
   workerPresence,
   workerStartOutcome,
@@ -72,6 +73,34 @@ describe("uvCandidatePaths(uv の探し先)", () => {
   it("同じ場所を二度探さない", () => {
     const got = uvCandidatePaths("/opt/homebrew/bin:/opt/homebrew/bin", "/Users/x");
     expect(got.filter((p) => p === "/opt/homebrew/bin/uv")).toHaveLength(1);
+  });
+});
+
+describe("workerChildEnv(ワーカーへ渡す環境変数)", () => {
+  it("PORT を落とす", () => {
+    // ワーカーは PORT があると Cloud Run 上だと判断してヘルスサーバを立てる。
+    // 2026-08-08 実測: Next.js の PORT=5555 が渡り、dev server と衝突して
+    // Address already in use で即死していた(起動ボタンが動かなかった真因)
+    const got = workerChildEnv({ PORT: "5555", SUPABASE_URL: "http://127.0.0.1:55421" });
+    expect(got.PORT).toBeUndefined();
+  });
+
+  it("秘匿キーは落とさない(渡らないと Secret Manager へ落ちて死ぬ)", () => {
+    const got = workerChildEnv({
+      PORT: "5555",
+      SUPABASE_SERVICE_ROLE_KEY: "k1",
+      ANTHROPIC_API_KEY: "k2",
+      OPENAI_API_KEY: "k3",
+    });
+    expect(got.SUPABASE_SERVICE_ROLE_KEY).toBe("k1");
+    expect(got.ANTHROPIC_API_KEY).toBe("k2");
+    expect(got.OPENAI_API_KEY).toBe("k3");
+  });
+
+  it("元の環境を書き換えない", () => {
+    const parent = { PORT: "5555" };
+    workerChildEnv(parent);
+    expect(parent.PORT).toBe("5555");
   });
 });
 
