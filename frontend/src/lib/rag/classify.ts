@@ -27,7 +27,13 @@ const PROMPT = (query: string) => `質問: ${query}
 - creative: 創作依頼(詩、文章を書いて等)
 - mixed: 複数が混ざる質問
 
-出力形式(JSONのみ): {"queryKind": "..."}`;
+あわせて、質問が何について尋ねているかを表す語を1つ取り出せ(subject)。
+- 原典の中に**そのまま出てくる可能性のある表記**にすること
+  (例:「森鴎外の作品について」→「鴎外」、「明治維新は日本を前に進めたか」→「維新」)
+- 人物・作品・固有名詞があればそれを優先する
+- 一般的な問いかけで主題語を1語に絞れないときは空文字にする
+
+出力形式(JSONのみ): {"queryKind": "...", "subject": "..."}`;
 
 /**
  * Query Classifier(仕様7.3)。
@@ -35,8 +41,11 @@ const PROMPT = (query: string) => `質問: ${query}
  */
 export async function classifyQuery(query: string): Promise<Classification> {
   let kind: QueryKind = "mixed";
+  // 主題語。留保の判定に使う(原典に一度も出てこない語なら断定させない)。
+  // 取れなかったときは null のままにして、従来の関連度だけの判定に倒す
+  let subject: string | null = null;
   try {
-    const result = await callJson<{ queryKind: string }>({
+    const result = await callJson<{ queryKind: string; subject?: string }>({
       model: MODEL_LIGHT,
       system: SYSTEM,
       prompt: PROMPT(query),
@@ -45,11 +54,13 @@ export async function classifyQuery(query: string): Promise<Classification> {
     if (VALID_KINDS.includes(result.queryKind as QueryKind)) {
       kind = result.queryKind as QueryKind;
     }
+    subject = (result.subject ?? "").trim() || null;
   } catch {
     // 分類失敗時は安全側(mixed → ルーティングを試み、カード無しでも進める)
   }
   return {
     queryKind: kind,
     needsThoughtCards: kind === "thought" || kind === "life_advice",
+    subject,
   };
 }

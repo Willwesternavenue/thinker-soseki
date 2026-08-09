@@ -17,6 +17,7 @@ type TestChunk = {
   corpus_role: string | null;
   speaker_role: string | null;
   score: number;
+  origin?: string;
 };
 
 const chunk = (over: Partial<TestChunk> = {}): TestChunk => ({
@@ -217,6 +218,25 @@ describe("hasDirectSource(直接の原典があるか)", () => {
     expect(hasDirectSource([chunk()], "thought")).toBe(true);
   });
 
+  it("承認リンク由来のスコアは関連度として数えない", () => {
+    // 2026-08-09 実測: 「森鴎外の作品について」で、鴎外と無関係な
+    // 『創作家の態度』が score=0.8(strength=medium の変換値)で入り、
+    // hasDirectSource が true になって留保が発火しなかった。
+    // strength は「カードと根拠の結びつきの強さ」であって、
+    // 目の前の質問との関連度ではない
+    expect(hasDirectSource([chunk({ score: 0.8, origin: "linked" })], "thought")).toBe(false);
+  });
+
+  it("全文検索由来のスコアも関連度として数えない(固定値0.5のため)", () => {
+    // PGroonga のスコアは正規化されていないので捨てて 0.5 を入れている。
+    // 閾値 0.45 を必ず超えるので、そのまま数えると常に「原典あり」になる
+    expect(hasDirectSource([chunk({ score: 0.5, origin: "keyword" })], "thought")).toBe(false);
+  });
+
+  it("ベクトル検索由来だけを閾値で判定する", () => {
+    expect(hasDirectSource([chunk({ score: 0.68, origin: "vector" })], "thought")).toBe(true);
+  });
+
   it("関連度が低すぎるヒットは直接の原典として数えない", () => {
     // ベクトル検索は常に上位N件を返すため、関連が無くても何かが返る。
     // 実測: 原典にある話題 0.68 / 現代語(生成AI・暗号資産) 0.19〜0.35
@@ -247,6 +267,40 @@ describe("hasDirectSource(直接の原典があるか)", () => {
 
   it("根拠が無ければ false", () => {
     expect(hasDirectSource([], "thought")).toBe(false);
+  });
+});
+
+describe("decideAbstention(主題語がコーパスに無い場合)", () => {
+  // 2026-08-09 実測。ベクトルのスコアではこの2つを分けられない(0.002差)。
+  //   森鴎外   最高0.443 / コーパスの言及 0件   → 留保すべき
+  //   明治維新 最高0.445 / 「維新」17・「開化」32件 → 留保すべきでない
+  // 語の実在は、スコアが持っていない情報を持っている
+  const strong = chunk({ score: 0.68, origin: "vector" });
+
+  it("主題語がコーパスに無ければ、関連度が足りていても留保する", () => {
+    const reason = decideAbstention({
+      kind: "person_or_work" as never,
+      evidence: [strong],
+      subject: { term: "森鴎外", foundInCorpus: false },
+    });
+    expect(reason).not.toBeNull();
+    expect(reason).toContain("森鴎外");
+  });
+
+  it("主題語がコーパスにあれば、従来どおり関連度で判断する", () => {
+    expect(
+      decideAbstention({
+        kind: "thought",
+        evidence: [strong],
+        subject: { term: "維新", foundInCorpus: true },
+      })
+    ).toBeNull();
+  });
+
+  it("主題語を取れなかったときは従来の判定に倒す(過剰な留保を出さない)", () => {
+    expect(
+      decideAbstention({ kind: "thought", evidence: [strong], subject: null })
+    ).toBeNull();
   });
 });
 

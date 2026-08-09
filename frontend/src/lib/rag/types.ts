@@ -41,6 +41,11 @@ export type ThoughtCard = {
 export type Classification = {
   queryKind: QueryKind;
   needsThoughtCards: boolean;
+  /**
+   * 質問の主題語。原典に実在するかを確かめて留保の判定に使う。
+   * 1語に絞れなかった・分類自体が失敗した場合は null(従来の判定に倒す)。
+   */
+  subject?: string | null;
 };
 
 export type RouteResult = {

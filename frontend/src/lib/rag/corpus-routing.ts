@@ -241,14 +241,39 @@ export function rankByRoute<T extends CorpusTagged & { score: number }>(
  */
 export const MIN_DIRECT_SOURCE_SCORE = 0.45;
 
+/**
+ * 関連度として意味のある `score` を持つ根拠だけを残す。
+ *
+ * ⚠️ **`score` は経路ごとに意味が違う。** 閾値と比べてよいのはベクトル検索
+ * (コサイン類似度)だけである。
+ *
+ * | 経路 | score の中身 |
+ * |---|---|
+ * | vector  | コサイン類似度(0〜1)。`MIN_DIRECT_SOURCE_SCORE` はこれ用に較正した |
+ * | linked  | `strength` の変換値 0.6/0.8/1.0。**質問との関連度ではない** |
+ * | keyword | 固定 0.5。PGroonga のスコアは正規化されていないため捨てている |
+ *
+ * linked と keyword は必ず閾値を超えるので、混ぜると「原典あり」が常に真になる。
+ * 2026-08-09 実測: 「森鴎外の作品について」で、鴎外への言及がコーパスに1件も
+ * 無いのに、無関係な『創作家の態度』が score=0.8 で入り留保が発火せず、
+ * 鴎外の作風について根拠の無い断定を本人の声で述べた。
+ */
+function relevanceScored<T extends { score?: number; origin?: string }>(
+  evidence: T[]
+): T[] {
+  return evidence.filter(
+    (c) =>
+      (c.origin ?? "vector") === "vector" &&
+      (c.score ?? 0) >= MIN_DIRECT_SOURCE_SCORE
+  );
+}
+
 /** そのルートにとって「直接の原典」と言える根拠があるか。 */
 export function hasDirectSource(
-  evidence: Array<CorpusTagged & { score?: number }>,
+  evidence: Array<CorpusTagged & { score?: number; origin?: string }>,
   kind: CorpusRouteKind
 ): boolean {
-  const relevant = evidence.filter(
-    (c) => (c.score ?? 0) >= MIN_DIRECT_SOURCE_SCORE
-  );
+  const relevant = relevanceScored(evidence);
   if (kind === "character") {
     // 人物質問は、その人物の発言そのものが直接の原典
     return relevant.some(
@@ -266,12 +291,32 @@ export function hasDirectSource(
  */
 export function decideAbstention(options: {
   kind: CorpusRouteKind;
-  evidence: Array<CorpusTagged & { score?: number }>;
+  evidence: Array<CorpusTagged & { score?: number; origin?: string }>;
+  /**
+   * 質問の主題語と、それがコーパスに実在するか。取れなかったときは null。
+   *
+   * ⚠️ **ベクトルの関連度だけでは足りない。** 2026-08-09 実測:
+   *   「森鴎外の作品について」 最高 0.443 / 鴎外への言及 0件   → 留保すべき
+   *   「明治維新は…」         最高 0.445 / 維新17・開化32件   → 留保すべきでない
+   * 分けたい2つが 0.002 差で、閾値をどこに置いても分離できない。
+   * 「その語が原典に出てくるか」は、スコアが持っていない情報を持っている。
+   */
+  subject?: { term: string; foundInCorpus: boolean } | null;
 }): string | null {
-  const { kind, evidence } = options;
+  const { kind, evidence, subject } = options;
+
+  // 主題語が原典に一度も出てこないなら、関連度が足りていても断定させない。
+  // ここを抜けると、実在の人物について根拠の無い記述を本人の声で述べることになる
+  if (subject && !subject.foundInCorpus) {
+    return (
+      `「${subject.term}」を扱った原典が見つからなかった。` +
+      "原典に基づく主張として述べていない。"
+    );
+  }
+
   if (hasDirectSource(evidence, kind)) return null;
 
-  const relevant = evidence.filter((c) => (c.score ?? 0) >= MIN_DIRECT_SOURCE_SCORE);
+  const relevant = relevanceScored(evidence);
   if (relevant.length === 0) {
     return "この主題を直接扱った原典が見つからなかった。原典に基づく主張として述べていない。";
   }
@@ -288,11 +333,12 @@ export function decideAbstention(options: {
  * trace には原典が並ぶという矛盾した記録になり、監査の役に立たなくなる。
  */
 export function directSourceIds(
-  evidence: Array<CorpusTagged & { source_id: string; score?: number }>,
+  evidence: Array<CorpusTagged & { source_id: string; score?: number; origin?: string }>,
   kind: CorpusRouteKind
 ): string[] {
+  const relevant = new Set(relevanceScored(evidence));
   const qualifies = (c: CorpusTagged & { score?: number }) =>
-    (c.score ?? 0) >= MIN_DIRECT_SOURCE_SCORE &&
+    relevant.has(c as never) &&
     (kind === "character"
       ? c.speaker_role === "character" || c.corpus_role === "character_judgment"
       : isAuthorDirect(c));

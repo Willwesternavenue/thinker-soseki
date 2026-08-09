@@ -252,3 +252,35 @@ export function filterQuotableChunks(hits: EvidenceChunk[]): EvidenceChunk[] {
     (c) => c.evidence_role === "quote" && c.verbatim === true && c.quote_allowed === true
   );
 }
+
+/**
+ * 主題語が原典に実在するかを確かめる(留保の判定用)。
+ *
+ * ⚠️ ベクトルの関連度では足りないために足した検査である。2026-08-09 実測:
+ *   「森鴎外の作品について」 最高 0.443 / 鴎外への言及 0件
+ *   「明治維新は…」         最高 0.445 / 維新17・開化32件
+ * 分けたい2つが 0.002 差で、閾値では分離できない。
+ * 「その語が原典に出てくるか」だけがこの2つを分ける。
+ *
+ * 取得に失敗したときは true を返す(フェイルオープン)。DBの一時的な失敗で
+ * 「原典が無い」と誤って断定させないため。
+ */
+export async function subjectFoundInCorpus(
+  db: SupabaseClient,
+  personId: string,
+  subject: string
+): Promise<boolean> {
+  const term = subject.trim();
+  if (!term) return true;
+  try {
+    const { data, error } = await db.rpc("search_source_chunks_fulltext", {
+      query_text: term,
+      target_person_id: personId,
+      match_count: 1,
+    });
+    if (error) return true;
+    return (data as unknown[] | null)?.length ? true : false;
+  } catch {
+    return true;
+  }
+}

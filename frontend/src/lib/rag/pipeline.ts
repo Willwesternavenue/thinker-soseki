@@ -28,6 +28,7 @@ import {
   mergeEvidence,
   retrieveRoutedEvidence,
   retrieveUnscopedEvidence,
+  subjectFoundInCorpus,
 } from "./evidence";
 import {
   buildRegenerateInstruction,
@@ -152,7 +153,7 @@ export async function answerQuestion(
   const characterId = detectCharacter(retrievalQuery);
   const { corpusRoles } = retrievalFiltersFor(routeKind);
 
-  const [unscoped, routed, linked, bridges] = await Promise.all([
+  const [unscoped, routed, linked, bridges, subjectPresent] = await Promise.all([
     retrieveUnscopedEvidence(db, PERSON_ID, retrievalQuery),
     retrieveRoutedEvidence(db, PERSON_ID, retrievalQuery, corpusRoles),
     thoughtIds.length > 0
@@ -163,6 +164,11 @@ export async function answerQuestion(
     routeKind === "creative"
       ? fetchBridges(db, PERSON_ID)
       : Promise.resolve([]),
+    // 主題語が原典に一度も出てこないなら、関連度が足りていても断定させない。
+    // ベクトルのスコアはこの判別ができない(§A-3・実測0.002差)
+    classification.subject
+      ? subjectFoundInCorpus(db, PERSON_ID, classification.subject)
+      : Promise.resolve(true),
   ]);
   // linked(承認リンクの代表原典)を最優先し、関連度検索を足す。
   // 重複はchunk_idで排除、スコア順に多様性制御(source/role偏り防止、3〜8件)。
@@ -175,7 +181,13 @@ export async function answerQuestion(
   );
 
   // 直接の原典が無いまま断定させない(受入#14 / 指示書§13)
-  const abstentionReason = decideAbstention({ kind: routeKind, evidence });
+  const abstentionReason = decideAbstention({
+    kind: routeKind,
+    evidence,
+    subject: classification.subject
+      ? { term: classification.subject, foundInCorpus: subjectPresent }
+      : null,
+  });
 
   // 引用可能フィルタ(仕様7.8、コードで強制)
   const quotable = filterQuotableChunks(evidence);
